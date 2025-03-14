@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
+import 'package:taxi_app/widgets/CustomAppBar.dart';
 
 class ProfileScreen extends StatefulWidget {
   @override
@@ -9,6 +10,7 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   Map<String, dynamic>? _userData;
   bool _isLoggedIn = false;
+  String selectedLanguage = 'en'; // Define selectedLanguage with a default value
 
   Future<void> _loginWithFacebook() async {
     final LoginResult result = await FacebookAuth.instance.login(
@@ -37,7 +39,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Profile")),
+      appBar: CustomAppBar(selectedLanguage: selectedLanguage, hiddenButtons: ['profile']),
+
       body: Padding(
         padding: EdgeInsets.all(16.0),
         child: Column(
