@@ -4,6 +4,7 @@ import 'package:taxi_app/screens/components/custom_text_field.dart';
 import 'package:country_picker/country_picker.dart';
 import 'package:taxi_app/screens/signin_screen.dart';
 import 'package:taxi_app/widgets/CustomAppBar.dart';
+import 'package:taxi_app/language/localization.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -21,19 +22,20 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   String selectedCountryCode = '+1';
   String selectedCountryFlag = '🇺🇸';
-  String selectedLanguage = 'en';
+  String? selectedGender = 'Male';
   bool isPrivacyAccepted = false;
   bool isPasswordVisible = false;
   bool isConfirmPasswordVisible = false;
-  String? selectedGender = 'Male';
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context);
+
     bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
     Color textColor = isDarkMode ? Colors.white : Colors.black;
 
     return Scaffold(
-      appBar: CustomAppBar(selectedLanguage: selectedLanguage, hiddenButtons: ['signup']),
+      appBar: CustomAppBar(),
       body: LayoutBuilder(
         builder: (context, constraints) {
           bool isWeb = constraints.maxWidth > 600;
@@ -47,16 +49,16 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   ),
                   child: Column(
                     children: [
-                      SizedBox(height: 40),
+                      const SizedBox(height: 40),
 
                       CustomTextField(
-                        hintText: 'Full Name',
+                        hintText: localizations.translate('full_name'),
                         controller: fullNameController,
                         width: double.infinity,
                         hintTextColor: Colors.grey,
                         textColor: textColor,
                       ),
-                      SizedBox(height: 15),
+                      const SizedBox(height: 15),
 
                       InkWell(
                         onTap: () {
@@ -72,38 +74,38 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           );
                         },
                         child: Container(
-                          padding: EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+                          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
                           decoration: BoxDecoration(
                             border: Border.all(color: Colors.grey),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Row(
                             children: [
-                              Text(selectedCountryFlag, style: TextStyle(fontSize: 20)),
-                              SizedBox(width: 10),
-                              Text(selectedCountryCode, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                              Spacer(),
-                              Icon(Icons.arrow_drop_down),
+                              Text(selectedCountryFlag, style: const TextStyle(fontSize: 20)),
+                              const SizedBox(width: 10),
+                              Text(selectedCountryCode, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                              const Spacer(),
+                              const Icon(Icons.arrow_drop_down),
                             ],
                           ),
                         ),
                       ),
                       CustomTextField(
-                        hintText: 'Phone Number',
+                        hintText: localizations.translate('phone_number'),
                         controller: phoneController,
                         width: double.infinity,
                         hintTextColor: Colors.grey,
                         textColor: textColor,
                       ),
                       CustomTextField(
-                        hintText: 'Email',
+                        hintText: localizations.translate('email'),
                         controller: emailController,
                         width: double.infinity,
                         hintTextColor: Colors.grey,
                         textColor: textColor,
                       ),
                       CustomTextField(
-                        hintText: 'Enter Your Password',
+                        hintText: localizations.translate('password'),
                         controller: passwordController,
                         obscureText: !isPasswordVisible,
                         suffixIcon: isPasswordVisible ? Icons.visibility : Icons.visibility_off,
@@ -112,7 +114,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         textColor: textColor,
                       ),
                       CustomTextField(
-                        hintText: 'Confirm Password',
+                        hintText: localizations.translate('confirm_password'),
                         controller: confirmPasswordController,
                         obscureText: !isConfirmPasswordVisible,
                         suffixIcon: isConfirmPasswordVisible ? Icons.visibility : Icons.visibility_off,
@@ -121,16 +123,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         textColor: textColor,
                       ),
 
-                      CustomTextField(
-                        hintText: 'Confirm Password',
-                        controller: confirmPasswordController,
-                        obscureText: !isConfirmPasswordVisible,
-                        suffixIcon: isConfirmPasswordVisible ? Icons.visibility : Icons.visibility_off,
-                        width: double.infinity,
-                        hintTextColor: Colors.grey,
-                        textColor: textColor,
-                      ),
-                      SizedBox(height: 15),
+                      const SizedBox(height: 15),
 
                       DropdownButton<String>(
                         value: selectedGender,
@@ -144,12 +137,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             .map<DropdownMenuItem<String>>((String value) {
                           return DropdownMenuItem<String>(
                             value: value,
-                            child: Text(value, style: TextStyle(color: textColor)),
+                            child: Text(localizations.translate(value.toLowerCase()), style: TextStyle(color: textColor)),
                           );
                         }).toList(),
-                        hint: Text("Select Gender", style: TextStyle(color: textColor)),
+                        hint: Text(localizations.translate('select_gender'), style: TextStyle(color: textColor)),
                       ),
-                      SizedBox(height: 15),
+                      const SizedBox(height: 15),
 
                       Row(
                         children: [
@@ -163,20 +156,20 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           ),
                           Expanded(
                             child: Text(
-                              "I agree to the Privacy Policy and Terms & Conditions",
+                              localizations.translate('privacy_policy'),
                               style: TextStyle(color: textColor),
                             ),
                           ),
                         ],
                       ),
-                      SizedBox(height: 10),
+                      const SizedBox(height: 10),
 
                       CustomButton(
-                        text: 'Sign Up',
+                        text: localizations.translate('sign_up'),
                         width: double.infinity,
                         onPressed: () {},
                       ),
-                      SizedBox(height: 20),
+                      const SizedBox(height: 20),
 
                       Center(
                         child: TextButton(
@@ -188,12 +181,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           },
                           child: Text.rich(
                             TextSpan(
-                              text: "Already have an account? ",
+                              text: "${localizations.translate('already_have_account')} ",
                               style: TextStyle(color: textColor),
                               children: [
                                 TextSpan(
-                                  text: "Sign In",
-                                  style: TextStyle(color: Colors.amber, fontWeight: FontWeight.bold),
+                                  text: localizations.translate('sign_in'),
+                                  style: const TextStyle(color: Colors.amber, fontWeight: FontWeight.bold),
                                 ),
                               ],
                             ),

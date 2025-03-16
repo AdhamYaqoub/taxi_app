@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:taxi_app/screens/maps_screen.dart';
+import 'package:taxi_app/screens/pyment.dart';
+import 'package:taxi_app/screens/setting.dart';
+import 'package:taxi_app/screens/smile.dart';
+import 'package:taxi_app/widgets/CustomAppBar.dart';
+import 'package:taxi_app/language/localization.dart'; // استيراد AppLocalizations
+import 'package:taxi_app/providers/theme_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:taxi_app/providers/theme_provider.dart';
-import 'package:intl/intl.dart';
 import 'package:geolocator/geolocator.dart';
-// import 'package:taxi_app/screens/ProfileScreen.dart';
-// import 'package:taxi_app/screens/signin_screen.dart';
-// import 'package:taxi_app/screens/signup_screen.dart';
-import 'package:taxi_app/widgets/CustomAppBar.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -30,6 +33,16 @@ class _HomePageState extends State<HomePage> {
   LatLng? _dropOffLocation;
 
   Future<void> _getLocation() async {
+
+      LocationPermission permission = await Geolocator.checkPermission();
+  if (permission == LocationPermission.denied) {
+    permission = await Geolocator.requestPermission();
+    if (permission == LocationPermission.deniedForever) {
+      // إذا رفض المستخدم الإذن بشكل دائم، يمكن فتح إعدادات الجهاز
+      openAppSettings();
+      return;
+    }
+  }
     Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
     setState(() {
       _pickUpLocation = LatLng(position.latitude, position.longitude);
@@ -43,98 +56,86 @@ class _HomePageState extends State<HomePage> {
     bool isDarkMode = themeProvider.themeMode == ThemeMode.dark;
     final theme = Theme.of(context);
 
+    // استخدام الترجمة من AppLocalizations
+    String homeText = AppLocalizations.of(context).translate('home');
+    String historyText = AppLocalizations.of(context).translate('history');
+    String settingsText = AppLocalizations.of(context).translate('settings');
+    String menuText = AppLocalizations.of(context).translate('menu');
+    String pickUpLocationText = AppLocalizations.of(context).translate('pick_up_location');
+    String dropOffLocationText = AppLocalizations.of(context).translate('drop_off_location');
+    String dateText = AppLocalizations.of(context).translate('date');
+    String timeText = AppLocalizations.of(context).translate('time');
+    String estimatePriceText = AppLocalizations.of(context).translate('estimate_price');
+
     return LayoutBuilder(
       builder: (context, constraints) {
         bool isWeb = constraints.maxWidth > 800;
         return Scaffold(
           key: _scaffoldKey,
-          backgroundColor: theme.colorScheme.surface,
-  appBar: CustomAppBar(selectedLanguage: selectedLanguage),
-
-
-          drawer: isWeb ? null : _buildDrawer(theme),
-          body: isWeb ? _buildWebLayout(theme) : _buildMobileLayout(theme),
+          appBar: CustomAppBar(),
+          drawer: isWeb ? null : _buildDrawer(theme, homeText, historyText, settingsText, menuText),
+          body: isWeb ? _buildWebLayout(theme, pickUpLocationText, dropOffLocationText, dateText, timeText, estimatePriceText) : _buildMobileLayout(theme, pickUpLocationText, dropOffLocationText, dateText, timeText, estimatePriceText),
         );
       },
     );
   }
 
-  /// 🗂️ تصميم الشريط الجانبي للويب
+ Widget _buildDrawer(ThemeData theme, String homeText, String historyText, String settingsText, String menuText) {
+  return Drawer(
+    child: ListView(
+      padding: EdgeInsets.zero,
+      children: <Widget>[
+        DrawerHeader(
+          decoration: BoxDecoration(
+            color: theme.colorScheme.primary,
+          ),
+          child: Text(
+            selectedLanguage == 'Arabic' ? menuText : 'Menu',
+            style: theme.textTheme.titleLarge?.copyWith(color: theme.colorScheme.onPrimary),
+          ),
+        ),
+        ListTile(
+          leading: Icon(Icons.home, color: theme.colorScheme.onSurface),
+          title: Text(homeText, style: theme.textTheme.bodyLarge),
+          onTap: () {
+            Navigator.pop(context); // إغلاق القائمة
+            Navigator.of(context).push(MaterialPageRoute(builder: (context) => const MapScreen()));
+          },
+        ),
+        ListTile(
+          leading: Icon(Icons.history, color: theme.colorScheme.onSurface),
+          title: Text(historyText, style: theme.textTheme.bodyLarge),
+          onTap: () {
+            Navigator.pop(context); // إغلاق القائمة
+            Navigator.of(context).push(MaterialPageRoute(builder: (context) => const SmileToPayScreen()));
+          },
+        ),
+        ListTile(
+          leading: Icon(Icons.settings, color: theme.colorScheme.onSurface),
+          title: Text(settingsText, style: theme.textTheme.bodyLarge),
+          onTap: () {
+            Navigator.pop(context); // إغلاق القائمة
+            Navigator.of(context).push(MaterialPageRoute(builder: (context) => const SettingsScreen()));
+          },
+        ),
+      ],
+    ),
+  );
+}
 
-  /// 🗂️ تصميم الشريط الجانبي للموبايل
-  Widget _buildDrawer(ThemeData theme) {
-    return Drawer(
-      child: ListView(
-        padding: EdgeInsets.zero,
-        children: <Widget>[
-          DrawerHeader(
-            decoration: BoxDecoration(
-              color: theme.colorScheme.primary,
-            ),
-            child: Text(
-              selectedLanguage == 'Arabic' ? 'القائمة' : 'Menu',
-              style: theme.textTheme.titleLarge?.copyWith(color: theme.colorScheme.onPrimary),
-            ),
-          ),
-          ListTile(
-            leading: Icon(Icons.home, color: theme.colorScheme.onSurface),
-            title: Text(selectedLanguage == 'Arabic' ? 'الرئيسية' : 'Home', style: theme.textTheme.bodyLarge),
-            onTap: () {},
-          ),
-          ListTile(
-            leading: Icon(Icons.history, color: theme.colorScheme.onSurface),
-            title: Text(selectedLanguage == 'Arabic' ? 'السجل' : 'History', style: theme.textTheme.bodyLarge),
-            onTap: () {},
-          ),
-          ListTile(
-            leading: Icon(Icons.settings, color: theme.colorScheme.onSurface),
-            title: Text(selectedLanguage == 'Arabic' ? 'الإعدادات' : 'Settings', style: theme.textTheme.bodyLarge),
-            onTap: () {},
-          ),
-        ],
-      ),
-    );
-  }
-  Widget _buildSidebar(ThemeData theme) {
-    return Container(
-      width: 250,
-      color: theme.colorScheme.surface,
-      child: ListView(
-        padding: const EdgeInsets.all(16.0),
-        children: [
-          ListTile(
-            leading: Icon(Icons.home, color: theme.colorScheme.onSurface),
-            title: Text(selectedLanguage == 'Arabic' ? 'الرئيسية' : 'Home', style: theme.textTheme.bodyLarge),
-            onTap: () {},
-          ),
-          ListTile(
-            leading: Icon(Icons.history, color: theme.colorScheme.onSurface),
-            title: Text(selectedLanguage == 'Arabic' ? 'السجل' : 'History', style: theme.textTheme.bodyLarge),
-            onTap: () {},
-          ),
-          ListTile(
-            leading: Icon(Icons.settings, color: theme.colorScheme.onSurface),
-            title: Text(selectedLanguage == 'Arabic' ? 'الإعدادات' : 'Settings', style: theme.textTheme.bodyLarge),
-            onTap: () {},
-          ),
-        ],
-      ),
-    );
-  }
 
-  /// ✅ تصميم الموبايل: قائمة جانبية، حقول إدخال رأسية، وخريطة منبثقة
-  Widget _buildMobileLayout(ThemeData theme) {
+  Widget _buildMobileLayout(ThemeData theme, String pickUpLocationText, String dropOffLocationText, String dateText, String timeText, String estimatePriceText) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: Column(
         children: [
-          _buildTextField(_pickUpController, Icons.location_on, 'موقع الالتقاط', 'Pick-up Location', theme, _getLocation),
+          _buildTextField(_pickUpController, Icons.location_on, pickUpLocationText, 'Pick-up Location', theme, _getLocation),
           const SizedBox(height: 10),
-          _buildTextField(_dropOffController, Icons.location_off, 'موقع التسليم', 'Drop-off Location', theme),
+          _buildTextField(_dropOffController, Icons.location_off, dropOffLocationText, 'Drop-off Location', theme),
           const SizedBox(height: 10),
-          _buildDateTimeFields(theme),
+          _buildDateTimeFields(theme, dateText, timeText),
           const SizedBox(height: 10),
-          _buildEstimateButton(theme),
+          _buildEstimateButton(theme, estimatePriceText),
           const SizedBox(height: 20),
           GestureDetector(
             onTap: () => _showMapDialog(context),
@@ -145,8 +146,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  /// ✅ تصميم الويب: شريط جانبي، حقول إدخال في صفوف، وخريطة على اليمين
-  Widget _buildWebLayout(ThemeData theme) {
+  Widget _buildWebLayout(ThemeData theme, String pickUpLocationText, String dropOffLocationText, String dateText, String timeText, String estimatePriceText) {
     return Row(
       children: [
         _buildSidebar(theme),
@@ -158,15 +158,15 @@ class _HomePageState extends State<HomePage> {
               children: [
                 Row(
                   children: [
-                    Expanded(child: _buildTextField(_pickUpController, Icons.location_on, 'موقع الالتقاط', 'Pick-up Location', theme, _getLocation)),
+                    Expanded(child: _buildTextField(_pickUpController, Icons.location_on, pickUpLocationText, 'Pick-up Location', theme, _getLocation)),
                     const SizedBox(width: 10),
-                    Expanded(child: _buildTextField(_dropOffController, Icons.location_off, 'موقع التسليم', 'Drop-off Location', theme)),
+                    Expanded(child: _buildTextField(_dropOffController, Icons.location_off, dropOffLocationText, 'Drop-off Location', theme)),
                   ],
                 ),
                 const SizedBox(height: 10),
-                _buildDateTimeFields(theme),
+                _buildDateTimeFields(theme, dateText, timeText),
                 const SizedBox(height: 10),
-                _buildEstimateButton(theme),
+                _buildEstimateButton(theme, estimatePriceText),
               ],
             ),
           ),
@@ -179,7 +179,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  /// 🗺️ تصميم مصغر للخريطة عند النقر عليها في الموبايل
   Widget _buildMapThumbnail() {
     return Container(
       width: 150,
@@ -187,14 +186,13 @@ class _HomePageState extends State<HomePage> {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         image: DecorationImage(
-          image: AssetImage('../../assets/map.png'),
+          image: AssetImage('assets/map.png'),
           fit: BoxFit.cover,
         ),
       ),
     );
   }
 
-  /// 🗺️ تصميم الخريطة الكبيرة للويب
   Widget _buildMapView() {
     return FlutterMap(
       options: MapOptions(
@@ -211,7 +209,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  /// 🎨 عناصر الإدخال للنصوص
   Widget _buildTextField(TextEditingController controller, IconData icon, String arLabel, String enLabel, ThemeData theme, [VoidCallback? onPressed]) {
     return TextField(
       controller: controller,
@@ -223,12 +220,11 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  /// 📅 عناصر الإدخال للتاريخ والوقت
-  Widget _buildDateTimeFields(ThemeData theme) {
+  Widget _buildDateTimeFields(ThemeData theme, String dateText, String timeText) {
     return Row(
       children: [
         Expanded(
-          child: _buildTextField(_dateController, Icons.date_range, 'التاريخ', 'Date', theme, () async {
+          child: _buildTextField(_dateController, Icons.date_range, dateText, 'Date', theme, () async {
             DateTime? pickedDate = await showDatePicker(
               context: context,
               initialDate: DateTime.now(),
@@ -244,7 +240,7 @@ class _HomePageState extends State<HomePage> {
         ),
         const SizedBox(width: 10),
         Expanded(
-          child: _buildTextField(_timeController, Icons.access_time, 'الوقت', 'Time', theme, () async {
+          child: _buildTextField(_timeController, Icons.access_time, timeText, 'Time', theme, () async {
             TimeOfDay? pickedTime = await showTimePicker(
               context: context,
               initialTime: TimeOfDay.now(),
@@ -260,7 +256,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  /// 🗺️ عرض الخريطة في حوار
   void _showMapDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -276,15 +271,53 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  /// 🎯 زر تقدير السعر
-  Widget _buildEstimateButton(ThemeData theme) {
+  Widget _buildEstimateButton(ThemeData theme, String estimatePriceText) {
     return ElevatedButton(
       onPressed: () {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(selectedLanguage == 'Arabic' ? 'تم تقدير السعر!' : 'Price Estimated!'),
+          content: Text(selectedLanguage == 'Arabic' ? 'قيمة التقدير' : 'Estimated price'),
         ));
       },
-      child: Text(selectedLanguage == 'Arabic' ? 'تقدير السعر' : 'Estimate Price'),
+      child: Text(estimatePriceText),
+    );
+  }
+
+  Widget _buildSidebar(ThemeData theme) {
+    return Container(
+      width: 250,
+      color: theme.colorScheme.surface,
+      padding: EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+        Text(AppLocalizations.of(context).translate('menu'), style: theme.textTheme.headlineSmall),
+        ListTile(
+  title: Text(AppLocalizations.of(context).translate('home')),
+  onTap: () {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (context) => MapScreen()),
+    );
+  },
+),
+ListTile(
+  title: Text(AppLocalizations.of(context).translate('history')),
+  onTap: () {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (context) => PaymentScreen()),
+    );
+  },
+),
+ListTile(
+  title: Text(AppLocalizations.of(context).translate('settings')),
+  onTap: () {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (context) => SettingsScreen()),
+    );
+  },
+),
+
+      ],
+      ),
     );
   }
 }
