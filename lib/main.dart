@@ -1,16 +1,48 @@
 import 'package:flutter/material.dart';
-import 'screens/splash_screen.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:provider/provider.dart';
+import 'package:taxi_app/language/localization.dart';
+import 'package:taxi_app/providers/theme_provider.dart';
+import 'package:taxi_app/providers/language_provider.dart';
+import 'package:taxi_app/screens/splash_screen.dart';
+import 'package:taxi_app/theme/theme.dart';  // تأكد من إضافة هذا الملف
 
 void main() {
-  runApp(EasyRiderApp());
+  runApp(const MyApp());
 }
 
-class EasyRiderApp extends StatelessWidget {
+class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: SplashScreen(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (context) => ThemeProvider()),
+        ChangeNotifierProvider(create: (context) => LanguageProvider()),
+      ],
+      child: Consumer2<ThemeProvider, LanguageProvider>(
+        builder: (context, themeProvider, languageProvider, child) {
+          return MaterialApp(
+            debugShowCheckedModeBanner: false,
+            theme: lightTheme,
+            darkTheme: darkTheme,
+            themeMode: themeProvider.themeMode,
+            locale: languageProvider.locale,  // تحديد اللغة من المزود
+            supportedLocales: const [
+              Locale('en', 'US'), // الإنجليزية
+              Locale('ar', 'SA'), // العربية
+            ],
+            localizationsDelegates: [
+              AppLocalizations.delegate,  // إضافة AppLocalizations
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            home: SplashScreen(),
+          );
+        },
+      ),
     );
   }
 }

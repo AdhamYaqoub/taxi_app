@@ -1,117 +1,139 @@
 import 'package:flutter/material.dart';
-import 'package:taxi_app/screens/pyment.dart';
+import 'package:taxi_app/screens/homepage.dart';
+import 'package:taxi_app/screens/signup_screen.dart';
+import 'package:taxi_app/widgets/CustomAppBar.dart';
 import 'components/custom_text_field.dart';
 import 'components/custom_button.dart';
 import 'components/social_button.dart';
 import 'forgot_password_screen.dart';
-import 'maps_screen.dart'; // استيراد صفحة الخرائط
-import 'about.dart'; // استيراد صفحة حول التطبيق
-//import '../screens/SOS.dart'; // استيراد صفحة حول التطبيق
-import '../screens/ProfileScreen.dart'; // استيراد صفحة حول التطبيق
+import 'package:taxi_app/language/localization.dart'; // استيراد AppLocalizations
 
 class SignInScreen extends StatelessWidget {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
+  SignInScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    
+    // استخدام الترجمة من AppLocalizations
+    String signInText = AppLocalizations.of(context).translate('sign_in');
+    String emailHintText = AppLocalizations.of(context).translate('email_or_phone');
+    String passwordHintText = AppLocalizations.of(context).translate('enter_password');
+    String forgetPasswordText = AppLocalizations.of(context).translate('forget_password');
+    String signUpText = AppLocalizations.of(context).translate('dont_have_account');
+    String signUpLinkText = AppLocalizations.of(context).translate('sign_up');
+
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () {
-            Navigator.pop(context);
-          },
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => ProfileScreen()),
-              );
-            },
-            child: Text("About", style: TextStyle(color: Colors.black, fontSize: 16)),
-          ),
-        ],
-      ),
-      body: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(height: 20),
-            Text(
-              "Sign in",
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 20),
-            CustomTextField(
-              hintText: "Email or Phone Number",
-              controller: emailController,
-            ),
-            SizedBox(height: 15),
-            CustomTextField(
-              hintText: "Enter Your Password",
-              obscureText: true,
-              suffixIcon: Icons.visibility_off,
-              controller: passwordController,
-            ),
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => ForgotPasswordScreen()),
-                  );
-                },
-                child: Text("Forget password?", style: TextStyle(color: Colors.red)),
-              ),
-            ),
-            SizedBox(height: 10),
-            CustomButton(
-              text: "Sign In",
-              onPressed: () {
-                // الانتقال إلى صفحة الخرائط
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => MapsScreen()),
-                );
-              },
-            ),
-            SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                SocialButton(assetPath: "assets/image-removebg-preview4.png"),
-                SizedBox(width: 15),
-                SocialButton(assetPath: "assets/image-removebg-preview4.png"),
-                SizedBox(width: 15),
-                SocialButton(assetPath: "assets/image-removebg-preview5.png"),
-              ],
-            ),
-            Spacer(),
-            Center(
-              child: TextButton(
-                onPressed: () {},
-                child: Text.rich(
-                  TextSpan(
-                    text: "Don’t have an account? ",
-                    children: [
-                      TextSpan(
-                        text: "Sign Up",
-                        style: TextStyle(color: Colors.amber, fontWeight: FontWeight.bold),
+      backgroundColor: theme.scaffoldBackgroundColor,
+      appBar: CustomAppBar(),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          bool isWeb = constraints.maxWidth > 600; // اعتبر الشاشة كبيرة إذا تجاوزت 600 بكسل
+          return Center(
+            child: Container(
+              width: isWeb ? 400 : double.infinity, // وسط الشاشة في الويب
+              padding: EdgeInsets.symmetric(horizontal: 20.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(height: 20),
+                  Text(
+                    signInText,  // النص هنا سيكون مترجمًا
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: theme.textTheme.bodyLarge?.color,
+                    ),
+                  ),
+                  SizedBox(height: 20),
+                  CustomTextField(
+                    hintText: emailHintText,  // الترجمة هنا
+                    controller: emailController,
+                    width: double.infinity,
+                    hintTextColor: theme.hintColor,
+                    textColor: theme.textTheme.bodyLarge?.color ?? Colors.black,
+                  ),
+                  SizedBox(height: 15),
+                  CustomTextField(
+                    hintText: passwordHintText,  // الترجمة هنا
+                    obscureText: true,
+                    suffixIcon: Icons.visibility_off,
+                    controller: passwordController,
+                    width: double.infinity,
+                    hintTextColor: theme.hintColor,
+                    textColor: theme.textTheme.bodyLarge?.color ?? Colors.black,
+                  ),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => ForgotPasswordScreen()),
+                        );
+                      },
+                      child: Text(
+                        forgetPasswordText,  // الترجمة هنا
+                        style: TextStyle(color: theme.colorScheme.error),
                       ),
+                    ),
+                  ),
+                  SizedBox(height: 10),
+                  CustomButton(
+                    text: signInText,  // الترجمة هنا
+                    width: double.infinity,
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => HomePage()), // الانتقال إلى الصفحة الرئيسية
+                      );
+                    },
+                  ),
+                  SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SocialButton(assetPath: "assets/image-removebg-preview4.png"),
+                      SizedBox(width: 15),
+                      SocialButton(assetPath: "assets/image-removebg-preview4.png"),
+                      SizedBox(width: 15),
+                      SocialButton(assetPath: "assets/image-removebg-preview5.png"),
                     ],
                   ),
-                ),
+                  Spacer(),
+                  Center(
+                    child: TextButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => SignUpScreen()),
+                        );
+                      },
+                      child: Text.rich(
+                        TextSpan(
+                          text: signUpText,  // الترجمة هنا
+                          style: TextStyle(color: theme.textTheme.bodyMedium?.color),
+                          children: [
+                            TextSpan(
+                              text: signUpLinkText,  // الترجمة هنا
+                              style: TextStyle(
+                                color: theme.primaryColor,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }

@@ -1,120 +1,205 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:taxi_app/screens/components/custom_button.dart';
+import 'package:taxi_app/screens/components/custom_text_field.dart';
+import 'package:country_picker/country_picker.dart';
+import 'package:taxi_app/screens/signin_screen.dart';
+import 'package:taxi_app/widgets/CustomAppBar.dart';
+import 'package:taxi_app/language/localization.dart';
 
 class SignUpScreen extends StatefulWidget {
+  const SignUpScreen({super.key});
+
   @override
   _SignUpScreenState createState() => _SignUpScreenState();
 }
 
 class _SignUpScreenState extends State<SignUpScreen> {
-  final TextEditingController fullNameController = TextEditingController();
   final TextEditingController phoneController = TextEditingController();
+  final TextEditingController fullNameController = TextEditingController();
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+  final TextEditingController confirmPasswordController = TextEditingController();
+
+  String selectedCountryCode = '+1';
+  String selectedCountryFlag = '🇺🇸';
+  String? selectedGender = 'Male';
   bool isPrivacyAccepted = false;
-
-  Future<void> signUp(String fullName, String phone) async {
-    final url = Uri.parse('http://localhost:5000/signup');  // تأكد من أن URL يشير إلى السيرفر الخاص بك.
-
-    final response = await http.post(
-      url,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: json.encode({
-        'fullName': fullName,
-        'phone': phone,
-      }),
-    );
-
-    if (response.statusCode == 201) {
-      // تم إنشاء المستخدم بنجاح
-      print('User created successfully');
-      // يمكن الانتقال إلى شاشة أخرى بعد التسجيل
-      Navigator.pushNamed(context, '/otp-verification');  // على سبيل المثال
-    } else {
-      // حدث خطأ
-      print('Failed to create user: ${response.body}');
-    }
-  }
-
-  void _onSignUpPressed() {
-    if (isPrivacyAccepted) {
-      signUp(
-        fullNameController.text,  // استخدم المدخلات الخاصة بالمستخدم هنا
-        phoneController.text,
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('You must accept the Privacy Policy and Terms & Conditions')),
-      );
-    }
-  }
+  bool isPasswordVisible = false;
+  bool isConfirmPasswordVisible = false;
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context);
+
+    bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    Color textColor = isDarkMode ? Colors.white : Colors.black;
+
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () {
-            Navigator.pop(context);
-          },
-        ),
-      ),
-      body: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(height: 20),
-            Text("Sign Up", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-            SizedBox(height: 20),
-            // حقل الاسم
-            TextField(
-              controller: fullNameController,
-              decoration: InputDecoration(
-                hintText: "Full Name",
-                filled: true,
-                fillColor: Colors.grey.shade200,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-            ),
-            SizedBox(height: 15),
-            // حقل رقم الجوال
-            TextField(
-              controller: phoneController,
-              keyboardType: TextInputType.phone,
-              decoration: InputDecoration(
-                hintText: "Phone Number",
-                filled: true,
-                fillColor: Colors.grey.shade200,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-            ),
-            SizedBox(height: 15),
-            // زر التسجيل
-            ElevatedButton(
-              onPressed: _onSignUpPressed,  // استدعاء دالة التسجيل
-              child: Text("Sign Up", style: TextStyle(fontSize: 18, color: Colors.white)),
-            ),
-            // إضافة خيار سياسة الخصوصية
-            Row(
-              children: [
-                Checkbox(
-                  value: isPrivacyAccepted,
-                  onChanged: (value) {
-                    setState(() {
-                      isPrivacyAccepted = value!;
-                    });
-                  },
+      appBar: CustomAppBar(),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          bool isWeb = constraints.maxWidth > 600;
+          return Padding(
+            padding: EdgeInsets.symmetric(horizontal: isWeb ? 50 : 20),
+            child: SingleChildScrollView(
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: isWeb ? 600 : double.infinity,
+                  ),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 40),
+
+                      CustomTextField(
+                        hintText: localizations.translate('full_name'),
+                        controller: fullNameController,
+                        width: double.infinity,
+                        hintTextColor: Colors.grey,
+                        textColor: textColor,
+                      ),
+                      const SizedBox(height: 15),
+
+                      InkWell(
+                        onTap: () {
+                          showCountryPicker(
+                            context: context,
+                            showPhoneCode: true,
+                            onSelect: (Country country) {
+                              setState(() {
+                                selectedCountryCode = "+${country.phoneCode}";
+                                selectedCountryFlag = country.flagEmoji;
+                              });
+                            },
+                          );
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Row(
+                            children: [
+                              Text(selectedCountryFlag, style: const TextStyle(fontSize: 20)),
+                              const SizedBox(width: 10),
+                              Text(selectedCountryCode, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                              const Spacer(),
+                              const Icon(Icons.arrow_drop_down),
+                            ],
+                          ),
+                        ),
+                      ),
+                      CustomTextField(
+                        hintText: localizations.translate('phone_number'),
+                        controller: phoneController,
+                        width: double.infinity,
+                        hintTextColor: Colors.grey,
+                        textColor: textColor,
+                      ),
+                      CustomTextField(
+                        hintText: localizations.translate('email'),
+                        controller: emailController,
+                        width: double.infinity,
+                        hintTextColor: Colors.grey,
+                        textColor: textColor,
+                      ),
+                      CustomTextField(
+                        hintText: localizations.translate('password'),
+                        controller: passwordController,
+                        obscureText: !isPasswordVisible,
+                        suffixIcon: isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                        width: double.infinity,
+                        hintTextColor: Colors.grey,
+                        textColor: textColor,
+                      ),
+                      CustomTextField(
+                        hintText: localizations.translate('confirm_password'),
+                        controller: confirmPasswordController,
+                        obscureText: !isConfirmPasswordVisible,
+                        suffixIcon: isConfirmPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                        width: double.infinity,
+                        hintTextColor: Colors.grey,
+                        textColor: textColor,
+                      ),
+
+                      const SizedBox(height: 15),
+
+                      DropdownButton<String>(
+                        value: selectedGender,
+                        dropdownColor: isDarkMode ? Colors.grey[900] : Colors.white,
+                        onChanged: (String? newValue) {
+                          setState(() {
+                            selectedGender = newValue;
+                          });
+                        },
+                        items: <String>['Male', 'Female']
+                            .map<DropdownMenuItem<String>>((String value) {
+                          return DropdownMenuItem<String>(
+                            value: value,
+                            child: Text(localizations.translate(value.toLowerCase()), style: TextStyle(color: textColor)),
+                          );
+                        }).toList(),
+                        hint: Text(localizations.translate('select_gender'), style: TextStyle(color: textColor)),
+                      ),
+                      const SizedBox(height: 15),
+
+                      Row(
+                        children: [
+                          Checkbox(
+                            value: isPrivacyAccepted,
+                            onChanged: (bool? value) {
+                              setState(() {
+                                isPrivacyAccepted = value!;
+                              });
+                            },
+                          ),
+                          Expanded(
+                            child: Text(
+                              localizations.translate('privacy_policy'),
+                              style: TextStyle(color: textColor),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+
+                      CustomButton(
+                        text: localizations.translate('sign_up'),
+                        width: double.infinity,
+                        onPressed: () {},
+                      ),
+                      const SizedBox(height: 20),
+
+                      Center(
+                        child: TextButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => SignInScreen()),
+                            );
+                          },
+                          child: Text.rich(
+                            TextSpan(
+                              text: "${localizations.translate('already_have_account')} ",
+                              style: TextStyle(color: textColor),
+                              children: [
+                                TextSpan(
+                                  text: localizations.translate('sign_in'),
+                                  style: const TextStyle(color: Colors.amber, fontWeight: FontWeight.bold),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                Text("I accept the Privacy Policy and Terms & Conditions"),
-              ],
+              ),
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }

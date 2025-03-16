@@ -1,19 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:taxi_app/widgets/CustomAppBar.dart';
 
 class ForgotPasswordScreen extends StatelessWidget {
+  const ForgotPasswordScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () {
-            Navigator.pop(context);
-          },
-        ),
-      ),
+      appBar:CustomAppBar(),
       body: Padding(
         padding: EdgeInsets.symmetric(horizontal: 20.0),
         child: Column(
@@ -147,10 +141,10 @@ class OTPInputScreen extends StatelessWidget {
               onPressed: () {},
               child: Text("Verify", style: TextStyle(color: Colors.white)),
             ),
-            SizedBox(height: 20),
-          ],
+              SizedBox(height: 20),
+            ],
+          ),
         ),
-      ),
-    );
+      );
+    }
   }
-}
