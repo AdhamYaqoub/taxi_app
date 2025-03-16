@@ -1,16 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:taxi_app/screens/homepage.dart';
-// import 'package:taxi_app/screens/pyment.dart';
 import 'package:taxi_app/screens/signup_screen.dart';
-// import 'package:taxi_app/theme/theme.dart';
 import 'package:taxi_app/widgets/CustomAppBar.dart';
 import 'components/custom_text_field.dart';
 import 'components/custom_button.dart';
 import 'components/social_button.dart';
 import 'forgot_password_screen.dart';
-// import 'maps_screen.dart';
-// import 'about.dart';
-// import '../screens/ProfileScreen.dart';
+import 'package:taxi_app/language/localization.dart'; // استيراد AppLocalizations
 
 class SignInScreen extends StatelessWidget {
   final TextEditingController emailController = TextEditingController();
@@ -21,11 +17,18 @@ class SignInScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final String selectedLanguage = 'en'; // Define the selectedLanguage variable
     
+    // استخدام الترجمة من AppLocalizations
+    String signInText = AppLocalizations.of(context).translate('sign_in');
+    String emailHintText = AppLocalizations.of(context).translate('email_or_phone');
+    String passwordHintText = AppLocalizations.of(context).translate('enter_password');
+    String forgetPasswordText = AppLocalizations.of(context).translate('forget_password');
+    String signUpText = AppLocalizations.of(context).translate('dont_have_account');
+    String signUpLinkText = AppLocalizations.of(context).translate('sign_up');
+
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: CustomAppBar(selectedLanguage: selectedLanguage, hiddenButtons: ['login']),
+      appBar: CustomAppBar(),
       body: LayoutBuilder(
         builder: (context, constraints) {
           bool isWeb = constraints.maxWidth > 600; // اعتبر الشاشة كبيرة إذا تجاوزت 600 بكسل
@@ -38,7 +41,7 @@ class SignInScreen extends StatelessWidget {
                 children: [
                   SizedBox(height: 20),
                   Text(
-                    "Sign in",
+                    signInText,  // النص هنا سيكون مترجمًا
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
@@ -47,7 +50,7 @@ class SignInScreen extends StatelessWidget {
                   ),
                   SizedBox(height: 20),
                   CustomTextField(
-                    hintText: "Email or Phone Number",
+                    hintText: emailHintText,  // الترجمة هنا
                     controller: emailController,
                     width: double.infinity,
                     hintTextColor: theme.hintColor,
@@ -55,7 +58,7 @@ class SignInScreen extends StatelessWidget {
                   ),
                   SizedBox(height: 15),
                   CustomTextField(
-                    hintText: "Enter Your Password",
+                    hintText: passwordHintText,  // الترجمة هنا
                     obscureText: true,
                     suffixIcon: Icons.visibility_off,
                     controller: passwordController,
@@ -73,23 +76,22 @@ class SignInScreen extends StatelessWidget {
                         );
                       },
                       child: Text(
-                        "Forget password?",
+                        forgetPasswordText,  // الترجمة هنا
                         style: TextStyle(color: theme.colorScheme.error),
                       ),
                     ),
                   ),
                   SizedBox(height: 10),
-               CustomButton(
-  text: "Sign In",
-  width: double.infinity,
-  onPressed: () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => HomePage()), // الانتقال إلى الصفحة الرئيسية
-    );
-  },
-),
-
+                  CustomButton(
+                    text: signInText,  // الترجمة هنا
+                    width: double.infinity,
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => HomePage()), // الانتقال إلى الصفحة الرئيسية
+                      );
+                    },
+                  ),
                   SizedBox(height: 20),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -102,32 +104,31 @@ class SignInScreen extends StatelessWidget {
                     ],
                   ),
                   Spacer(),
-               Center(
-  child: TextButton(
-    onPressed: () {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => SignUpScreen()), // استبدل SignUpScreen بالشاشة الصحيحة
-      );
-    },
-    child: Text.rich(
-      TextSpan(
-        text: "Don’t have an account? ",
-        style: TextStyle(color: theme.textTheme.bodyMedium?.color),
-        children: [
-          TextSpan(
-            text: "Sign Up",
-            style: TextStyle(
-              color: theme.primaryColor,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
-      ),
-    ),
-  ),
-),
-
+                  Center(
+                    child: TextButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => SignUpScreen()),
+                        );
+                      },
+                      child: Text.rich(
+                        TextSpan(
+                          text: signUpText,  // الترجمة هنا
+                          style: TextStyle(color: theme.textTheme.bodyMedium?.color),
+                          children: [
+                            TextSpan(
+                              text: signUpLinkText,  // الترجمة هنا
+                              style: TextStyle(
+                                color: theme.primaryColor,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
