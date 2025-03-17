@@ -53,32 +53,21 @@ class _PaymentScreenState extends State<PaymentScreen> {
   Widget _buildCardFields() {
     return Column(
       children: [
-        TextField(
-          controller: _cardNumberController,
-          keyboardType: TextInputType.number,
-          maxLength: 16,
-          decoration: InputDecoration(labelText: "Card Number", border: OutlineInputBorder(), prefixIcon: Icon(Icons.credit_card)),
-        ),
+        _buildTextField(_cardNumberController, "Card Number", Icons.credit_card, isNumber: true),
         SizedBox(height: 10),
         Row(
           children: [
             Expanded(
-              child: TextField(
-                controller: _expiryDateController,
-                readOnly: true,
-                decoration: InputDecoration(labelText: "Expiry Date", border: OutlineInputBorder(), prefixIcon: Icon(Icons.date_range)),
+              child: GestureDetector(
                 onTap: _selectExpiryDate,
+                child: AbsorbPointer(
+                  child: _buildTextField(_expiryDateController, "Expiry Date", Icons.date_range),
+                ),
               ),
             ),
             SizedBox(width: 10),
             Expanded(
-              child: TextField(
-                controller: _cvvController,
-                keyboardType: TextInputType.number,
-                maxLength: 3,
-                obscureText: true,
-                decoration: InputDecoration(labelText: "CVV", border: OutlineInputBorder(), prefixIcon: Icon(Icons.lock)),
-              ),
+              child: _buildTextField(_cvvController, "CVV", Icons.lock, isNumber: true, isPassword: true),
             ),
           ],
         ),
@@ -88,18 +77,28 @@ class _PaymentScreenState extends State<PaymentScreen> {
   }
 
   Widget _buildEmailField() {
-    return TextField(
-      controller: _emailController,
-      keyboardType: TextInputType.emailAddress,
-      decoration: InputDecoration(labelText: "Email Address", border: OutlineInputBorder(), prefixIcon: Icon(Icons.email)),
-    );
+    return _buildTextField(_emailController, "Email Address", Icons.email);
   }
 
   Widget _buildPhoneField() {
+    return _buildTextField(_phoneController, "Phone Number", Icons.phone, isNumber: true);
+  }
+
+  Widget _buildTextField(TextEditingController controller, String label, IconData icon, {bool isNumber = false, bool isPassword = false}) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return TextField(
-      controller: _phoneController,
-      keyboardType: TextInputType.phone,
-      decoration: InputDecoration(labelText: "Phone Number", border: OutlineInputBorder(), prefixIcon: Icon(Icons.phone)),
+      controller: controller,
+      keyboardType: isNumber ? TextInputType.number : TextInputType.text,
+      obscureText: isPassword,
+      maxLength: isNumber ? 16 : null,
+      decoration: InputDecoration(
+        labelText: label,
+        border: OutlineInputBorder(),
+        prefixIcon: Icon(icon),
+        filled: true,
+        fillColor: isDarkMode ? Colors.grey.shade800 : Colors.grey.shade200, // يتغير اللون حسب المود
+      ),
     );
   }
 
@@ -156,6 +155,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
       appBar: CustomAppBar(),
       body: Padding(
@@ -163,9 +164,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text("Select payment method", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            Text("Select payment method", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: isDarkMode ? Colors.white : Colors.black)),
             SizedBox(height: 8),
-            Text("Select payment method you want to use", style: TextStyle(color: Colors.grey)),
+            Text("Select payment method you want to use", style: TextStyle(color: isDarkMode ? Colors.white : Colors.grey)),
             SizedBox(height: 16),
             Expanded(
               child: ListView(
@@ -192,29 +193,44 @@ class _PaymentScreenState extends State<PaymentScreen> {
     );
   }
 
-  Widget _buildPaymentOption(int index, String title, IconData icon, {bool noForm = false, bool isSmilePay = false}) {
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _selectedPayment = index;
-        });
-        if (isSmilePay) {
-          _showSmilePayment();
-        } else if (!noForm) {
-          _showPaymentForm(index, title);
-        }
-      },
-      child: Container(
-        margin: EdgeInsets.symmetric(vertical: 6),
-        padding: EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: _selectedPayment == index ? Colors.amber.shade100 : Colors.grey.shade200,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Row(
-          children: [Icon(icon, size: 32), SizedBox(width: 12), Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold))],
-        ),
+ Widget _buildPaymentOption(int index, String title, IconData icon, {bool noForm = false, bool isSmilePay = false}) {
+  final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
+  return GestureDetector(
+    onTap: () {
+      setState(() {
+        _selectedPayment = index;
+      });
+      if (isSmilePay) {
+        _showSmilePayment();
+      } else if (!noForm) {
+        _showPaymentForm(index, title);
+      }
+    },
+    child: Container(
+      margin: EdgeInsets.symmetric(vertical: 6),
+      padding: EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: _selectedPayment == index 
+            ? (isDarkMode ? Colors.amber.shade700 : Colors.amber.shade100)  // لون العنصر المحدد
+            : (isDarkMode ? Colors.grey.shade800 : Colors.grey.shade200),   // لون الخلفية العادي
+        borderRadius: BorderRadius.circular(10),
       ),
-    );
-  }
+      child: Row(
+        children: [
+          Icon(icon, size: 32, color: isDarkMode ? Colors.white : Colors.black),
+          SizedBox(width: 12),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 16, 
+              fontWeight: FontWeight.bold, 
+              color: isDarkMode ? Colors.white : Colors.black,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
 }
