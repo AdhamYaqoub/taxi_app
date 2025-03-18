@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:taxi_app/screens/admin.dart';
 import 'package:taxi_app/screens/maps_screen.dart';
 import 'package:taxi_app/screens/pyment.dart';
 import 'package:taxi_app/screens/setting.dart';
@@ -60,6 +61,7 @@ class _HomePageState extends State<HomePage> {
     String homeText = AppLocalizations.of(context).translate('home');
     String historyText = AppLocalizations.of(context).translate('history');
     String settingsText = AppLocalizations.of(context).translate('settings');
+    String adminText = AppLocalizations.of(context).translate('admin');
     String menuText = AppLocalizations.of(context).translate('menu');
     String pickUpLocationText = AppLocalizations.of(context).translate('pick_up_location');
     String dropOffLocationText = AppLocalizations.of(context).translate('drop_off_location');
@@ -73,14 +75,14 @@ class _HomePageState extends State<HomePage> {
         return Scaffold(
           key: _scaffoldKey,
           appBar: CustomAppBar(),
-          drawer: isWeb ? null : _buildDrawer(theme, homeText, historyText, settingsText, menuText),
+          drawer: isWeb ? null : _buildDrawer(theme, homeText, historyText, settingsText, menuText, adminText),
           body: isWeb ? _buildWebLayout(theme, pickUpLocationText, dropOffLocationText, dateText, timeText, estimatePriceText) : _buildMobileLayout(theme, pickUpLocationText, dropOffLocationText, dateText, timeText, estimatePriceText),
         );
       },
     );
   }
 
- Widget _buildDrawer(ThemeData theme, String homeText, String historyText, String settingsText, String menuText) {
+ Widget _buildDrawer(ThemeData theme, String homeText, String historyText, String settingsText, String menuText, String adminText) {
   return Drawer(
     child: ListView(
       padding: EdgeInsets.zero,
@@ -107,7 +109,7 @@ class _HomePageState extends State<HomePage> {
           title: Text(historyText, style: theme.textTheme.bodyLarge),
           onTap: () {
             Navigator.pop(context); // إغلاق القائمة
-            Navigator.of(context).push(MaterialPageRoute(builder: (context) => const SmileToPayScreen()));
+            Navigator.of(context).push(MaterialPageRoute(builder: (context) => const PaymentScreen()));
           },
         ),
         ListTile(
@@ -116,6 +118,14 @@ class _HomePageState extends State<HomePage> {
           onTap: () {
             Navigator.pop(context); // إغلاق القائمة
             Navigator.of(context).push(MaterialPageRoute(builder: (context) => const SettingsScreen()));
+          },
+        ),
+          ListTile(
+          leading: Icon(Icons.settings, color: theme.colorScheme.onSurface),
+          title: Text(adminText, style: theme.textTheme.bodyLarge),
+          onTap: () {
+            Navigator.pop(context); // إغلاق القائمة
+            Navigator.of(context).push(MaterialPageRoute(builder: (context) => const AdminDashboard()));
           },
         ),
       ],
@@ -312,6 +322,14 @@ ListTile(
   onTap: () {
     Navigator.of(context).push(
       MaterialPageRoute(builder: (context) => SettingsScreen()),
+    );
+  },
+),
+ListTile(
+  title: Text(AppLocalizations.of(context).translate('admin')),
+  onTap: () {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (context) => AdminDashboard()),
     );
   },
 ),
