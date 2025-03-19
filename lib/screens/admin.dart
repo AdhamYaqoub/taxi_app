@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import 'pages/dashboard_home.dart';
-import 'pages/drivers_page.dart';
-import 'pages/users_page.dart';
-import 'pages/settings_page.dart';
-import 'pages/trips_management.dart';
-import 'pages/payments_management.dart';
-import 'pages/security_monitoring.dart';
-import 'pages/analytics_reports.dart';
-import 'pages/vip_corporate.dart';
+import 'Admin/dashboard_home.dart';
+import 'Admin/drivers_page.dart';
+import 'Admin/users_page.dart';
+import 'Admin/settings_page.dart';
+import 'Admin/trips_management.dart';
+import 'Admin/payments_management.dart';
+import 'Admin/security_monitoring.dart';
+import 'Admin/analytics_reports.dart';
+import 'Admin/vip_corporate.dart';
 
 // void main() {
 //   runApp(const MyApp());
@@ -80,15 +80,24 @@ class _AdminDashboardState extends State<AdminDashboard> {
               unselectedItemColor: Colors.grey,
               backgroundColor: Colors.yellow.shade700,
               items: const [
-                BottomNavigationBarItem(icon: Icon(LucideIcons.layoutDashboard), label: "الرئيسية"),
-                BottomNavigationBarItem(icon: Icon(LucideIcons.userCheck), label: "السائقين"),
-                BottomNavigationBarItem(icon: Icon(LucideIcons.users), label: "المستخدمين"),
-                BottomNavigationBarItem(icon: Icon(LucideIcons.car), label: "إدارة الرحلات"),
-                BottomNavigationBarItem(icon: Icon(LucideIcons.dollarSign), label: "المدفوعات"),
-                BottomNavigationBarItem(icon: Icon(LucideIcons.shieldCheck), label: "الأمان"),
-                BottomNavigationBarItem(icon: Icon(LucideIcons.barChart), label: "التقارير"),
-                BottomNavigationBarItem(icon: Icon(LucideIcons.star), label: "VIP & الشركات"),
-                BottomNavigationBarItem(icon: Icon(LucideIcons.settings), label: "الإعدادات"),
+                BottomNavigationBarItem(
+                    icon: Icon(LucideIcons.layoutDashboard), label: "الرئيسية"),
+                BottomNavigationBarItem(
+                    icon: Icon(LucideIcons.userCheck), label: "السائقين"),
+                BottomNavigationBarItem(
+                    icon: Icon(LucideIcons.users), label: "المستخدمين"),
+                BottomNavigationBarItem(
+                    icon: Icon(LucideIcons.car), label: "إدارة الرحلات"),
+                BottomNavigationBarItem(
+                    icon: Icon(LucideIcons.dollarSign), label: "المدفوعات"),
+                BottomNavigationBarItem(
+                    icon: Icon(LucideIcons.shieldCheck), label: "الأمان"),
+                BottomNavigationBarItem(
+                    icon: Icon(LucideIcons.barChart), label: "التقارير"),
+                BottomNavigationBarItem(
+                    icon: Icon(LucideIcons.star), label: "VIP & الشركات"),
+                BottomNavigationBarItem(
+                    icon: Icon(LucideIcons.settings), label: "الإعدادات"),
               ],
             ),
     );
@@ -103,7 +112,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
           const SizedBox(height: 20),
           Icon(LucideIcons.car, size: 60, color: Colors.black),
           const SizedBox(height: 10),
-          const Text("TaxiGo Admin", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const Text("TaxiGo Admin",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const Divider(color: Colors.black),
           _buildSidebarItem("الرئيسية", LucideIcons.layoutDashboard, 0),
           _buildSidebarItem("السائقين", LucideIcons.userCheck, 1),
