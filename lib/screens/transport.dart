@@ -16,55 +16,55 @@ class MyApp extends StatelessWidget {
           bodyMedium: TextStyle(color: Colors.black),
         ),
       ),
-      home: SelectLocationScreen(),
+      home: SelectTransportScreen(),
     );
   }
 }
 
-class SelectLocationScreen extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('Select Address')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            TextField(
-              decoration: InputDecoration(
-                labelText: 'Enter address',
-                labelStyle: TextStyle(color: Colors.black),
-                border: OutlineInputBorder(),
-                filled: true,
-                fillColor: Colors.yellow[50],
-              ),
-            ),
-            SizedBox(height: 20),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                foregroundColor: Colors.black, backgroundColor: Colors.yellow,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                padding: EdgeInsets.symmetric(vertical: 15, horizontal: 30),
-                elevation: 5,
-              ),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => SelectTransportScreen(),
-                  ),
-                );
-              },
-              child: Text('Confirm Location', style: TextStyle(fontSize: 16)),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
+// class SelectLocationScreen extends StatelessWidget {
+//   @override
+//   Widget build(BuildContext context) {
+//     return Scaffold(
+//       appBar: AppBar(title: Text('Select Address')),
+//       body: Padding(
+//         padding: const EdgeInsets.all(16.0),
+//         child: Column(
+//           children: [
+//             TextField(
+//               decoration: InputDecoration(
+//                 labelText: 'Enter address',
+//                 labelStyle: TextStyle(color: Colors.black),
+//                 border: OutlineInputBorder(),
+//                 filled: true,
+//                 fillColor: Colors.yellow[50],
+//               ),
+//             ),
+//             SizedBox(height: 20),
+//             ElevatedButton(
+//               style: ElevatedButton.styleFrom(
+//                 foregroundColor: Colors.black, backgroundColor: Colors.yellow,
+//                 shape: RoundedRectangleBorder(
+//                   borderRadius: BorderRadius.circular(8),
+//                 ),
+//                 padding: EdgeInsets.symmetric(vertical: 15, horizontal: 30),
+//                 elevation: 5,
+//               ),
+//               onPressed: () {
+//                 Navigator.push(
+//                   context,
+//                   MaterialPageRoute(
+//                     builder: (context) => SelectTransportScreen(),
+//                   ),
+//                 );
+//               },
+//               child: Text('Confirm Location', style: TextStyle(fontSize: 16)),
+//             ),
+//           ],
+//         ),
+//       ),
+//     );
+//   }
+// }
 
 class SelectTransportScreen extends StatelessWidget {
   final List<Map<String, String>> transportOptions = [
