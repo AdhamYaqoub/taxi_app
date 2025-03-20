@@ -5,7 +5,7 @@ import 'package:taxi_app/language/localization.dart';
 import 'package:taxi_app/providers/theme_provider.dart';
 import 'package:taxi_app/providers/language_provider.dart';
 import 'package:taxi_app/screens/splash_screen.dart';
-import 'package:taxi_app/theme/theme.dart';  // تأكد من إضافة هذا الملف
+import 'package:taxi_app/theme/theme.dart'; // تأكد من إضافة هذا الملف
 
 void main() {
   runApp(const MyApp());
@@ -28,13 +28,13 @@ class MyApp extends StatelessWidget {
             theme: lightTheme,
             darkTheme: darkTheme,
             themeMode: themeProvider.themeMode,
-            locale: languageProvider.locale,  // تحديد اللغة من المزود
+            locale: languageProvider.locale, // تحديد اللغة من المزود
             supportedLocales: const [
               Locale('en', 'US'), // الإنجليزية
               Locale('ar', 'SA'), // العربية
             ],
             localizationsDelegates: [
-              AppLocalizations.delegate,  // إضافة AppLocalizations
+              AppLocalizations.delegate, // إضافة AppLocalizations
               GlobalMaterialLocalizations.delegate,
               GlobalWidgetsLocalizations.delegate,
               GlobalCupertinoLocalizations.delegate,
