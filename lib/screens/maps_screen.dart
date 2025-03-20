@@ -4,22 +4,21 @@ import 'package:latlong2/latlong.dart';
 import 'package:location/location.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'bot_service.dart';
 
-// void main() {
-//   runApp(const MyApp());
-// }
+void main() {
+  runApp(const MyApp());
+}
 
-// class MyApp extends StatelessWidget {
-//   const MyApp({super.key});
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
 
-//   @override
-//   Widget build(BuildContext context) {
-//     return MaterialApp(
-//       home: MapScreen(),
-//     );
-//   }
-// }
+  @override
+  Widget build(BuildContext context) {
+    return const MaterialApp(
+      home: MapScreen(),
+    );
+  }
+}
 
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
@@ -29,12 +28,13 @@ class MapScreen extends StatefulWidget {
 }
 
 class _MapScreenState extends State<MapScreen> {
-  List<List<LatLng>> routePoints = [];
-  LatLng? startPoint;
-  LatLng? endPoint;
+  final MapController mapController = MapController();
+  final TextEditingController searchController = TextEditingController();
   LocationData? currentLocation;
-  Color routeColor = Colors.green; // اللون الافتراضي للطريق
-
+  List<LatLng> routePoints = [];
+  List<Marker> markers = [];
+  final String orsApiKey =
+      '5b3ce3597851110001cf624864005a7f63a04ffaa9bdc72ec30cf0ef';
 
   @override
   void initState() {
@@ -42,17 +42,23 @@ class _MapScreenState extends State<MapScreen> {
     _getCurrentLocation();
   }
 
-  // الحصول على الموقع الحالي للمستخدم
   Future<void> _getCurrentLocation() async {
     var location = Location();
-
     try {
       var userLocation = await location.getLocation();
       setState(() {
         currentLocation = userLocation;
-        startPoint = LatLng(userLocation.latitude!, userLocation.longitude!);
+        markers.add(
+          Marker(
+            width: 80.0,
+            height: 80.0,
+            point: LatLng(userLocation.latitude!, userLocation.longitude!),
+            child:
+                const Icon(Icons.my_location, color: Colors.blue, size: 40.0),
+          ),
+        );
       });
-    } on Exception {
+    } catch (e) {
       currentLocation = null;
     }
 
@@ -63,100 +69,136 @@ class _MapScreenState extends State<MapScreen> {
     });
   }
 
-  // تحميل المسارات الثلاثة
-  Future<void> getRoutes(LatLng start, LatLng end) async {
-    final url =
-        "https://router.project-osrm.org/route/v1/driving/${start.longitude},${start.latitude};${end.longitude},${end.latitude}?alternatives=3&overview=full&geometries=geojson";
-
-    final response = await http.get(Uri.parse(url));
+  Future<void> _searchLocation(String placeName) async {
+    final response = await http.get(
+      Uri.parse(
+          'https://nominatim.openstreetmap.org/search?q=$placeName&format=json'),
+    );
 
     if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      final List routes = data['routes'];
+      final List<dynamic> data = json.decode(response.body);
+      if (data.isNotEmpty) {
+        final double lat = double.parse(data[0]['lat']);
+        final double lon = double.parse(data[0]['lon']);
 
-      setState(() {
-        routePoints = routes.map((route) {
-          final List coordinates = route['geometry']['coordinates'];
-          return coordinates.map((coord) => LatLng(coord[1], coord[0])).toList();
-        }).toList();
-      });
+        LatLng destination = LatLng(lat, lon);
+
+        setState(() {
+          markers.add(
+            Marker(
+              width: 80.0,
+              height: 80.0,
+              point: destination,
+              child:
+                  const Icon(Icons.location_on, color: Colors.red, size: 40.0),
+            ),
+          );
+        });
+
+        _getRoute(destination);
+        mapController.move(destination, 15.0);
+      }
     } else {
-      print("Failed to load routes");
+      print('Failed to fetch location');
     }
   }
 
-  // تحديد النقطة الثانية عند الضغط على الخريطة
-  void _onMapTap(LatLng point) {
-    setState(() {
-      endPoint = point;
-      // تحميل المسارات بعد تحديد النقطة الثانية
-      if (startPoint != null && endPoint != null) {
-        getRoutes(startPoint!, endPoint!);
-      }
-    });
-  }
+  Future<void> _getRoute(LatLng destination) async {
+    if (currentLocation == null) return;
 
-  // تحديد اللون للمسارات بناءً على المسافة والازدحام
-  Color _getRouteColor(int index) {
-    if (routeColor == Colors.red) {
-      return Colors.red; // إذا كان الطريق مسكرًا
-    } else if (routeColor == Colors.yellow) {
-      return Colors.yellow; // إذا كان الطريق مزدحمًا
+    final start =
+        LatLng(currentLocation!.latitude!, currentLocation!.longitude!);
+    final response = await http.get(
+      Uri.parse(
+          'https://api.openrouteservice.org/v2/directions/driving-car?api_key=$orsApiKey&start=${start.longitude},${start.latitude}&end=${destination.longitude},${destination.latitude}'),
+    );
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      final List<dynamic> coords =
+          data['features'][0]['geometry']['coordinates'];
+      setState(() {
+        routePoints =
+            coords.map((coord) => LatLng(coord[1], coord[0])).toList();
+      });
     } else {
-      return Colors.green; // الطريق الطبيعي
+      print('Failed to fetch route');
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Free Routing with OSM")),
-      body: currentLocation == null
-          ? const Center(child: CircularProgressIndicator())
-          : FlutterMap(
-              options: MapOptions(
-                initialCenter: LatLng(
-                    currentLocation!.latitude!, currentLocation!.longitude!),
-                minZoom: 13.0,
-                onTap: (tapPosition, point) => _onMapTap(point), // عند الضغط على الخريطة
-              ),
+      appBar: AppBar(
+        title: const Text('OpenStreetMap with Flutter'),
+      ),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
               children: [
-                TileLayer(
-                  urlTemplate: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-                  subdomains: ['a', 'b', 'c'],
-                ),
-                MarkerLayer(
-                  markers: [
-                    if (startPoint != null)
-                      Marker(
-                        point: startPoint!,
-                        width: 40,
-                        height: 40,
-                        child: Icon(Icons.location_pin, color: Colors.green, size: 40),
-                      ),
-                    if (endPoint != null)
-                      Marker(
-                        point: endPoint!,
-                        width: 40,
-                        height: 40,
-                        child: Icon(Icons.location_pin, color: Colors.red, size: 40),
-                      ),
-                  ],
-                ),
-                if (routePoints.isNotEmpty)
-                  PolylineLayer(
-                    polylines: routePoints.asMap().entries.map((entry) {
-                      final index = entry.key;
-                      final points = entry.value;
-                      return Polyline(
-                        points: points,
-                        strokeWidth: 6.0,
-                        color: _getRouteColor(index), // تعيين اللون بناءً على فهرس الرسالة
-                      );
-                    }).toList(),
+                Expanded(
+                  child: TextField(
+                    controller: searchController,
+                    decoration: const InputDecoration(
+                      hintText: 'ابحث عن مكان...',
+                      border: OutlineInputBorder(),
+                      suffixIcon: Icon(Icons.search),
+                    ),
                   ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.search),
+                  onPressed: () {
+                    _searchLocation(searchController.text);
+                  },
+                ),
               ],
             ),
+          ),
+          Expanded(
+            child: currentLocation == null
+                ? const Center(child: CircularProgressIndicator())
+                : FlutterMap(
+                    mapController: mapController,
+                    options: MapOptions(
+                      initialCenter: LatLng(currentLocation!.latitude!,
+                          currentLocation!.longitude!),
+                      initialZoom: 15.0,
+                    ),
+                    children: [
+                      TileLayer(
+                        urlTemplate:
+                            "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+                        subdomains: const ['a', 'b', 'c'],
+                      ),
+                      MarkerLayer(markers: markers),
+                      PolylineLayer(
+                        polylines: [
+                          Polyline(
+                            points: routePoints,
+                            strokeWidth: 4.0,
+                            color: Colors.blue,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          if (currentLocation != null) {
+            mapController.move(
+              LatLng(currentLocation!.latitude!, currentLocation!.longitude!),
+              15.0,
+            );
+          }
+        },
+        child: const Icon(Icons.my_location),
+      ),
     );
   }
 }
