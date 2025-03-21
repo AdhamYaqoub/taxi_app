@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import 'Driver/driver_home.dart';
-import 'Driver/driver_trips.dart';
-import 'Driver/earnings.dart';
-import 'Driver/driver_settings.dart';
-import 'Driver/support.dart';
+import 'User/user_home.dart';
+import 'User/mytrip.dart';
+import 'User/payment_page.dart';
+import 'User/offers_page.dart';
+import 'User/settings_page.dart';
+import 'User/support_page.dart';
 
 // void main() {
 //   runApp(const MyApp());
@@ -17,27 +18,28 @@ import 'Driver/support.dart';
 //   Widget build(BuildContext context) {
 //     return MaterialApp(
 //       debugShowCheckedModeBanner: false,
-//       home: const DriverDashboard(),
+//       home: const UserDashboard(),
 //     );
 //   }
 // }
 
-class DriverDashboard extends StatefulWidget {
-  const DriverDashboard({super.key});
+class UserDashboard extends StatefulWidget {
+  const UserDashboard({super.key});
 
   @override
-  _DriverDashboardState createState() => _DriverDashboardState();
+  _UserDashboardState createState() => _UserDashboardState();
 }
 
-class _DriverDashboardState extends State<DriverDashboard> {
+class _UserDashboardState extends State<UserDashboard> {
   int _selectedIndex = 0;
 
   final List<Widget> _pages = [
-    const DriverHomePage(),
-    const DriverTripsPage(),
-    const EarningsPage(),
+    const HomePage(),
+    const MyTripsPage(),
+    const PaymentPage(),
+    const OffersPage(),
+    const SettingsPage(),
     const SupportPage(),
-    const DriverSettingsPage(),
   ];
 
   @override
@@ -50,7 +52,7 @@ class _DriverDashboardState extends State<DriverDashboard> {
           ? null
           : AppBar(
               backgroundColor: Colors.yellow.shade700,
-              title: const Text("لوحة السائق"),
+              title: const Text("TaxiGo 🚖"),
             ),
       drawer: isWeb ? null : Drawer(child: _buildSidebarContent()),
       body: Row(
@@ -71,17 +73,13 @@ class _DriverDashboardState extends State<DriverDashboard> {
               selectedItemColor: Colors.black,
               unselectedItemColor: Colors.grey,
               backgroundColor: Colors.yellow.shade700,
-              items: [
-                BottomNavigationBarItem(
-                    icon: Icon(LucideIcons.home), label: "الرئيسية"),
-                BottomNavigationBarItem(
-                    icon: Icon(LucideIcons.car), label: "رحلاتي"),
-                BottomNavigationBarItem(
-                    icon: Icon(LucideIcons.dollarSign), label: "الأرباح"),
-                BottomNavigationBarItem(
-                    icon: Icon(LucideIcons.headphones), label: "الدعم"),
-                BottomNavigationBarItem(
-                    icon: Icon(LucideIcons.settings), label: "الإعدادات"),
+              items: const [
+                BottomNavigationBarItem(icon: Icon(LucideIcons.home), label: "الرئيسية"),
+                BottomNavigationBarItem(icon: Icon(LucideIcons.map), label: "رحلاتي"),
+                BottomNavigationBarItem(icon: Icon(LucideIcons.creditCard), label: "الدفع"),
+                BottomNavigationBarItem(icon: Icon(LucideIcons.tag), label: "العروض"),
+                BottomNavigationBarItem(icon: Icon(LucideIcons.settings), label: "الإعدادات"),
+                BottomNavigationBarItem(icon: Icon(LucideIcons.helpCircle), label: "الدعم"),
               ],
             ),
     );
@@ -94,19 +92,16 @@ class _DriverDashboardState extends State<DriverDashboard> {
       child: Column(
         children: [
           const SizedBox(height: 20),
-          Icon(LucideIcons.car, size: 60, color: Colors.white),
+          const Icon(LucideIcons.user, size: 60, color: Colors.black),
           const SizedBox(height: 10),
-          const Text("TaxiGo Driver",
-              style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white)),
-          const Divider(color: Colors.white),
+          const Text("مرحباً، أحمد", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const Divider(color: Colors.black),
           _buildSidebarItem("الرئيسية", LucideIcons.home, 0),
-          _buildSidebarItem("رحلاتي", LucideIcons.car, 1),
-          _buildSidebarItem("الأرباح", LucideIcons.dollarSign, 2),
-          _buildSidebarItem("الدعم", LucideIcons.headphones, 3),
+          _buildSidebarItem("رحلاتي", LucideIcons.map, 1),
+          _buildSidebarItem("الدفع", LucideIcons.creditCard, 2),
+          _buildSidebarItem("العروض", LucideIcons.tag, 3),
           _buildSidebarItem("الإعدادات", LucideIcons.settings, 4),
+          _buildSidebarItem("الدعم", LucideIcons.helpCircle, 5),
         ],
       ),
     );
@@ -114,8 +109,8 @@ class _DriverDashboardState extends State<DriverDashboard> {
 
   Widget _buildSidebarItem(String title, IconData icon, int index) {
     return ListTile(
-      leading: Icon(icon, color: Colors.white),
-      title: Text(title, style: const TextStyle(color: Colors.white)),
+      leading: Icon(icon, color: Colors.black),
+      title: Text(title, style: const TextStyle(color: Colors.black)),
       selected: _selectedIndex == index,
       onTap: () {
         setState(() {

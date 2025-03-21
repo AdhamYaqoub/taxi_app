@@ -1,17 +1,14 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.taxi_app">
 
-    <!-- أذونات الموقع المطلوبة -->
+    <!-- أذونات الموقع والإنترنت -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
-    <uses-permission android:name="android.permission.INTERNET" />
 
     <application
         android:label="taxi_app"
-        android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
 
         <activity
@@ -33,11 +30,6 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-
-        <!-- مفتاح API لخرائط Google -->
-        <meta-data
-            android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyAysQBM3-leTK8l9EKH9GpzS5HeIplJeUM"/>
 
         <!-- الإعدادات المطلوبة -->
         <meta-data

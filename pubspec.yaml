@@ -40,6 +40,10 @@ dependencies:
   location: 
   http:
   geocoding:
+  webview_flutter: ^4.10.0
+  webview_flutter_web: ^0.2.3+4
+  webview_flutter_wkwebview: ^3.18.4
+  flutter_compass: ^0.8.1
   
 dev_dependencies:
   flutter_test:
@@ -59,4 +63,5 @@ flutter:
     - assets/image-removebg-preview4.png
     - assets/image-removebg-preview5.png
     - assets/map.png
+    - assets/osm_map.html
     

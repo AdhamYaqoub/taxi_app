@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:taxi_app/screens/admin.dart';
+import 'package:taxi_app/screens/driver_dashboard.dart';
 import 'package:taxi_app/screens/maps_screen.dart';
 import 'package:taxi_app/screens/pyment.dart';
 import 'package:taxi_app/screens/setting.dart';
 import 'package:taxi_app/screens/smile.dart';
+import 'package:taxi_app/screens/user.dart';
 import 'package:taxi_app/widgets/CustomAppBar.dart';
 import 'package:taxi_app/language/localization.dart'; // استيراد AppLocalizations
 import 'package:taxi_app/providers/theme_provider.dart';
@@ -63,6 +65,9 @@ class _HomePageState extends State<HomePage> {
     String settingsText = AppLocalizations.of(context).translate('settings');
     String adminText = AppLocalizations.of(context).translate('admin');
     String menuText = AppLocalizations.of(context).translate('menu');
+    String driverText = AppLocalizations.of(context).translate('driver');
+    String userText = AppLocalizations.of(context).translate('user');
+
     String pickUpLocationText =
         AppLocalizations.of(context).translate('pick_up_location');
     String dropOffLocationText =
@@ -81,7 +86,7 @@ class _HomePageState extends State<HomePage> {
           drawer: isWeb
               ? null
               : _buildDrawer(theme, homeText, historyText, settingsText,
-                  menuText, adminText),
+                  menuText, adminText, driverText, userText),
           body: isWeb
               ? _buildWebLayout(theme, pickUpLocationText, dropOffLocationText,
                   dateText, timeText, estimatePriceText)
@@ -93,7 +98,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildDrawer(ThemeData theme, String homeText, String historyText,
-      String settingsText, String menuText, String adminText) {
+      String settingsText, String menuText, String adminText, String driverText, String userText) {
     return Drawer(
       child: ListView(
         padding: EdgeInsets.zero,
@@ -142,6 +147,24 @@ class _HomePageState extends State<HomePage> {
               Navigator.pop(context); // إغلاق القائمة
               Navigator.of(context).push(MaterialPageRoute(
                   builder: (context) => const AdminDashboard()));
+            },
+          ),
+            ListTile(
+            leading: Icon(Icons.settings, color: theme.colorScheme.onSurface),
+            title: Text(driverText, style: theme.textTheme.bodyLarge),
+            onTap: () {
+              Navigator.pop(context); // إغلاق القائمة
+              Navigator.of(context).push(MaterialPageRoute(
+                  builder: (context) => const DriverDashboard()));
+            },
+          ),
+           ListTile(
+            leading: Icon(Icons.settings, color: theme.colorScheme.onSurface),
+            title: Text(userText, style: theme.textTheme.bodyLarge),
+            onTap: () {
+              Navigator.pop(context); // إغلاق القائمة
+              Navigator.of(context).push(MaterialPageRoute(
+                  builder: (context) => const UserDashboard()));
             },
           ),
         ],
@@ -385,6 +408,22 @@ class _HomePageState extends State<HomePage> {
             onTap: () {
               Navigator.of(context).push(
                 MaterialPageRoute(builder: (context) => AdminDashboard()),
+              );
+            },
+          ),
+            ListTile(
+            title: Text(AppLocalizations.of(context).translate('driver')),
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (context) => DriverDashboard()),
+              );
+            },
+          ),
+            ListTile(
+            title: Text(AppLocalizations.of(context).translate('user')),
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (context) => UserDashboard()),
               );
             },
           ),
