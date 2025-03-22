@@ -34,7 +34,7 @@ class _DriverDashboardState extends State<DriverDashboard> {
 
   final List<Widget> _pages = [
     const DriverHomePage(),
-    const DriverTripsPage(),
+    const DriverTripsPage(driverName: '', trips: [],),
     const EarningsPage(),
     const SupportPage(),
     const DriverSettingsPage(),

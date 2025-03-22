@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:taxi_app/screens/about.dart';
 import 'package:taxi_app/screens/admin.dart';
 import 'package:taxi_app/screens/driver_dashboard.dart';
+import 'package:taxi_app/screens/manegar.dart';
 import 'package:taxi_app/screens/maps_screen.dart';
 import 'package:taxi_app/screens/pyment.dart';
 import 'package:taxi_app/screens/setting.dart';
@@ -67,6 +69,8 @@ class _HomePageState extends State<HomePage> {
     String menuText = AppLocalizations.of(context).translate('menu');
     String driverText = AppLocalizations.of(context).translate('driver');
     String userText = AppLocalizations.of(context).translate('user');
+    String manegerText = AppLocalizations.of(context).translate('manegar');
+    String aboutText = AppLocalizations.of(context).translate('about');
 
     String pickUpLocationText =
         AppLocalizations.of(context).translate('pick_up_location');
@@ -86,7 +90,7 @@ class _HomePageState extends State<HomePage> {
           drawer: isWeb
               ? null
               : _buildDrawer(theme, homeText, historyText, settingsText,
-                  menuText, adminText, driverText, userText),
+                  menuText, adminText, driverText, userText, aboutText, manegerText),
           body: isWeb
               ? _buildWebLayout(theme, pickUpLocationText, dropOffLocationText,
                   dateText, timeText, estimatePriceText)
@@ -98,7 +102,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildDrawer(ThemeData theme, String homeText, String historyText,
-      String settingsText, String menuText, String adminText, String driverText, String userText) {
+      String settingsText, String menuText, String adminText, String driverText, String userText, String aboutText, String manegerText) {
     return Drawer(
       child: ListView(
         padding: EdgeInsets.zero,
@@ -165,6 +169,24 @@ class _HomePageState extends State<HomePage> {
               Navigator.pop(context); // إغلاق القائمة
               Navigator.of(context).push(MaterialPageRoute(
                   builder: (context) => const UserDashboard()));
+            },
+          ),
+           ListTile(
+            leading: Icon(Icons.settings, color: theme.colorScheme.onSurface),
+            title: Text(aboutText, style: theme.textTheme.bodyLarge),
+            onTap: () {
+              Navigator.pop(context); // إغلاق القائمة
+              Navigator.of(context).push(MaterialPageRoute(
+                  builder: (context) => const AboutPage()));
+            },
+          ),
+            ListTile(
+            leading: Icon(Icons.settings, color: theme.colorScheme.onSurface),
+            title: Text(manegerText, style: theme.textTheme.bodyLarge),
+            onTap: () {
+              Navigator.pop(context); // إغلاق القائمة
+              Navigator.of(context).push(MaterialPageRoute(
+                  builder: (context) => const OfficeManagerPage(officeId: '',)));
             },
           ),
         ],
@@ -424,6 +446,22 @@ class _HomePageState extends State<HomePage> {
             onTap: () {
               Navigator.of(context).push(
                 MaterialPageRoute(builder: (context) => UserDashboard()),
+              );
+            },
+          ),
+             ListTile(
+            title: Text(AppLocalizations.of(context).translate('about')),
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (context) => AboutPage()),
+              );
+            },
+          ),
+             ListTile(
+            title: Text(AppLocalizations.of(context).translate('maneger')),
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (context) => OfficeManagerPage(officeId: '',)),
               );
             },
           ),

@@ -23,9 +23,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
   String selectedCountryCode = '+1';
   String selectedCountryFlag = '🇺🇸';
   String? selectedGender = 'Male';
+  String? selectedRole = 'User';  // Added role selection
+  String? selectedTaxiOffice; // Added taxi office field for drivers
   bool isPrivacyAccepted = false;
   bool isPasswordVisible = false;
   bool isConfirmPasswordVisible = false;
+
+  // List of taxi offices (for demonstration purposes)
+  List<String> taxiOffices = ['Office 1', 'Office 2', 'Office 3'];
 
   @override
   Widget build(BuildContext context) {
@@ -125,6 +130,51 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
                       const SizedBox(height: 15),
 
+                      // Role selection (Driver or User)
+                      DropdownButton<String>(
+                        value: selectedRole,
+                        dropdownColor: isDarkMode ? Colors.grey[900] : Colors.white,
+                        onChanged: (String? newValue) {
+                          setState(() {
+                            selectedRole = newValue;
+                            if (selectedRole == 'User') {
+                              selectedTaxiOffice = null; // Clear taxi office if User is selected
+                            }
+                          });
+                        },
+                        items: <String>['User', 'Driver']
+                            .map<DropdownMenuItem<String>>((String value) {
+                          return DropdownMenuItem<String>(
+                            value: value,
+                            child: Text(localizations.translate(value.toLowerCase()), style: TextStyle(color: textColor)),
+                          );
+                        }).toList(),
+                        hint: Text(localizations.translate('select_role'), style: TextStyle(color: textColor)),
+                      ),
+                      const SizedBox(height: 15),
+
+                      // Show taxi office dropdown only if "Driver" is selected
+                      if (selectedRole == 'Driver')
+                        DropdownButton<String>(
+                          value: selectedTaxiOffice,
+                          dropdownColor: isDarkMode ? Colors.grey[900] : Colors.white,
+                          onChanged: (String? newValue) {
+                            setState(() {
+                              selectedTaxiOffice = newValue;
+                            });
+                          },
+                          items: taxiOffices
+                              .map<DropdownMenuItem<String>>((String value) {
+                            return DropdownMenuItem<String>(
+                              value: value,
+                              child: Text(value, style: TextStyle(color: textColor)),
+                            );
+                          }).toList(),
+                          hint: Text(localizations.translate('select_taxi_office'), style: TextStyle(color: textColor)),
+                        ),
+                      const SizedBox(height: 15),
+
+                      // Gender selection
                       DropdownButton<String>(
                         value: selectedGender,
                         dropdownColor: isDarkMode ? Colors.grey[900] : Colors.white,
