@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 class DriverTripsPage extends StatelessWidget {
-  const DriverTripsPage({super.key});
+  const DriverTripsPage({super.key, required String driverName, required List<Map<String, String>> trips});
 
   @override
   Widget build(BuildContext context) {
