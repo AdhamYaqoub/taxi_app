@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:taxi_app/screens/Manegar/details.dart';
+import 'package:taxi_app/screens/chat.dart'; // استيراد صفحة الدردشة
 import 'package:taxi_app/widgets/CustomAppBar.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:taxi_app/language/localization.dart'; // استيراد AppLocalizations
+import 'package:taxi_app/language/localization.dart'; // استيراد الترجمة
 
 class OfficeManagerPage extends StatefulWidget {
   final String officeId;
@@ -33,8 +34,13 @@ class _OfficeManagerPageState extends State<OfficeManagerPage> {
     print("✏ تعديل بيانات السائق: ${drivers[index]['name']}");
   }
 
-  void addDriver() {
-    print("➕ إضافة سائق جديد");
+  void startChat(Map<String, String> driver) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ChatScreen(),
+      ),
+    );
   }
 
   List<Map<String, String>> getFilteredDrivers() {
@@ -56,12 +62,11 @@ class _OfficeManagerPageState extends State<OfficeManagerPage> {
 
   @override
   Widget build(BuildContext context) {
-    // استخدام الترجمة من AppLocalizations
     String searchLabel = AppLocalizations.of(context).translate('search_driver');
     String noDriversText = AppLocalizations.of(context).translate('no_drivers');
-    String filterLabel = AppLocalizations.of(context).translate('filter');
     String editLabel = AppLocalizations.of(context).translate('edit');
     String removeLabel = AppLocalizations.of(context).translate('remove');
+    String chatLabel = AppLocalizations.of(context).translate('chat'); // ترجمة خيار الدردشة
 
     List<Map<String, String>> filteredDrivers = getFilteredDrivers();
 
@@ -69,15 +74,14 @@ class _OfficeManagerPageState extends State<OfficeManagerPage> {
       appBar: CustomAppBar(),
       body: LayoutBuilder(
         builder: (context, constraints) {
-          bool isWeb = constraints.maxWidth > 600; // شاشة كبيرة
+          bool isWeb = constraints.maxWidth > 600;
           return Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
               children: [
-                // 🔍 مربع البحث
                 TextField(
                   decoration: InputDecoration(
-                    labelText: searchLabel,  // النص المترجم هنا
+                    labelText: searchLabel,
                     prefixIcon: const Icon(Icons.search),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                   ),
@@ -88,8 +92,6 @@ class _OfficeManagerPageState extends State<OfficeManagerPage> {
                   },
                 ),
                 const SizedBox(height: 10),
-
-                // 🔄 فلترة السائقين
                 DropdownButton<String>(
                   value: selectedFilter,
                   items: ["الكل", "نشط", "غير متصل", "مشغول"].map((status) {
@@ -105,11 +107,9 @@ class _OfficeManagerPageState extends State<OfficeManagerPage> {
                   },
                 ),
                 const SizedBox(height: 10),
-
-                // 📋 قائمة السائقين
                 Expanded(
                   child: filteredDrivers.isEmpty
-                      ? Center(child: Text(noDriversText)) // النص المترجم هنا
+                      ? Center(child: Text(noDriversText))
                       : ListView.builder(
                           itemCount: filteredDrivers.length,
                           itemBuilder: (context, index) {
@@ -137,11 +137,14 @@ class _OfficeManagerPageState extends State<OfficeManagerPage> {
                                       editDriver(index);
                                     } else if (value == 'remove') {
                                       removeDriver(index);
+                                    } else if (value == 'chat') {
+                                      startChat(driver);
                                     }
                                   },
                                   itemBuilder: (BuildContext context) => [
-                                    PopupMenuItem(value: 'edit', child: Text(editLabel)), // النص المترجم هنا
-                                    PopupMenuItem(value: 'remove', child: Text(removeLabel)), // النص المترجم هنا
+                                    PopupMenuItem(value: 'edit', child: Text(editLabel)),
+                                    PopupMenuItem(value: 'remove', child: Text(removeLabel)),
+                                    PopupMenuItem(value: 'chat', child: Text(chatLabel)), // خيار فتح الدردشة
                                   ],
                                 ),
                                 onTap: () {
