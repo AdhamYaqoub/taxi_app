@@ -177,7 +177,7 @@ class _HomePageState extends State<HomePage> {
             onTap: () {
               Navigator.pop(context); // إغلاق القائمة
               Navigator.of(context).push(MaterialPageRoute(
-                  builder: (context) => const AboutPage()));
+                  builder: (context) =>  const AboutPage()));
             },
           ),
             ListTile(
