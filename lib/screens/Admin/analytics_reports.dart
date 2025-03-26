@@ -1,28 +1,33 @@
 import 'package:flutter/material.dart';
-import 'package:lucide_icons/lucide_icons.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:taxi_app/language/localization.dart';
 
 class AnalyticsReportsPage extends StatelessWidget {
   const AnalyticsReportsPage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    var theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: Colors.grey.shade100,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.blue.shade700,
-        title: const Text("التقارير والتحليلات"),
+        title: Text(AppLocalizations.of(context)
+            .translate('analytics_reports')), // استخدام الترجمة
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildSectionTitle("إحصائيات الرحلات"),
+            _buildSectionTitle(AppLocalizations.of(context)
+                .translate('trips_statistics')), // استخدام الترجمة
             _buildTripsChart(),
             const SizedBox(height: 20),
-            _buildSectionTitle("نسبة السائقين النشطين"),
-            _buildActiveDriversPieChart(),
+            _buildSectionTitle(AppLocalizations.of(context)
+                .translate('active_drivers_percentage')), // استخدام الترجمة
+            _buildActiveDriversPieChart(context),
           ],
         ),
       ),
@@ -47,7 +52,9 @@ class AnalyticsReportsPage extends StatelessWidget {
           alignment: BarChartAlignment.spaceAround,
           barGroups: [
             for (int i = 1; i <= 7; i++)
-              BarChartGroupData(x: i, barRods: [BarChartRodData(toY: (i * 10).toDouble(), color: Colors.blue)])
+              BarChartGroupData(x: i, barRods: [
+                BarChartRodData(toY: (i * 10).toDouble(), color: Colors.blue)
+              ])
           ],
           titlesData: FlTitlesData(show: true),
           borderData: FlBorderData(show: false),
@@ -56,14 +63,22 @@ class AnalyticsReportsPage extends StatelessWidget {
     );
   }
 
-  Widget _buildActiveDriversPieChart() {
+  Widget _buildActiveDriversPieChart(BuildContext context) {
     return SizedBox(
       height: 200,
       child: PieChart(
         PieChartData(
           sections: [
-            PieChartSectionData(value: 70, title: 'نشط', color: Colors.green, radius: 50),
-            PieChartSectionData(value: 30, title: 'غير نشط', color: Colors.red, radius: 50),
+            PieChartSectionData(
+                value: 70,
+                title: AppLocalizations.of(context).translate('active'),
+                color: Colors.green,
+                radius: 50), // استخدام الترجمة
+            PieChartSectionData(
+                value: 30,
+                title: AppLocalizations.of(context).translate('inactive'),
+                color: Colors.red,
+                radius: 50), // استخدام الترجمة
           ],
         ),
       ),

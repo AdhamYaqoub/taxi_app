@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:taxi_app/language/localization.dart';
 import 'Admin/dashboard_home.dart';
 import 'Admin/drivers_page.dart';
 import 'Admin/users_page.dart';
@@ -9,22 +10,6 @@ import 'Admin/payments_management.dart';
 import 'Admin/security_monitoring.dart';
 import 'Admin/analytics_reports.dart';
 import 'Admin/vip_corporate.dart';
-
-// void main() {
-//   runApp(const MyApp());
-// }
-
-// class MyApp extends StatelessWidget {
-//   const MyApp({super.key});
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return MaterialApp(
-//       debugShowCheckedModeBanner: false,
-//       home: const AdminDashboard(),
-//     );
-//   }
-// }
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
@@ -50,20 +35,22 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
   @override
   Widget build(BuildContext context) {
+    var theme = Theme.of(context);
     bool isWeb = MediaQuery.of(context).size.width > 800;
 
     return Scaffold(
-      backgroundColor: Colors.grey.shade100,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: isWeb
           ? null
           : AppBar(
-              backgroundColor: Colors.yellow.shade700,
-              title: const Text("لوحة الأدمن"),
+              backgroundColor: theme.colorScheme.primary,
+              title: Text(
+                  AppLocalizations.of(context).translate('admin_dashboard')),
             ),
-      drawer: isWeb ? null : Drawer(child: _buildSidebarContent()),
+      drawer: isWeb ? null : Drawer(child: _buildSidebarContent(theme)),
       body: Row(
         children: [
-          if (isWeb) _buildSidebarContent(),
+          if (isWeb) _buildSidebarContent(theme),
           Expanded(child: _pages[_selectedIndex]),
         ],
       ),
@@ -76,63 +63,105 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   _selectedIndex = index;
                 });
               },
-              selectedItemColor: Colors.black,
-              unselectedItemColor: Colors.grey,
-              backgroundColor: Colors.yellow.shade700,
-              items: const [
+              selectedItemColor: theme.colorScheme.onPrimary,
+              unselectedItemColor: theme.colorScheme.onSurface.withOpacity(0.6),
+              backgroundColor: theme.colorScheme.primary,
+              items: [
                 BottomNavigationBarItem(
-                    icon: Icon(LucideIcons.layoutDashboard), label: "الرئيسية"),
+                    icon: Icon(LucideIcons.layoutDashboard),
+                    label: AppLocalizations.of(context).translate('home')),
                 BottomNavigationBarItem(
-                    icon: Icon(LucideIcons.userCheck), label: "السائقين"),
+                    icon: Icon(LucideIcons.userCheck),
+                    label: AppLocalizations.of(context).translate('drivers')),
                 BottomNavigationBarItem(
-                    icon: Icon(LucideIcons.users), label: "المستخدمين"),
+                    icon: Icon(LucideIcons.users),
+                    label: AppLocalizations.of(context).translate('users')),
                 BottomNavigationBarItem(
-                    icon: Icon(LucideIcons.car), label: "إدارة الرحلات"),
+                    icon: Icon(LucideIcons.car),
+                    label: AppLocalizations.of(context)
+                        .translate('trips_management')),
                 BottomNavigationBarItem(
-                    icon: Icon(LucideIcons.dollarSign), label: "المدفوعات"),
+                    icon: Icon(LucideIcons.dollarSign),
+                    label: AppLocalizations.of(context)
+                        .translate('payments_management')),
                 BottomNavigationBarItem(
-                    icon: Icon(LucideIcons.shieldCheck), label: "الأمان"),
+                    icon: Icon(LucideIcons.shieldCheck),
+                    label: AppLocalizations.of(context)
+                        .translate('security_monitoring')),
                 BottomNavigationBarItem(
-                    icon: Icon(LucideIcons.barChart), label: "التقارير"),
+                    icon: Icon(LucideIcons.barChart),
+                    label: AppLocalizations.of(context)
+                        .translate('analytics_reports')),
                 BottomNavigationBarItem(
-                    icon: Icon(LucideIcons.star), label: "VIP & الشركات"),
+                    icon: Icon(LucideIcons.star),
+                    label: AppLocalizations.of(context)
+                        .translate('vip_corporate')),
                 BottomNavigationBarItem(
-                    icon: Icon(LucideIcons.settings), label: "الإعدادات"),
+                    icon: Icon(LucideIcons.settings),
+                    label: AppLocalizations.of(context).translate('settings')),
               ],
             ),
     );
   }
 
-  Widget _buildSidebarContent() {
+  Widget _buildSidebarContent(ThemeData theme) {
     return Container(
       width: 250,
-      color: Colors.yellow.shade700,
+      color: theme.colorScheme.primary,
       child: Column(
         children: [
           const SizedBox(height: 20),
-          Icon(LucideIcons.car, size: 60, color: Colors.black),
+          Icon(LucideIcons.car, size: 60, color: theme.colorScheme.onPrimary),
           const SizedBox(height: 10),
-          const Text("TaxiGo Admin",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          const Divider(color: Colors.black),
-          _buildSidebarItem("الرئيسية", LucideIcons.layoutDashboard, 0),
-          _buildSidebarItem("السائقين", LucideIcons.userCheck, 1),
-          _buildSidebarItem("المستخدمين", LucideIcons.users, 2),
-          _buildSidebarItem("إدارة الرحلات", LucideIcons.car, 3),
-          _buildSidebarItem("المدفوعات", LucideIcons.dollarSign, 4),
-          _buildSidebarItem("الأمان", LucideIcons.shieldCheck, 5),
-          _buildSidebarItem("التقارير", LucideIcons.barChart, 6),
-          _buildSidebarItem("VIP & الشركات", LucideIcons.star, 7),
-          _buildSidebarItem("الإعدادات", LucideIcons.settings, 8),
+          Text("TaxiGo Admin",
+              style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: theme.colorScheme.onPrimary)),
+          Divider(color: theme.colorScheme.onPrimary),
+          _buildSidebarItem(AppLocalizations.of(context).translate('home'),
+              LucideIcons.layoutDashboard, 0, theme),
+          _buildSidebarItem(AppLocalizations.of(context).translate('drivers'),
+              LucideIcons.userCheck, 1, theme),
+          _buildSidebarItem(AppLocalizations.of(context).translate('users'),
+              LucideIcons.users, 2, theme),
+          _buildSidebarItem(
+              AppLocalizations.of(context).translate('trips_management'),
+              LucideIcons.car,
+              3,
+              theme),
+          _buildSidebarItem(
+              AppLocalizations.of(context).translate('payments_management'),
+              LucideIcons.dollarSign,
+              4,
+              theme),
+          _buildSidebarItem(
+              AppLocalizations.of(context).translate('security_monitoring'),
+              LucideIcons.shieldCheck,
+              5,
+              theme),
+          _buildSidebarItem(
+              AppLocalizations.of(context).translate('analytics_reports'),
+              LucideIcons.barChart,
+              6,
+              theme),
+          _buildSidebarItem(
+              AppLocalizations.of(context).translate('vip_corporate'),
+              LucideIcons.star,
+              7,
+              theme),
+          _buildSidebarItem(AppLocalizations.of(context).translate('settings'),
+              LucideIcons.settings, 8, theme),
         ],
       ),
     );
   }
 
-  Widget _buildSidebarItem(String title, IconData icon, int index) {
+  Widget _buildSidebarItem(
+      String title, IconData icon, int index, ThemeData theme) {
     return ListTile(
-      leading: Icon(icon, color: Colors.black),
-      title: Text(title, style: const TextStyle(color: Colors.black)),
+      leading: Icon(icon, color: theme.colorScheme.onPrimary),
+      title: Text(title, style: TextStyle(color: theme.colorScheme.onPrimary)),
       selected: _selectedIndex == index,
       onTap: () {
         setState(() {

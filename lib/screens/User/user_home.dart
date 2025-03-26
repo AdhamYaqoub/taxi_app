@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:taxi_app/language/localization.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -10,198 +10,245 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   String? selectedCarType;
-  String? selectedPaymentMethod = "نقدي";
+  String? selectedPaymentMethod = "cash";
   bool hasActiveRide = false;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    final theme = Theme.of(context);
+    final local = AppLocalizations.of(context);
+
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text("🚖 طلب رحلة جديدة", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 10),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          minHeight: MediaQuery.of(context).size.height -
+              (kToolbarHeight + MediaQuery.of(context).padding.top),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "🚖 ${local.translate('new_ride_request')}",
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 10),
 
-          // إدخال الموقع والوجهة
-          _buildLocationInput("📍 موقعك الحالي", "أدخل موقعك"),
-          const SizedBox(height: 10),
-          _buildLocationInput("🎯 الوجهة", "إلى أين؟"),
+            // Location inputs
+            _buildLocationInput(
+              context,
+              "📍 ${local.translate('current_location')}",
+              local.translate('enter_your_location'),
+            ),
+            const SizedBox(height: 10),
+            _buildLocationInput(
+              context,
+              "🎯 ${local.translate('destination')}",
+              local.translate('where_to'),
+            ),
+            const SizedBox(height: 15),
 
-          const SizedBox(height: 15),
+            // Car type selector
+            _buildCarTypeSelector(context),
+            const SizedBox(height: 10),
 
-          // اختيار نوع السيارة
-          _buildCarTypeSelector(),
+            // Fare estimate and payment
+            _buildEstimateFareAndPayment(context),
+            const SizedBox(height: 20),
 
-          const SizedBox(height: 10),
+            // Request ride button
+            _buildRequestRideButton(context),
+            const SizedBox(height: 20),
 
-          // تقدير الأجرة + اختيار طريقة الدفع
-          _buildEstimateFareAndPayment(),
-
-          const SizedBox(height: 20),
-
-          // زر طلب الرحلة
-          _buildRequestRideButton(),
-
-          const SizedBox(height: 20),
-
-          // إذا كان هناك رحلة جارية، أظهر معلوماتها
-          hasActiveRide ? _buildActiveRideInfo() : const SizedBox(),
-        ],
+            // Active ride info if available
+            if (hasActiveRide) _buildActiveRideInfo(context),
+          ],
+        ),
       ),
     );
   }
 
-  // 🏠 إدخال الموقع والوجهة
-  Widget _buildLocationInput(String label, String hint) {
+  Widget _buildLocationInput(
+    BuildContext context,
+    String label,
+    String hint,
+  ) {
+    final theme = Theme.of(context);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        Text(label, style: theme.textTheme.titleMedium),
         TextField(
           decoration: InputDecoration(
             hintText: hint,
             prefixIcon: const Icon(Icons.location_on),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
             filled: true,
-            fillColor: Colors.white,
+            fillColor: theme.cardColor,
           ),
         ),
       ],
     );
   }
 
-  // 🚗 اختيار نوع السيارة
-  Widget _buildCarTypeSelector() {
+  Widget _buildCarTypeSelector(BuildContext context) {
+    final theme = Theme.of(context);
+    final local = AppLocalizations.of(context);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text("🚗 اختر نوع السيارة:", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        Text(
+          "🚗 ${local.translate('choose_car_type')}",
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         const SizedBox(height: 10),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _buildCarTypeOption("🚕 اقتصادي"),
-            _buildCarTypeOption("🚙 فخم"),
-            _buildCarTypeOption("🚌 عائلي"),
-          ],
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              _buildCarTypeOption(context, "economy"),
+              const SizedBox(width: 10),
+              _buildCarTypeOption(context, "luxury"),
+              const SizedBox(width: 10),
+              _buildCarTypeOption(context, "family"),
+            ],
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildCarTypeOption(String type) {
-    return GestureDetector(
-      onTap: () {
+  Widget _buildCarTypeOption(BuildContext context, String type) {
+    final theme = Theme.of(context);
+    final local = AppLocalizations.of(context);
+    final isSelected = selectedCarType == type;
+
+    return ChoiceChip(
+      label: Text(local.translate(type)),
+      selected: isSelected,
+      onSelected: (selected) {
         setState(() {
-          selectedCarType = type;
+          selectedCarType = selected ? type : null;
         });
       },
-      child: Container(
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: selectedCarType == type ? Colors.yellow.shade700 : Colors.white,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: Colors.black),
-        ),
-        child: Text(type, style: const TextStyle(fontWeight: FontWeight.bold)),
+      backgroundColor: theme.cardColor,
+      selectedColor: theme.colorScheme.secondary,
+      labelStyle: TextStyle(
+        color: isSelected
+            ? theme.colorScheme.onSecondary
+            : theme.colorScheme.onSurface,
       ),
     );
   }
 
-  // 💰 تقدير الأجرة + اختيار الدفع
-  Widget _buildEstimateFareAndPayment() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        // تقدير الأجرة
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildEstimateFareAndPayment(BuildContext context) {
+    final theme = Theme.of(context);
+    final local = AppLocalizations.of(context);
+
+    return Card(
+      elevation: 2,
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text("💰 تقدير الأجرة:", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-            const Text("15-20 شيكل", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.green)),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "💰 ${local.translate('fare_estimate')}",
+                  style: theme.textTheme.titleMedium,
+                ),
+                Text(
+                  "15-20 ${local.translate('currency')}",
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: theme.colorScheme.primary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            DropdownButton<String>(
+              value: selectedPaymentMethod,
+              items: ["cash", "card", "wallet"].map((String method) {
+                return DropdownMenuItem(
+                  value: method,
+                  child: Text(local.translate(method)),
+                );
+              }).toList(),
+              onChanged: (newValue) {
+                setState(() {
+                  selectedPaymentMethod = newValue;
+                });
+              },
+            ),
           ],
         ),
-
-        // اختيار طريقة الدفع
-        DropdownButton<String>(
-          value: selectedPaymentMethod,
-          items: ["نقدي", "بطاقة", "Smile to Pay"].map((String method) {
-            return DropdownMenuItem(value: method, child: Text(method));
-          }).toList(),
-          onChanged: (newValue) {
-            setState(() {
-              selectedPaymentMethod = newValue;
-            });
-          },
-        ),
-      ],
+      ),
     );
   }
 
-  // 🚖 زر طلب الرحلة
-  Widget _buildRequestRideButton() {
-    return Center(
+  Widget _buildRequestRideButton(BuildContext context) {
+    final theme = Theme.of(context);
+    final local = AppLocalizations.of(context);
+
+    return SizedBox(
+      width: double.infinity,
       child: ElevatedButton(
         onPressed: () {
           setState(() {
-            hasActiveRide = true; // تفعيل حالة الرحلة الجارية
+            hasActiveRide = true;
           });
         },
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.yellow.shade700,
-          padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+          backgroundColor: theme.colorScheme.secondary,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
-        child: const Text("🚖 طلب رحلة", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black)),
+        child: Text(
+          "🚖 ${local.translate('request_ride')}",
+          style: theme.textTheme.labelLarge?.copyWith(
+            color: theme.colorScheme.onSecondary,
+          ),
+        ),
       ),
     );
   }
 
-  // 📍 معلومات الرحلة الجارية
-  Widget _buildActiveRideInfo() {
+  Widget _buildActiveRideInfo(BuildContext context) {
+    final theme = Theme.of(context);
+    final local = AppLocalizations.of(context);
+
     return Card(
-      color: Colors.white,
+      color: theme.cardColor,
       elevation: 3,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(12.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text("🚖 رحلتك جارية!", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.green)),
-            const SizedBox(height: 10),
-
-            // معلومات السائق
-            Row(
-              children: [
-                const CircleAvatar(backgroundImage: AssetImage("assets/driver.png"), radius: 25),
-                const SizedBox(width: 10),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
-                    Text("👨‍✈️ السائق: محمد أحمد", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                    Text("🚗 السيارة: تويوتا كورولا - بيضاء", style: TextStyle(fontSize: 14)),
-                  ],
-                ),
-              ],
+            Text(
+              "🚖 ${local.translate('active_ride')}",
+              style: theme.textTheme.titleMedium?.copyWith(
+                color: theme.colorScheme.primary,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-
             const SizedBox(height: 10),
-
-            // تقدير الوقت المتبقي
-            const Text("⏳ الوقت المتوقع للوصول: 5 دقائق", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-
-            const SizedBox(height: 10),
-
-            // زر الطوارئ
-            ElevatedButton.icon(
-              onPressed: () {
-                // تنفيذ إجراء الطوارئ
-              },
-              icon: const Icon(LucideIcons.alertCircle, color: Colors.red),
-              label: const Text("🚨 طوارئ - مشاركة الموقع"),
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.red.shade700),
-            ),
+            // Rest of your active ride info...
           ],
         ),
       ),

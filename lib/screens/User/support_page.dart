@@ -1,42 +1,63 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:provider/provider.dart';
+import 'package:taxi_app/language/localization.dart';
+import 'package:taxi_app/providers/theme_provider.dart';
 
 class SupportPage extends StatelessWidget {
   const SupportPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    bool isWeb = MediaQuery.of(context).size.width > 800;
+    final theme = Theme.of(context);
+    final isWeb = MediaQuery.of(context).size.width > 800;
+    final local = AppLocalizations.of(context);
+    final themeProvider = Provider.of<ThemeProvider>(context);
 
     return Scaffold(
       appBar: isWeb
           ? null
           : AppBar(
-              backgroundColor: Colors.yellow.shade700,
-              title: const Text("📞 مركز الدعم والطوارئ"),
+              backgroundColor: theme.colorScheme.primary,
+              title: Text(
+                local.translate("support_center"),
+                style: theme.textTheme.titleLarge?.copyWith(
+                  color: theme.colorScheme.onPrimary,
+                ),
+              ),
+              actions: [
+                IconButton(
+                  icon: Icon(
+                    themeProvider.themeMode == ThemeMode.dark
+                        ? LucideIcons.sun
+                        : LucideIcons.moon,
+                    color: theme.colorScheme.onPrimary,
+                  ),
+                  onPressed: () {
+                    themeProvider.toggleTheme();
+                  },
+                ),
+              ],
             ),
       body: Center(
         child: Container(
-          constraints: const BoxConstraints(maxWidth: 600), // ضبط العرض للويب
+          constraints: const BoxConstraints(maxWidth: 600),
           padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text("📞 مركز الدعم والطوارئ", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+              Text(
+                local.translate("support_center"),
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               const SizedBox(height: 10),
-
-              // 🚑 زر الطوارئ
-              _buildEmergencyButton(),
-
+              _buildEmergencyButton(context, local),
               const SizedBox(height: 20),
-
-              // 📩 خيارات التواصل مع الدعم
-              _buildSupportOptions(),
-
+              _buildSupportOptions(context, local),
               const SizedBox(height: 20),
-
-              // ❓ الأسئلة الشائعة (FAQ)
-              _buildFAQSection(),
+              _buildFAQSection(context, local),
             ],
           ),
         ),
@@ -44,71 +65,172 @@ class SupportPage extends StatelessWidget {
     );
   }
 
-  // 🚨 زر الطوارئ (SOS)
-  Widget _buildEmergencyButton() {
+  Widget _buildEmergencyButton(BuildContext context, AppLocalizations local) {
+    final theme = Theme.of(context);
+
     return Center(
       child: ElevatedButton.icon(
         onPressed: () {
-          // تنفيذ إجراء الطوارئ مثل إرسال الموقع
+          // Emergency action implementation
         },
-        icon: const Icon(LucideIcons.alertCircle, color: Colors.white),
-        label: const Text("🚨 طوارئ - إرسال الموقع الآن"),
+        icon: Icon(
+          LucideIcons.alertCircle,
+          color: theme.colorScheme.onError,
+        ),
+        label: Text(
+          local.translate("emergency_button"),
+          style: theme.textTheme.labelLarge?.copyWith(
+            color: theme.colorScheme.onError,
+          ),
+        ),
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.red.shade700,
+          backgroundColor: theme.colorScheme.error,
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
         ),
       ),
     );
   }
 
-  // ☎️ خيارات التواصل مع الدعم الفني
-  Widget _buildSupportOptions() {
+  Widget _buildSupportOptions(BuildContext context, AppLocalizations local) {
+    final theme = Theme.of(context);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text("☎️ كيف يمكننا مساعدتك؟", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        Text(
+          local.translate("how_can_we_help"),
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         const SizedBox(height: 10),
-        ListTile(
-          leading: const Icon(LucideIcons.phoneCall, color: Colors.green),
-          title: const Text("📞 الاتصال بالدعم الفني"),
-          onTap: () {
-            // تنفيذ الاتصال بالدعم الفني
-          },
-        ),
-        ListTile(
-          leading: const Icon(LucideIcons.mail, color: Colors.blue),
-          title: const Text("📩 إرسال بريد إلكتروني"),
-          onTap: () {
-            // تنفيذ إرسال بريد إلكتروني
-          },
-        ),
-        ListTile(
-          leading: const Icon(LucideIcons.messageCircle, color: Colors.orange),
-          title: const Text("💬 الدردشة مع الدعم"),
-          onTap: () {
-            // فتح نافذة الدردشة
-          },
+        Card(
+          elevation: 1,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Column(
+            children: [
+              _buildSupportTile(
+                context,
+                icon: LucideIcons.phoneCall,
+                color: Colors.green,
+                title: local.translate("call_support"),
+                onTap: () {
+                  // Call support implementation
+                },
+              ),
+              Divider(height: 1, color: theme.dividerColor),
+              _buildSupportTile(
+                context,
+                icon: LucideIcons.mail,
+                color: Colors.blue,
+                title: local.translate("send_email"),
+                onTap: () {
+                  // Email support implementation
+                },
+              ),
+              Divider(height: 1, color: theme.dividerColor),
+              _buildSupportTile(
+                context,
+                icon: LucideIcons.messageCircle,
+                color: Colors.orange,
+                title: local.translate("chat_with_support"),
+                onTap: () {
+                  // Chat support implementation
+                },
+              ),
+            ],
+          ),
         ),
       ],
     );
   }
 
-  // ❓ قسم الأسئلة الشائعة (FAQ)
-  Widget _buildFAQSection() {
-    return ExpansionTile(
-      title: const Text("❓ الأسئلة الشائعة", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-      children: [
-        _buildFAQItem("كيف يمكنني إلغاء رحلة؟", "يمكنك إلغاء الرحلة من خلال التطبيق قبل وصول السائق."),
-        _buildFAQItem("ماذا أفعل إذا نسيت شيئًا في السيارة؟", "يمكنك التواصل مع الدعم الفني لمساعدتك في استعادة أغراضك."),
-        _buildFAQItem("هل يمكنني طلب رحلة مجدولة؟", "نعم، يمكنك تحديد موعد مستقبلي لرحلتك."),
-      ],
-    );
-  }
+  Widget _buildSupportTile(
+    BuildContext context, {
+    required IconData icon,
+    required Color color,
+    required String title,
+    required VoidCallback onTap,
+  }) {
+    final theme = Theme.of(context);
 
-  Widget _buildFAQItem(String question, String answer) {
     return ListTile(
-      title: Text("🔹 $question", style: const TextStyle(fontWeight: FontWeight.bold)),
-      subtitle: Text(answer),
+      leading: Icon(icon, color: color),
+      title: Text(title),
+      onTap: onTap,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+      ),
+      tileColor: theme.cardColor,
+    );
+  }
+
+  Widget _buildFAQSection(BuildContext context, AppLocalizations local) {
+    final theme = Theme.of(context);
+
+    return Card(
+      elevation: 1,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: ExpansionTile(
+        title: Text(
+          local.translate("faq"),
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        children: [
+          _buildFAQItem(
+            context,
+            question: local.translate("cancel_trip"),
+            answer: local.translate("cancel_trip_answer"),
+          ),
+          Divider(height: 1, color: theme.dividerColor),
+          _buildFAQItem(
+            context,
+            question: local.translate("forgot_item"),
+            answer: local.translate("forgot_item_answer"),
+          ),
+          Divider(height: 1, color: theme.dividerColor),
+          _buildFAQItem(
+            context,
+            question: local.translate("schedule_trip"),
+            answer: local.translate("schedule_trip_answer"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFAQItem(
+    BuildContext context, {
+    required String question,
+    required String answer,
+  }) {
+    final theme = Theme.of(context);
+
+    return ListTile(
+      title: Text(
+        question,
+        style: theme.textTheme.bodyLarge?.copyWith(
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      subtitle: Text(
+        answer,
+        style: theme.textTheme.bodyMedium,
+      ),
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: 16,
+        vertical: 8,
+      ),
     );
   }
 }

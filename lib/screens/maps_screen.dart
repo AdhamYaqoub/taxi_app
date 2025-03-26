@@ -35,7 +35,8 @@ class _MapScreenState extends State<MapScreen> {
   List<LatLng> routePoints = [LatLng(0, 0)];
   List<Marker> markers = [];
   bool isRouteBlocked = false;
-  final String orsApiKey = '5b3ce3597851110001cf62485bf8e58a124640b1bc61ce2b4825433e';
+  final String orsApiKey =
+      '5b3ce3597851110001cf62485bf8e58a124640b1bc61ce2b4825433e';
   final String botToken = '7608922442:AAHaWNXgfJFxgPBi2VJgdWekfznFIQ-4ZOQ';
   final String chatId = '-1002436928564';
   Timer? _timer; // Timer للفحص التلقائي
@@ -74,7 +75,8 @@ class _MapScreenState extends State<MapScreen> {
             width: 80.0,
             height: 80.0,
             point: LatLng(userLocation.latitude!, userLocation.longitude!),
-            child: const Icon(Icons.my_location, color: Colors.blue, size: 40.0),
+            child:
+                const Icon(Icons.my_location, color: Colors.blue, size: 40.0),
           ),
         );
       });
@@ -88,7 +90,8 @@ class _MapScreenState extends State<MapScreen> {
     if (placeName.isEmpty) return;
 
     final response = await http.get(
-      Uri.parse('https://nominatim.openstreetmap.org/search?q=$placeName&format=json'),
+      Uri.parse(
+          'https://nominatim.openstreetmap.org/search?q=$placeName&format=json'),
     );
 
     if (response.statusCode != 200) return;
@@ -116,7 +119,8 @@ class _MapScreenState extends State<MapScreen> {
   Future<void> _getRoute() async {
     if (currentLocation == null || destination == null) return;
 
-    final start = LatLng(currentLocation!.latitude!, currentLocation!.longitude!);
+    final start =
+        LatLng(currentLocation!.latitude!, currentLocation!.longitude!);
     final response = await http.get(
       Uri.parse(
           'https://api.openrouteservice.org/v2/directions/driving-car?api_key=$orsApiKey&start=${start.longitude},${start.latitude}&end=${destination!.longitude},${destination!.latitude}'),
@@ -125,10 +129,12 @@ class _MapScreenState extends State<MapScreen> {
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       if (data['features'].isNotEmpty) {
-        final List<dynamic> coords = data['features'][0]['geometry']['coordinates'];
+        final List<dynamic> coords =
+            data['features'][0]['geometry']['coordinates'];
         if (coords.isNotEmpty) {
           setState(() {
-            routePoints = coords.map((coord) => LatLng(coord[1], coord[0])).toList();
+            routePoints =
+                coords.map((coord) => LatLng(coord[1], coord[0])).toList();
           });
         }
       }
@@ -138,7 +144,8 @@ class _MapScreenState extends State<MapScreen> {
   // التحقق من حالة الطريق من التلجرام
   Future<void> _checkRouteStatus() async {
     final response = await http.get(
-      Uri.parse('https://api.telegram.org/bot$botToken/getUpdates?chat_id=$chatId'),
+      Uri.parse(
+          'https://api.telegram.org/bot$botToken/getUpdates?chat_id=$chatId'),
     );
 
     if (response.statusCode == 200) {
@@ -147,7 +154,8 @@ class _MapScreenState extends State<MapScreen> {
       if (updates.isNotEmpty) {
         final String lastMessage = updates.last['message']['text'] ?? '';
         setState(() {
-          isRouteBlocked = lastMessage.contains('مسكرة'); // تغيير الشرط حسب الرسالة
+          isRouteBlocked =
+              lastMessage.contains('مسكرة'); // تغيير الشرط حسب الرسالة
         });
       }
     }
@@ -215,17 +223,19 @@ class _MapScreenState extends State<MapScreen> {
                 : FlutterMap(
                     mapController: mapController,
                     options: MapOptions(
-                      initialCenter: LatLng(currentLocation!.latitude!, currentLocation!.longitude!),
+                      initialCenter: LatLng(currentLocation!.latitude!,
+                          currentLocation!.longitude!),
                       initialZoom: 15.0,
                     ),
                     children: [
                       TileLayer(
-                        urlTemplate: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+                        urlTemplate:
+                            "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
                         subdomains: const ['a', 'b', 'c'],
                       ),
                       MarkerLayer(markers: markers),
                       PolylineLayer<LatLng>(polylines: [
-                        Polyline<LatLng>( 
+                        Polyline<LatLng>(
                           points: routePoints,
                           strokeWidth: 4.0,
                           color: isRouteBlocked ? Colors.red : Colors.blue,
@@ -253,7 +263,8 @@ class _MapScreenState extends State<MapScreen> {
             onPressed: () {
               if (currentLocation != null) {
                 mapController.move(
-                  LatLng(currentLocation!.latitude!, currentLocation!.longitude!),
+                  LatLng(
+                      currentLocation!.latitude!, currentLocation!.longitude!),
                   15.0,
                 );
               }

@@ -12,8 +12,8 @@ import 'package:taxi_app/screens/smile.dart';
 import 'package:taxi_app/screens/user.dart';
 import 'package:taxi_app/widgets/CustomAppBar.dart';
 import 'package:taxi_app/language/localization.dart'; // استيراد AppLocalizations
-import 'package:taxi_app/providers/theme_provider.dart';
-import 'package:provider/provider.dart';
+// import 'package:taxi_app/providers/theme_provider.dart';
+// import 'package:provider/provider.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
@@ -57,8 +57,8 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context);
-    bool isDarkMode = themeProvider.themeMode == ThemeMode.dark;
+    // final themeProvider = Provider.of<ThemeProvider>(context);
+    // bool isDarkMode = themeProvider.themeMode == ThemeMode.dark;
     final theme = Theme.of(context);
 
     // استخدام الترجمة من AppLocalizations
@@ -89,8 +89,17 @@ class _HomePageState extends State<HomePage> {
           appBar: CustomAppBar(),
           drawer: isWeb
               ? null
-              : _buildDrawer(theme, homeText, historyText, settingsText,
-                  menuText, adminText, driverText, userText, aboutText, manegerText),
+              : _buildDrawer(
+                  theme,
+                  homeText,
+                  historyText,
+                  settingsText,
+                  menuText,
+                  adminText,
+                  driverText,
+                  userText,
+                  aboutText,
+                  manegerText),
           body: isWeb
               ? _buildWebLayout(theme, pickUpLocationText, dropOffLocationText,
                   dateText, timeText, estimatePriceText)
@@ -101,8 +110,17 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildDrawer(ThemeData theme, String homeText, String historyText,
-      String settingsText, String menuText, String adminText, String driverText, String userText, String aboutText, String manegerText) {
+  Widget _buildDrawer(
+      ThemeData theme,
+      String homeText,
+      String historyText,
+      String settingsText,
+      String menuText,
+      String adminText,
+      String driverText,
+      String userText,
+      String aboutText,
+      String manegerText) {
     return Drawer(
       child: ListView(
         padding: EdgeInsets.zero,
@@ -153,7 +171,7 @@ class _HomePageState extends State<HomePage> {
                   builder: (context) => const AdminDashboard()));
             },
           ),
-            ListTile(
+          ListTile(
             leading: Icon(Icons.settings, color: theme.colorScheme.onSurface),
             title: Text(driverText, style: theme.textTheme.bodyLarge),
             onTap: () {
@@ -162,7 +180,7 @@ class _HomePageState extends State<HomePage> {
                   builder: (context) => const DriverDashboard()));
             },
           ),
-           ListTile(
+          ListTile(
             leading: Icon(Icons.settings, color: theme.colorScheme.onSurface),
             title: Text(userText, style: theme.textTheme.bodyLarge),
             onTap: () {
@@ -171,22 +189,24 @@ class _HomePageState extends State<HomePage> {
                   builder: (context) => const UserDashboard()));
             },
           ),
-           ListTile(
+          ListTile(
             leading: Icon(Icons.settings, color: theme.colorScheme.onSurface),
             title: Text(aboutText, style: theme.textTheme.bodyLarge),
             onTap: () {
               Navigator.pop(context); // إغلاق القائمة
-              Navigator.of(context).push(MaterialPageRoute(
-                  builder: (context) => const AboutPage()));
+              Navigator.of(context).push(
+                  MaterialPageRoute(builder: (context) => const AboutPage()));
             },
           ),
-            ListTile(
+          ListTile(
             leading: Icon(Icons.settings, color: theme.colorScheme.onSurface),
             title: Text(manegerText, style: theme.textTheme.bodyLarge),
             onTap: () {
               Navigator.pop(context); // إغلاق القائمة
               Navigator.of(context).push(MaterialPageRoute(
-                  builder: (context) => const OfficeManagerPage(officeId: '',)));
+                  builder: (context) => const OfficeManagerPage(
+                        officeId: '',
+                      )));
             },
           ),
         ],
@@ -433,7 +453,7 @@ class _HomePageState extends State<HomePage> {
               );
             },
           ),
-            ListTile(
+          ListTile(
             title: Text(AppLocalizations.of(context).translate('driver')),
             onTap: () {
               Navigator.of(context).push(
@@ -441,7 +461,7 @@ class _HomePageState extends State<HomePage> {
               );
             },
           ),
-            ListTile(
+          ListTile(
             title: Text(AppLocalizations.of(context).translate('user')),
             onTap: () {
               Navigator.of(context).push(
@@ -449,7 +469,7 @@ class _HomePageState extends State<HomePage> {
               );
             },
           ),
-             ListTile(
+          ListTile(
             title: Text(AppLocalizations.of(context).translate('about')),
             onTap: () {
               Navigator.of(context).push(
@@ -457,11 +477,14 @@ class _HomePageState extends State<HomePage> {
               );
             },
           ),
-             ListTile(
+          ListTile(
             title: Text(AppLocalizations.of(context).translate('maneger')),
             onTap: () {
               Navigator.of(context).push(
-                MaterialPageRoute(builder: (context) => OfficeManagerPage(officeId: '',)),
+                MaterialPageRoute(
+                    builder: (context) => OfficeManagerPage(
+                          officeId: '',
+                        )),
               );
             },
           ),
