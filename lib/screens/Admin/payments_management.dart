@@ -1,27 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:taxi_app/language/localization.dart';
 
 class PaymentsManagementPage extends StatelessWidget {
   const PaymentsManagementPage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    var theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: Colors.grey.shade100,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.yellow.shade700,
-        title: const Text("إدارة المدفوعات"),
+        backgroundColor: theme.colorScheme.primary,
+        title:
+            Text(AppLocalizations.of(context).translate('payments_management')),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildSectionTitle("تفاصيل المعاملات"),
+            _buildSectionTitle(
+                AppLocalizations.of(context).translate('transaction_details')),
             _buildTransactionList(),
             const SizedBox(height: 20),
-            _buildSectionTitle("إدارة الأسعار والعروض"),
-            _buildPricingControls(),
+            _buildSectionTitle(
+                AppLocalizations.of(context).translate('pricing_and_offers')),
+            _buildPricingControls(context),
           ],
         ),
       ),
@@ -48,11 +54,18 @@ class PaymentsManagementPage extends StatelessWidget {
             margin: const EdgeInsets.symmetric(vertical: 8),
             child: ListTile(
               leading: Icon(
-                index.isEven ? LucideIcons.checkCircle : LucideIcons.alertTriangle,
+                index.isEven
+                    ? LucideIcons.checkCircle
+                    : LucideIcons.alertTriangle,
                 color: index.isEven ? Colors.green : Colors.red,
               ),
-              title: Text("معاملة #${index + 1}"),
-              subtitle: Text(index.isEven ? "تمت بنجاح" : "فشل الدفع"),
+              title: Text(
+                  AppLocalizations.of(context).translate('transaction') +
+                      " #${index + 1}"),
+              subtitle: Text(index.isEven
+                  ? AppLocalizations.of(context)
+                      .translate('transaction_success')
+                  : AppLocalizations.of(context).translate('payment_failed')),
               trailing: IconButton(
                 icon: const Icon(LucideIcons.eye),
                 onPressed: () {
@@ -66,12 +79,13 @@ class PaymentsManagementPage extends StatelessWidget {
     );
   }
 
-  Widget _buildPricingControls() {
+  Widget _buildPricingControls(BuildContext context) {
     return Column(
       children: [
         ListTile(
           leading: const Icon(LucideIcons.dollarSign, color: Colors.black),
-          title: const Text("تعديل أسعار الرحلات"),
+          title:
+              Text(AppLocalizations.of(context).translate('edit_fare_prices')),
           trailing: IconButton(
             icon: const Icon(LucideIcons.edit),
             onPressed: () {
@@ -81,7 +95,8 @@ class PaymentsManagementPage extends StatelessWidget {
         ),
         ListTile(
           leading: const Icon(LucideIcons.percent, color: Colors.black),
-          title: const Text("إدارة العروض والخصومات"),
+          title: Text(AppLocalizations.of(context)
+              .translate('manage_offers_discounts')),
           trailing: IconButton(
             icon: const Icon(LucideIcons.edit),
             onPressed: () {

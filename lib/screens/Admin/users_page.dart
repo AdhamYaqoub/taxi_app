@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:taxi_app/language/localization.dart';
 
 class UsersPage extends StatefulWidget {
   const UsersPage({super.key});
@@ -23,19 +24,20 @@ class _UsersPageState extends State<UsersPage> {
 
   @override
   Widget build(BuildContext context) {
+    var theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: Colors.grey.shade200,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text("إدارة المستخدمين 👥"),
-        backgroundColor: Colors.yellow.shade700,
+        title: Text(AppLocalizations.of(context).translate('users_management')),
+        backgroundColor: theme.colorScheme.primary,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              "قائمة المستخدمين",
+            Text(
+              AppLocalizations.of(context).translate('users_list'),
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 10),
@@ -52,8 +54,10 @@ class _UsersPageState extends State<UsersPage> {
                     margin: const EdgeInsets.symmetric(vertical: 8),
                     child: ListTile(
                       leading: Icon(LucideIcons.user, color: Colors.black),
-                      title: Text(user["name"], style: const TextStyle(fontWeight: FontWeight.bold)),
-                      subtitle: Text("التصنيف: ${user['type']} • عدد الرحلات: ${user['rides']}"),
+                      title: Text(user["name"],
+                          style: const TextStyle(fontWeight: FontWeight.bold)),
+                      subtitle: Text(
+                          "${AppLocalizations.of(context).translate('user_type')}: ${user['type']} • ${AppLocalizations.of(context).translate('rides_count')}: ${user['rides']}"),
                       trailing: Switch(
                         value: user['status'],
                         onChanged: (value) => toggleUserStatus(index),

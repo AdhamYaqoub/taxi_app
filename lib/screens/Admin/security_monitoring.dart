@@ -1,26 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:taxi_app/language/localization.dart';
 
 class SecurityMonitoringPage extends StatelessWidget {
   const SecurityMonitoringPage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    var theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: Colors.grey.shade100,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.red.shade700,
-        title: const Text("مراقبة الأمان"),
+        title:
+            Text(AppLocalizations.of(context).translate('security_monitoring')),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildSectionTitle("تنبيهات الطوارئ"),
-            _buildEmergencyAlerts(),
+            _buildSectionTitle(
+                AppLocalizations.of(context).translate('emergency_alerts')),
+            _buildEmergencyAlerts(context),
             const SizedBox(height: 20),
-            _buildSectionTitle("مراقبة الرحلات المشبوهة"),
+            _buildSectionTitle(
+                AppLocalizations.of(context).translate('suspicious_trips')),
             _buildSuspiciousTripsList(),
           ],
         ),
@@ -38,19 +43,20 @@ class SecurityMonitoringPage extends StatelessWidget {
     );
   }
 
-  Widget _buildEmergencyAlerts() {
+  Widget _buildEmergencyAlerts(BuildContext context) {
     return Card(
       color: Colors.red.shade100,
       child: ListTile(
         leading: const Icon(LucideIcons.alertCircle, color: Colors.red),
-        title: const Text("زر SOS مفعل من سائق"),
+        title: Text(
+            AppLocalizations.of(context).translate('sos_button_activated')),
         subtitle: const Text("سائق: أحمد - الموقع الحالي: شارع الملك فهد"),
         trailing: ElevatedButton(
           style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
           onPressed: () {
             // استدعاء الطوارئ
           },
-          child: const Text("اتخاذ إجراء"),
+          child: Text(AppLocalizations.of(context).translate('take_action')),
         ),
       ),
     );
@@ -66,8 +72,11 @@ class SecurityMonitoringPage extends StatelessWidget {
             margin: const EdgeInsets.symmetric(vertical: 8),
             child: ListTile(
               leading: const Icon(LucideIcons.zap, color: Colors.orange),
-              title: Text("رحلة مشبوهة #${index + 1}"),
-              subtitle: const Text("تم اكتشاف تغيير مسار مفاجئ"),
+              title: Text(
+                  AppLocalizations.of(context).translate('suspicious_trip') +
+                      " #${index + 1}"),
+              subtitle: Text(AppLocalizations.of(context)
+                  .translate('route_change_detected')),
               trailing: IconButton(
                 icon: const Icon(LucideIcons.eye),
                 onPressed: () {

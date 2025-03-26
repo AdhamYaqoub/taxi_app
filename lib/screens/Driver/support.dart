@@ -1,62 +1,123 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:taxi_app/language/localization.dart';
 
 class SupportPage extends StatelessWidget {
   const SupportPage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final local = AppLocalizations.of(context);
+    final isWeb = MediaQuery.of(context).size.width > 800;
+
     return Scaffold(
-      backgroundColor: Colors.grey.shade100,
-      appBar: AppBar(
-        backgroundColor: Colors.yellow.shade700,
-        title: const Text("الدعم الفني"),
-      ),
-      body: Padding(
+      appBar: isWeb
+          ? null
+          : AppBar(
+              backgroundColor: theme.colorScheme.primary,
+              title: Text(
+                local.translate('support_center'),
+                style: theme.textTheme.titleLarge?.copyWith(
+                  color: theme.colorScheme.onPrimary,
+                ),
+              ),
+            ),
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildSectionTitle("تواصل مع الدعم"),
-            _buildSupportOptions(),
+            _buildSectionTitle(
+              context,
+              local.translate('contact_support'),
+            ),
+            const SizedBox(height: 16),
+            _buildSupportOptions(context),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildSectionTitle(String title) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Text(
-        title,
-        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+  Widget _buildSectionTitle(BuildContext context, String title) {
+    final theme = Theme.of(context);
+
+    return Text(
+      title,
+      style: theme.textTheme.titleMedium?.copyWith(
+        fontWeight: FontWeight.bold,
+        color: theme.colorScheme.primary,
       ),
     );
   }
 
-  Widget _buildSupportOptions() {
-    return Column(
-      children: [
-        ListTile(
-          leading: const Icon(LucideIcons.headphones, color: Colors.blue),
-          title: const Text("الدعم عبر الهاتف"),
-          subtitle: const Text("اتصل بنا على: 0123456789"),
-          onTap: () {},
-        ),
-        ListTile(
-          leading: const Icon(LucideIcons.mail, color: Colors.blue),
-          title: const Text("الدعم عبر البريد الإلكتروني"),
-          subtitle: const Text("support@taxigo.com"),
-          onTap: () {},
-        ),
-        ListTile(
-          leading: const Icon(LucideIcons.messageCircle, color: Colors.blue),
-          title: const Text("الدعم عبر الدردشة"),
-          subtitle: const Text("تواصل معنا مباشرة عبر الدردشة"),
-          onTap: () {},
-        ),
-      ],
+  Widget _buildSupportOptions(BuildContext context) {
+    final theme = Theme.of(context);
+    final local = AppLocalizations.of(context);
+
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        children: [
+          _buildSupportTile(
+            context,
+            icon: LucideIcons.headphones,
+            title: local.translate('phone_support'),
+            subtitle: local.translate('call_us_at') + ": 0123456789",
+            onTap: () {},
+          ),
+          Divider(height: 1, color: theme.dividerColor),
+          _buildSupportTile(
+            context,
+            icon: LucideIcons.mail,
+            title: local.translate('email_support'),
+            subtitle: "support@taxigo.com",
+            onTap: () {},
+          ),
+          Divider(height: 1, color: theme.dividerColor),
+          _buildSupportTile(
+            context,
+            icon: LucideIcons.messageCircle,
+            title: local.translate('chat_support'),
+            subtitle: local.translate('chat_with_us_directly'),
+            onTap: () {},
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSupportTile(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    final theme = Theme.of(context);
+
+    return ListTile(
+      leading: Icon(
+        icon,
+        color: theme.colorScheme.secondary,
+      ),
+      title: Text(
+        title,
+        style: theme.textTheme.bodyLarge,
+      ),
+      subtitle: Text(
+        subtitle,
+        style: theme.textTheme.bodySmall,
+      ),
+      onTap: onTap,
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: 16,
+        vertical: 12,
+      ),
     );
   }
 }

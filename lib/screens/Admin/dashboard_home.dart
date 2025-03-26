@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:taxi_app/language/localization.dart'; // إضافة الترجمة
 
 class DashboardHome extends StatelessWidget {
   const DashboardHome({super.key});
@@ -12,28 +13,36 @@ class DashboardHome extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text("لوحة التحكم", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+          Text(
+            AppLocalizations.of(context)
+                .translate('dashboard'), // استخدام الترجمة
+            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 10),
           Wrap(
             spacing: 10,
             runSpacing: 10,
-            children: _buildStats(),
+            children: _buildStats(context), // تمرير context للترجمة
           ),
           const SizedBox(height: 20),
-          _buildBarChart(),
+          _buildBarChart(context),
           const SizedBox(height: 20),
-          _buildPieChart(),
+          _buildPieChart(context),
         ],
       ),
     );
   }
 
-  List<Widget> _buildStats() {
+  List<Widget> _buildStats(BuildContext context) {
     return [
-      _buildStatCard("الرحلات اليوم", "120", LucideIcons.map),
-      _buildStatCard("السائقون المتاحون", "45", LucideIcons.userCheck),
-      _buildStatCard("المستخدمون الجدد", "85", LucideIcons.users),
-      _buildStatCard("الإيرادات (اليوم)", "\$4,500", LucideIcons.dollarSign),
+      _buildStatCard(AppLocalizations.of(context).translate('todayTrips'),
+          "120", LucideIcons.map),
+      _buildStatCard(AppLocalizations.of(context).translate('availableDrivers'),
+          "45", LucideIcons.userCheck),
+      _buildStatCard(AppLocalizations.of(context).translate('newUsers'), "85",
+          LucideIcons.users),
+      _buildStatCard(AppLocalizations.of(context).translate('revenueToday'),
+          "\$4,500", LucideIcons.dollarSign),
     ];
   }
 
@@ -51,8 +60,13 @@ class DashboardHome extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(color: Colors.black, fontSize: 14)),
-                Text(value, style: const TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
+                Text(title,
+                    style: const TextStyle(color: Colors.black, fontSize: 14)),
+                Text(value,
+                    style: const TextStyle(
+                        color: Colors.black,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold)),
               ],
             ),
           ],
@@ -61,7 +75,7 @@ class DashboardHome extends StatelessWidget {
     );
   }
 
-  Widget _buildBarChart() {
+  Widget _buildBarChart(BuildContext context) {
     return Card(
       elevation: 3,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -70,7 +84,11 @@ class DashboardHome extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text("عدد الرحلات خلال الأسبوع", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Text(
+              AppLocalizations.of(context)
+                  .translate('weeklyTrips'), // استخدام الترجمة
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 10),
             SizedBox(
               height: 200,
@@ -78,9 +96,13 @@ class DashboardHome extends StatelessWidget {
                 BarChartData(
                   barGroups: [
                     for (int i = 0; i < 7; i++)
-                      BarChartGroupData(x: i, barRods: [BarChartRodData(toY: (i + 3) * 10, color: Colors.yellow.shade700)])
+                      BarChartGroupData(x: i, barRods: [
+                        BarChartRodData(
+                            toY: (i + 3) * 10, color: Colors.yellow.shade700)
+                      ])
                   ],
-                  titlesData: FlTitlesData(bottomTitles: AxisTitles(sideTitles: _bottomTitles())),
+                  titlesData: FlTitlesData(
+                      bottomTitles: AxisTitles(sideTitles: _bottomTitles())),
                   borderData: FlBorderData(show: false),
                 ),
               ),
@@ -95,16 +117,25 @@ class DashboardHome extends StatelessWidget {
     return SideTitles(
       showTitles: true,
       getTitlesWidget: (double value, TitleMeta meta) {
-        const days = ['سبت', 'أحد', 'إثنين', 'ثلاثاء', 'أربعاء', 'خميس', 'جمعة'];
+        const days = [
+          'سبت',
+          'أحد',
+          'إثنين',
+          'ثلاثاء',
+          'أربعاء',
+          'خميس',
+          'جمعة'
+        ];
         return Padding(
           padding: const EdgeInsets.only(top: 8),
-          child: Text(days[value.toInt()], style: const TextStyle(fontSize: 12)),
+          child:
+              Text(days[value.toInt()], style: const TextStyle(fontSize: 12)),
         );
       },
     );
   }
 
-  Widget _buildPieChart() {
+  Widget _buildPieChart(BuildContext context) {
     return Card(
       elevation: 3,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -113,15 +144,28 @@ class DashboardHome extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text("نسبة السائقين النشطين", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Text(
+              AppLocalizations.of(context)
+                  .translate('activeDriversPercentage'), // استخدام الترجمة
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 10),
             SizedBox(
               height: 200,
               child: PieChart(
                 PieChartData(
                   sections: [
-                    PieChartSectionData(value: 70, title: "نشطين", color: Colors.green, radius: 50),
-                    PieChartSectionData(value: 30, title: "غير نشطين", color: Colors.red, radius: 40),
+                    PieChartSectionData(
+                        value: 70,
+                        title: AppLocalizations.of(context).translate('active'),
+                        color: Colors.green,
+                        radius: 50), // استخدام الترجمة
+                    PieChartSectionData(
+                        value: 30,
+                        title:
+                            AppLocalizations.of(context).translate('inactive'),
+                        color: Colors.red,
+                        radius: 40), // استخدام الترجمة
                   ],
                 ),
               ),

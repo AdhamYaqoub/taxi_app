@@ -1,3 +1,4 @@
+// CustomAppBar.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:taxi_app/providers/theme_provider.dart';
@@ -9,7 +10,8 @@ import 'package:taxi_app/screens/signup_screen.dart';
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final List<String> hiddenButtons;
 
-  const CustomAppBar({Key? key, this.hiddenButtons = const []}) : super(key: key);
+  const CustomAppBar({Key? key, this.hiddenButtons = const []})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -23,58 +25,59 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       backgroundColor: theme.colorScheme.primary,
       title: Text(
         'TaxiGo',
-        style: theme.textTheme.bodyLarge?.copyWith(color: theme.colorScheme.onPrimary),
+        style: theme.textTheme.bodyLarge
+            ?.copyWith(color: theme.colorScheme.onPrimary),
       ),
       actions: [
         // زر تسجيل الدخول كقائمة منسدلة
-        // داخل CustomAppBar
-if (!hiddenButtons.contains('login'))
-  PopupMenuButton<String>(
-    icon: Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Icon(Icons.account_circle, color: theme.colorScheme.onPrimary, size: 30), // أيقونة الحساب
-        Positioned(
-          bottom: -2,
-          right: -2,
-          child: Icon(Icons.add_circle, color: Colors.white, size: 15), // أيقونة + باللون الأسود
-        ),
-      ],
-    ),
-    onSelected: (value) {
-      if (value == 'signin') {
-        Navigator.push(context, MaterialPageRoute(builder: (context) => SignInScreen()));
-      } else if (value == 'signup') {
-        Navigator.push(context, MaterialPageRoute(builder: (context) => const SignUpScreen()));
-      }
-    },
-    itemBuilder: (BuildContext context) => [
-      PopupMenuItem(
-        value: 'signin',
-        child: Text(isArabic ? 'تسجيل الدخول' : 'Sign In'),
-      ),
-      PopupMenuItem(
-        value: 'signup',
-        child: Text(isArabic ? 'إنشاء حساب' : 'Sign Up'),
-      ),
-    ],
-  ),
+        if (!hiddenButtons.contains('login'))
+          PopupMenuButton<String>(
+            icon: Icon(Icons.account_circle,
+                color: theme.colorScheme.onPrimary, size: 30),
+            onSelected: (value) {
+              if (value == 'signin') {
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (context) => SignInScreen()));
+              } else if (value == 'signup') {
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const SignUpScreen()));
+              }
+            },
+            itemBuilder: (BuildContext context) => [
+              PopupMenuItem(
+                value: 'signin',
+                child: Text(isArabic ? 'تسجيل الدخول' : 'Sign In'),
+              ),
+              PopupMenuItem(
+                value: 'signup',
+                child: Text(isArabic ? 'إنشاء حساب' : 'Sign Up'),
+              ),
+            ],
+          ),
 
-
-        // زر ملف التعريف (إذا لم يكن مخفيًا)
+        // زر ملف التعريف
         if (!hiddenButtons.contains('profile'))
           IconButton(
-            icon: Icon(Icons.account_circle, size: 30, color: theme.colorScheme.onPrimary),
+            icon: Icon(Icons.account_circle,
+                size: 30, color: theme.colorScheme.onPrimary),
             onPressed: () {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => const ProfileScreen()));
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const ProfileScreen()));
             },
           ),
 
-        // زر تغيير الثيم
+        // زر تغيير الثيم باستخدام Provider
         if (!hiddenButtons.contains('theme'))
           IconButton(
-            icon: Icon(isDarkMode ? Icons.brightness_7 : Icons.brightness_6),
-            onPressed: () => themeProvider.toggleTheme(),
+            icon: Icon(isDarkMode ? Icons.brightness_7 : Icons.brightness_4,
+                color: theme.colorScheme.onPrimary),
+            onPressed: () {
+              themeProvider.toggleTheme();
+            },
           ),
 
         // زر تغيير اللغة
@@ -82,7 +85,8 @@ if (!hiddenButtons.contains('login'))
           IconButton(
             icon: const Icon(Icons.language),
             onPressed: () {
-              Locale newLocale = isArabic ? const Locale('en') : const Locale('ar');
+              Locale newLocale =
+                  isArabic ? const Locale('en') : const Locale('ar');
               languageProvider.setLocale(newLocale);
             },
           ),

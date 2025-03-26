@@ -1,18 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
+import 'package:taxi_app/language/localization.dart';
 
 class OffersPage extends StatelessWidget {
   const OffersPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    bool isWeb = MediaQuery.of(context).size.width > 800;
+    final theme = Theme.of(context);
+    final local = AppLocalizations.of(context);
+    final isWeb = MediaQuery.of(context).size.width > 800;
 
     return Scaffold(
       appBar: isWeb
           ? null
           : AppBar(
-              backgroundColor: Colors.yellow.shade700,
-              title: const Text("🎁 العروض والخصومات"),
+              backgroundColor: theme.colorScheme.primary,
+              title: Text(
+                local.translate("offers_title"),
+                style: theme.textTheme.titleLarge?.copyWith(
+                  color: theme.colorScheme.onPrimary,
+                ),
+              ),
             ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -21,20 +30,28 @@ class OffersPage extends StatelessWidget {
           children: [
             // Title Section
             Text(
-              "العروض الحالية",
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.yellow.shade700,
-                  ),
+              local.translate("current_offers"),
+              style: theme.textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: theme.colorScheme.secondary,
+              ),
             ),
             const SizedBox(height: 16),
 
             // Example of available offers
             _buildOfferCard(
-                "عرض 10% على الرحلات لأول مرة", "يوم الجمعة فقط", Colors.green.shade600),
+              context,
+              title: local.translate("first_ride_offer"),
+              validity: local.translate("friday_only"),
+              color: Colors.green.shade600,
+            ),
             const SizedBox(height: 16),
             _buildOfferCard(
-                "خصم 20% للرحلات ضمن نفس المنطقة", "ينتهي يوم الاثنين", Colors.blue.shade600),
+              context,
+              title: local.translate("same_area_offer"),
+              validity: local.translate("until_monday"),
+              color: Colors.blue.shade600,
+            ),
             const SizedBox(height: 16),
 
             // Handle Web and Mobile Responsiveness
@@ -43,9 +60,23 @@ class OffersPage extends StatelessWidget {
               Expanded(
                 child: Row(
                   children: [
-                    Expanded(child: _buildOfferCard("عرض 10% على الرحلات لأول مرة", "يوم الجمعة فقط", Colors.green.shade600)),
+                    Expanded(
+                      child: _buildOfferCard(
+                        context,
+                        title: local.translate("first_ride_offer"),
+                        validity: local.translate("friday_only"),
+                        color: Colors.green.shade600,
+                      ),
+                    ),
                     const SizedBox(width: 16),
-                    Expanded(child: _buildOfferCard("خصم 20% للرحلات ضمن نفس المنطقة", "ينتهي يوم الاثنين", Colors.blue.shade600)),
+                    Expanded(
+                      child: _buildOfferCard(
+                        context,
+                        title: local.translate("same_area_offer"),
+                        validity: local.translate("until_monday"),
+                        color: Colors.blue.shade600,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -56,41 +87,63 @@ class OffersPage extends StatelessWidget {
     );
   }
 
-  Widget _buildOfferCard(String offerDescription, String validity, Color offerColor) {
+  Widget _buildOfferCard(
+    BuildContext context, {
+    required String title,
+    required String validity,
+    required Color color,
+  }) {
+    final theme = Theme.of(context);
+    final local = AppLocalizations.of(context);
+
     return Card(
       elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(offerDescription, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text(
+              title,
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
             const SizedBox(height: 8),
-            Text("صلاحية العرض: $validity", style: const TextStyle(color: Colors.grey)),
+            Text(
+              "${local.translate("offer_validity")}: $validity",
+              style: theme.textTheme.bodySmall,
+            ),
             const SizedBox(height: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: offerColor.withOpacity(0.2),
+                color: color.withOpacity(0.2),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
-                "خصم مميز",
-                style: TextStyle(color: offerColor, fontWeight: FontWeight.bold),
+                local.translate("special_discount"),
+                style: TextStyle(
+                  color: color,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
             const SizedBox(height: 8),
-            Row(
-              children: [
-                const Spacer(),
-                IconButton(
-                  icon: const Icon(Icons.arrow_forward_ios, color: Colors.blue),
-                  onPressed: () {
-                    // Navigate to offer details or take further actions
-                  },
+            Align(
+              alignment: Alignment.centerRight,
+              child: IconButton(
+                icon: Icon(
+                  LucideIcons.arrowRight,
+                  color: theme.colorScheme.primary,
                 ),
-              ],
+                onPressed: () {
+                  // Navigate to offer details or take further actions
+                },
+              ),
             ),
           ],
         ),
