@@ -20,7 +20,7 @@ class _MapScreenState extends State<MapScreen> {
   LatLng _initialPosition = LatLng(37.7749, -122.4194); // San Francisco
   final List<Marker> _markers = [];
   final List<List<LatLng>> _routeOptions = [];
-  final List<double> _routeDurations = [];
+  List<double> _routeDurations = [];
   late Marker _carMarker;
   String _estimatedTime = "";
   List<String> closedRoads = [];
@@ -116,6 +116,12 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
+  void _listenForRoadClosures() {
+    // هنا يجب استبدالها بمصدر بيانات مثل Firebase أو API
+    setState(() {
+      closedRoads = ["37.7749,-122.4194"]; // مثال لطريق مغلق
+    });
+  }
 
   @override
   Widget build(BuildContext context) {

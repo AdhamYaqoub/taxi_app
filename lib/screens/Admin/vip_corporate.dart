@@ -1,27 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:taxi_app/language/localization.dart';
 
 class VipCorporatePage extends StatelessWidget {
   const VipCorporatePage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    var theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: Colors.grey.shade100,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.purple.shade700,
-        title: const Text("إدارة العملاء VIP والشركات"),
+        title: Text(
+            AppLocalizations.of(context).translate('vip_corporate_management')),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildSectionTitle("حسابات الشركات"),
-            _buildCompanyManagementCard(),
+            _buildSectionTitle(
+                AppLocalizations.of(context).translate('company_accounts')),
+            _buildCompanyManagementCard(context),
             const SizedBox(height: 20),
-            _buildSectionTitle("خدمات VIP"),
-            _buildVipManagementCard(),
+            _buildSectionTitle(
+                AppLocalizations.of(context).translate('vip_services')),
+            _buildVipManagementCard(context),
           ],
         ),
       ),
@@ -38,28 +44,32 @@ class VipCorporatePage extends StatelessWidget {
     );
   }
 
-  Widget _buildCompanyManagementCard() {
+  Widget _buildCompanyManagementCard(BuildContext context) {
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ListTile(
         leading: const Icon(LucideIcons.building, color: Colors.blue),
-        title: const Text("إدارة حسابات الشركات"),
-        subtitle: const Text("إنشاء وتعديل ومتابعة حسابات الشركات المتعاقدة"),
+        title: Text(
+            AppLocalizations.of(context).translate('manage_company_accounts')),
+        subtitle: Text(AppLocalizations.of(context)
+            .translate('create_edit_follow_company_accounts')),
         trailing: const Icon(Icons.arrow_forward_ios),
         onTap: () {},
       ),
     );
   }
 
-  Widget _buildVipManagementCard() {
+  Widget _buildVipManagementCard(BuildContext context) {
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ListTile(
         leading: const Icon(LucideIcons.star, color: Colors.amber),
-        title: const Text("إدارة خدمات VIP"),
-        subtitle: const Text("منح امتيازات خاصة للعملاء المميزين ومتابعة حساباتهم"),
+        title:
+            Text(AppLocalizations.of(context).translate('manage_vip_services')),
+        subtitle: Text(
+            AppLocalizations.of(context).translate('grant_special_privileges')),
         trailing: const Icon(Icons.arrow_forward_ios),
         onTap: () {},
       ),

@@ -1,74 +1,142 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:provider/provider.dart';
+import 'package:taxi_app/language/localization.dart';
+import 'package:taxi_app/providers/theme_provider.dart';
+import 'package:taxi_app/providers/language_provider.dart';
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    bool isWeb = MediaQuery.of(context).size.width > 800;
+    final theme = Theme.of(context);
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final languageProvider = Provider.of<LanguageProvider>(context);
+    final isDarkMode = themeProvider.themeMode == ThemeMode.dark;
+    final isWeb = MediaQuery.of(context).size.width > 800;
+    final local = AppLocalizations.of(context);
 
     return Scaffold(
       appBar: isWeb
           ? null
           : AppBar(
-              backgroundColor: Colors.yellow.shade700,
-              title: const Text("⚙ الإعدادات والخصوصية"),
+              backgroundColor: theme.colorScheme.primary,
+              title: Text(
+                local.translate('settings_title'),
+                style: theme.textTheme.titleLarge?.copyWith(
+                  color: theme.colorScheme.onPrimary,
+                ),
+              ),
             ),
       body: Center(
         child: Container(
-          constraints: const BoxConstraints(maxWidth: 600), // ضبط العرض للويب
+          constraints: const BoxConstraints(maxWidth: 600),
           padding: const EdgeInsets.all(16.0),
           child: ListView(
             children: [
-              const Text("⚙ الإعدادات والخصوصية", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+              Text(
+                local.translate('settings_title'),
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               const SizedBox(height: 20),
-
-              // 🔹 الحساب والمعلومات الشخصية
-              _buildSettingsSection("👤 الحساب والمعلومات الشخصية", [
-                _buildSettingsItem("تعديل الملف الشخصي", LucideIcons.user, () {}),
-                _buildSettingsItem("تغيير كلمة المرور", LucideIcons.lock, () {}),
-                _buildSettingsItem("إدارة العناوين", LucideIcons.mapPin, () {}),
+              _buildSettingsSection(context, 'account_personal_info', [
+                _buildSettingsItem(
+                  context,
+                  'edit_profile',
+                  LucideIcons.user,
+                  () {},
+                ),
+                _buildSettingsItem(
+                  context,
+                  'change_password',
+                  LucideIcons.lock,
+                  () {},
+                ),
+                _buildSettingsItem(
+                  context,
+                  'manage_addresses',
+                  LucideIcons.mapPin,
+                  () {},
+                ),
               ]),
-
-              // 🔐 إعدادات الأمان والخصوصية
-              _buildSettingsSection("🔐 الأمان والخصوصية", [
-                _buildSettingsItem("المصادقة الثنائية", LucideIcons.shieldCheck, () {}),
-                _buildSettingsItem("إدارة الأذونات", LucideIcons.shieldAlert, () {}),
-                _buildSettingsItem("عرض سجل النشاطات", LucideIcons.fileSearch, () {}),
+              _buildSettingsSection(context, 'security_privacy', [
+                _buildSettingsItem(
+                  context,
+                  'two_factor_auth',
+                  LucideIcons.shieldCheck,
+                  () {},
+                ),
+                _buildSettingsItem(
+                  context,
+                  'manage_permissions',
+                  LucideIcons.shieldAlert,
+                  () {},
+                ),
+                _buildSettingsItem(
+                  context,
+                  'activity_log',
+                  LucideIcons.fileSearch,
+                  () {},
+                ),
               ]),
-
-              // 💳 إعدادات الدفع والفوترة
-              _buildSettingsSection("💳 الدفع والفوترة", [
-                _buildSettingsItem("إدارة بطاقات الدفع", LucideIcons.creditCard, () {}),
-                _buildSettingsItem("عرض الفواتير والمدفوعات", LucideIcons.receipt, () {}),
-                _buildSettingsItem("إعدادات الدفع التلقائي", LucideIcons.wallet, () {}),
+              _buildSettingsSection(context, 'app_settings', [
+                _buildSettingsItem(
+                  context,
+                  'dark_mode',
+                  isDarkMode ? LucideIcons.sun : LucideIcons.moon,
+                  () {
+                    themeProvider.toggleTheme();
+                  },
+                  trailing: Switch(
+                    value: isDarkMode,
+                    onChanged: (value) => themeProvider.toggleTheme(),
+                    activeColor: theme.colorScheme.secondary,
+                  ),
+                ),
+                _buildSettingsItem(
+                  context,
+                  'change_language',
+                  LucideIcons.globe,
+                  () {
+                    languageProvider.setLocale(
+                      languageProvider.locale.languageCode == 'ar'
+                          ? const Locale('en')
+                          : const Locale('ar'),
+                    );
+                  },
+                  trailing: Switch(
+                    value: languageProvider.locale.languageCode == 'ar',
+                    onChanged: (value) {
+                      languageProvider.setLocale(
+                        value ? const Locale('ar') : const Locale('en'),
+                      );
+                    },
+                    activeColor: theme.colorScheme.secondary,
+                  ),
+                ),
               ]),
-
-              // 🔔 إعدادات الإشعارات
-              _buildSettingsSection("🔔 إعدادات الإشعارات", [
-                _buildSettingsItem("إشعارات الرحلات", LucideIcons.bell, () {}),
-                _buildSettingsItem("إشعارات العروض والتخفيضات", LucideIcons.gift, () {}),
-                _buildSettingsItem("إشعارات الأمان والطوارئ", LucideIcons.alertTriangle, () {}),
-              ]),
-
-              // 🎨 إعدادات المظهر والتطبيق
-              _buildSettingsSection("🎨 إعدادات التطبيق", [
-              
-                _buildSettingsItem("الوضع الليلي", LucideIcons.moon, () {}),
-                _buildSettingsItem("تغيير اللغة", LucideIcons.globe, () {}),
-                _buildSettingsItem("إدارة حجم الخط والمظهر", LucideIcons.text, () {}),
-              ]),
-
-              // 🚪 تسجيل الخروج
               const SizedBox(height: 20),
               ElevatedButton.icon(
                 onPressed: () {},
-                icon: const Icon(LucideIcons.logOut, color: Colors.white),
-                label: const Text("تسجيل الخروج", style: TextStyle(color: Colors.white)),
+                icon: Icon(
+                  LucideIcons.logOut,
+                  color: theme.colorScheme.onError,
+                ),
+                label: Text(
+                  local.translate('logout'),
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    color: theme.colorScheme.onError,
+                  ),
+                ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red.shade600,
+                  backgroundColor: theme.colorScheme.error,
                   padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
               ),
             ],
@@ -78,28 +146,67 @@ class SettingsPage extends StatelessWidget {
     );
   }
 
-  /// ✅ أداة لإنشاء قسم الإعدادات
-  Widget _buildSettingsSection(String title, List<Widget> items) {
+  Widget _buildSettingsSection(
+    BuildContext context,
+    String titleKey,
+    List<Widget> items,
+  ) {
+    final theme = Theme.of(context);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 16),
-        Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        Text(
+          AppLocalizations.of(context).translate(titleKey),
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         const SizedBox(height: 10),
-        ...items,
+        Card(
+          elevation: 1,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Column(
+            children: items,
+          ),
+        ),
         const Divider(thickness: 1, height: 30),
       ],
     );
   }
 
-  /// ✅ أداة لإنشاء عنصر إعدادات فردي
-  Widget _buildSettingsItem(String title, IconData icon, VoidCallback onTap) {
+  Widget _buildSettingsItem(
+    BuildContext context,
+    String titleKey,
+    IconData icon,
+    VoidCallback onTap, {
+    Widget? trailing,
+  }) {
+    final theme = Theme.of(context);
+
     return ListTile(
-      leading: Icon(icon, color: Colors.yellow.shade700),
-      title: Text(title),
-      trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+      leading: Icon(
+        icon,
+        color: theme.colorScheme.secondary,
+      ),
+      title: Text(
+        AppLocalizations.of(context).translate(titleKey),
+        style: theme.textTheme.bodyLarge,
+      ),
+      trailing: trailing ??
+          Icon(
+            Icons.arrow_forward_ios,
+            size: 16,
+            color: theme.colorScheme.onSurface.withOpacity(0.6),
+          ),
       onTap: onTap,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+      ),
     );
   }
 }
-

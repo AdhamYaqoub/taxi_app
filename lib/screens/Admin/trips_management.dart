@@ -1,26 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:taxi_app/language/localization.dart';
 
 class TripsManagementPage extends StatelessWidget {
   const TripsManagementPage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    var theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: Colors.grey.shade100,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.yellow.shade700,
-        title: const Text("إدارة الرحلات"),
+        backgroundColor: theme.colorScheme.primary,
+        title: Text(AppLocalizations.of(context).translate('trips_management')),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildSectionTitle("الرحلات الجارية"),
+            _buildSectionTitle(
+                AppLocalizations.of(context).translate('ongoing_trips')),
             _buildTripList(),
             const SizedBox(height: 20),
-            _buildSectionTitle("الرحلات المنتهية"),
+            _buildSectionTitle(
+                AppLocalizations.of(context).translate('completed_trips')),
             _buildTripList(isOngoing: false),
           ],
         ),
@@ -51,9 +56,12 @@ class TripsManagementPage extends StatelessWidget {
                 isOngoing ? LucideIcons.car : LucideIcons.checkCircle,
                 color: isOngoing ? Colors.blue : Colors.green,
               ),
-              title: Text("رحلة #${index + 1}"),
+              title: Text(
+                  AppLocalizations.of(context).translate('trip_in_progress')),
               subtitle: Text(
-                isOngoing ? "في تقدم - السائق: أحمد" : "مكتملة - السائق: خالد",
+                isOngoing
+                    ? AppLocalizations.of(context).translate('trip_in_progress')
+                    : AppLocalizations.of(context).translate('trip_completed'),
               ),
               trailing: isOngoing
                   ? IconButton(

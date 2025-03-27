@@ -1,108 +1,225 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:provider/provider.dart';
+import 'package:taxi_app/language/localization.dart';
+import 'package:taxi_app/providers/theme_provider.dart';
+import 'package:taxi_app/providers/language_provider.dart';
 
 class DriverSettingsPage extends StatefulWidget {
   const DriverSettingsPage({super.key});
 
   @override
+  // ignore: library_private_types_in_public_api
   _DriverSettingsPageState createState() => _DriverSettingsPageState();
 }
 
 class _DriverSettingsPageState extends State<DriverSettingsPage> {
   bool notificationsEnabled = true;
-  bool darkModeEnabled = false;
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final languageProvider = Provider.of<LanguageProvider>(context);
+    final isDarkMode = themeProvider.themeMode == ThemeMode.dark;
+    final isWeb = MediaQuery.of(context).size.width > 800;
+    final local = AppLocalizations.of(context);
+
     return Scaffold(
-      backgroundColor: Colors.grey.shade200,
-      appBar: AppBar(
-        title: const Text("إعدادات السائق ⚙"),
-        backgroundColor: Colors.yellow.shade700,
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(16.0),
-        children: [
-          _buildSectionTitle("إعدادات الحساب"),
-          _buildSettingsItem(
-            icon: LucideIcons.user,
-            title: "تعديل الملف الشخصي",
-            subtitle: "تعديل معلومات الحساب",
-            onTap: () {},
-          ),
-          _buildSettingsItem(
-            icon: LucideIcons.bell,
-            title: "الإشعارات",
-            subtitle: "التحكم في التنبيهات",
-            trailing: Switch(
-              value: notificationsEnabled,
-              onChanged: (value) {
-                setState(() {
-                  notificationsEnabled = value;
-                });
-              },
-              activeColor: Colors.green,
+      appBar: isWeb
+          ? null
+          : AppBar(
+              backgroundColor: theme.colorScheme.primary,
+              title: Text(
+                local.translate('driver_settings_title'),
+                style: theme.textTheme.titleLarge?.copyWith(
+                  color: theme.colorScheme.onPrimary,
+                ),
+              ),
             ),
+      body: Center(
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 600),
+          padding: const EdgeInsets.all(16.0),
+          child: ListView(
+            children: [
+              Text(
+                local.translate('driver_settings_title'),
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // Account Settings Section
+              _buildSettingsSection(context, 'account_settings', [
+                _buildSettingsItem(
+                  context,
+                  'edit_profile',
+                  LucideIcons.user,
+                  () {},
+                ),
+                _buildSettingsItem(
+                  context,
+                  'notifications',
+                  LucideIcons.bell,
+                  () {
+                    setState(() {
+                      notificationsEnabled = !notificationsEnabled;
+                    });
+                  },
+                  trailing: Switch(
+                    value: notificationsEnabled,
+                    onChanged: (value) {
+                      setState(() {
+                        notificationsEnabled = value;
+                      });
+                    },
+                    activeColor: theme.colorScheme.secondary,
+                  ),
+                ),
+              ]),
+
+              // Display Settings Section
+              _buildSettingsSection(context, 'display_settings', [
+                _buildSettingsItem(
+                  context,
+                  'night_mode',
+                  isDarkMode ? LucideIcons.sun : LucideIcons.moon,
+                  () {
+                    themeProvider.toggleTheme();
+                  },
+                  trailing: Switch(
+                    value: isDarkMode,
+                    onChanged: (value) => themeProvider.toggleTheme(),
+                    activeColor: theme.colorScheme.secondary,
+                  ),
+                ),
+                _buildSettingsItem(
+                  context,
+                  'change_language',
+                  LucideIcons.globe,
+                  () {
+                    languageProvider.setLocale(
+                        languageProvider.locale.languageCode == 'ar'
+                            ? const Locale('en')
+                            : const Locale('ar'));
+                  },
+                  trailing: Switch(
+                    value: languageProvider.locale.languageCode == 'ar',
+                    onChanged: (value) {
+                      languageProvider.setLocale(
+                          value ? const Locale('ar') : const Locale('en'));
+                    },
+                    activeColor: theme.colorScheme.secondary,
+                  ),
+                ),
+              ]),
+
+              // Security Section
+              _buildSettingsSection(context, 'security_settings', [
+                _buildSettingsItem(
+                  context,
+                  'security_settings',
+                  LucideIcons.shieldCheck,
+                  () {},
+                ),
+                _buildSettingsItem(
+                  context,
+                  'change_password',
+                  LucideIcons.key,
+                  () {},
+                ),
+              ]),
+
+              const SizedBox(height: 20),
+              ElevatedButton.icon(
+                onPressed: () {},
+                icon: Icon(
+                  LucideIcons.logOut,
+                  color: theme.colorScheme.onError,
+                ),
+                label: Text(
+                  local.translate('logout'),
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    color: theme.colorScheme.onError,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: theme.colorScheme.error,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
+            ],
           ),
-          _buildSettingsItem(
-            icon: LucideIcons.moon,
-            title: "الوضع الليلي",
-            subtitle: "تفعيل أو تعطيل الوضع الداكن",
-            trailing: Switch(
-              value: darkModeEnabled,
-              onChanged: (value) {
-                setState(() {
-                  darkModeEnabled = value;
-                });
-              },
-              activeColor: Colors.black,
-            ),
-          ),
-          _buildSectionTitle("الأمان"),
-          _buildSettingsItem(
-            icon: LucideIcons.shieldCheck,
-            title: "إدارة الأمان",
-            subtitle: "إعدادات الأمان وحماية الحساب",
-            onTap: () {},
-          ),
-          _buildSettingsItem(
-            icon: LucideIcons.key,
-            title: "تغيير كلمة المرور",
-            subtitle: "إعادة تعيين كلمة المرور الخاصة بك",
-            onTap: () {},
-          ),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildSectionTitle(String title) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: Text(
-        title,
-        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-      ),
+  Widget _buildSettingsSection(
+    BuildContext context,
+    String titleKey,
+    List<Widget> items,
+  ) {
+    final theme = Theme.of(context);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 16),
+        Text(
+          AppLocalizations.of(context).translate(titleKey),
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 10),
+        Card(
+          elevation: 1,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Column(
+            children: items,
+          ),
+        ),
+        const Divider(thickness: 1, height: 30),
+      ],
     );
   }
 
-  Widget _buildSettingsItem({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    VoidCallback? onTap,
+  Widget _buildSettingsItem(
+    BuildContext context,
+    String titleKey,
+    IconData icon,
+    VoidCallback onTap, {
     Widget? trailing,
   }) {
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      elevation: 3,
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      child: ListTile(
-        leading: Icon(icon, color: Colors.black),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-        subtitle: Text(subtitle),
-        trailing: trailing,
-        onTap: onTap,
+    final theme = Theme.of(context);
+
+    return ListTile(
+      leading: Icon(
+        icon,
+        color: theme.colorScheme.secondary,
+      ),
+      title: Text(
+        AppLocalizations.of(context).translate(titleKey),
+        style: theme.textTheme.bodyLarge,
+      ),
+      trailing: trailing ??
+          Icon(
+            Icons.arrow_forward_ios,
+            size: 16,
+            color: theme.colorScheme.onSurface.withOpacity(0.6),
+          ),
+      onTap: onTap,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
       ),
     );
   }
