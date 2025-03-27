@@ -1,24 +1,73 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:taxi_app/screens/homepage.dart';
+import 'package:taxi_app/screens/driver_dashboard.dart'; // صفحة السائق
 import 'package:taxi_app/screens/signup_screen.dart';
 import 'package:taxi_app/widgets/CustomAppBar.dart';
 import 'components/custom_text_field.dart';
 import 'components/custom_button.dart';
 import 'components/social_button.dart';
 import 'forgot_password_screen.dart';
-import 'package:taxi_app/language/localization.dart'; // استيراد AppLocalizations
+import 'package:taxi_app/language/localization.dart';
 
-class SignInScreen extends StatelessWidget {
+class SignInScreen extends StatefulWidget {
+  const SignInScreen({super.key});
+
+  @override
+  _SignInScreenState createState() => _SignInScreenState();
+}
+
+class _SignInScreenState extends State<SignInScreen> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+  bool isLoading = false;
 
-  SignInScreen({super.key});
+  Future<void> signIn(BuildContext context) async {
+    setState(() => isLoading = true);
+
+    final String apiUrl = 'http://localhost:5000/api/users/signin'; // تأكد من عنوان السيرفر
+    final response = await http.post(
+      Uri.parse(apiUrl),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'email': emailController.text.trim(),
+        'password': passwordController.text.trim(),
+      }),
+    );
+
+    setState(() => isLoading = false);
+
+    if (response.statusCode == 200) {
+      try {
+        final data = jsonDecode(response.body);
+        if (data != null && data['role'] != null) {
+          String role = data['role']; // تأكد أن الـ API يعيد الدور (User/Driver)
+          if (role == "User") {
+            Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => HomePage()));
+          } else if (role == "Driver") {
+            Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => DriverDashboard()));
+          } else {
+            showError("Invalid role received!");
+          }
+        } else {
+          showError("Invalid data received from server.");
+        }
+      } catch (e) {
+        showError("Error parsing response data.");
+      }
+    } else {
+      showError("Login failed! Please check your credentials.");
+    }
+  }
+
+  void showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message, style: TextStyle(color: Colors.white)), backgroundColor: Colors.red));
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
-    // استخدام الترجمة من AppLocalizations
     String signInText = AppLocalizations.of(context).translate('sign_in');
     String emailHintText = AppLocalizations.of(context).translate('email_or_phone');
     String passwordHintText = AppLocalizations.of(context).translate('enter_password');
@@ -31,26 +80,19 @@ class SignInScreen extends StatelessWidget {
       appBar: CustomAppBar(),
       body: LayoutBuilder(
         builder: (context, constraints) {
-          bool isWeb = constraints.maxWidth > 600; // اعتبر الشاشة كبيرة إذا تجاوزت 600 بكسل
+          bool isWeb = constraints.maxWidth > 600;
           return Center(
             child: Container(
-              width: isWeb ? 400 : double.infinity, // وسط الشاشة في الويب
+              width: isWeb ? 400 : double.infinity,
               padding: EdgeInsets.symmetric(horizontal: 20.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   SizedBox(height: 20),
-                  Text(
-                    signInText,  // النص هنا سيكون مترجمًا
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: theme.textTheme.bodyLarge?.color,
-                    ),
-                  ),
+                  Text(signInText, style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color)),
                   SizedBox(height: 20),
                   CustomTextField(
-                    hintText: emailHintText,  // الترجمة هنا
+                    hintText: emailHintText,
                     controller: emailController,
                     width: double.infinity,
                     hintTextColor: theme.hintColor,
@@ -58,7 +100,7 @@ class SignInScreen extends StatelessWidget {
                   ),
                   SizedBox(height: 15),
                   CustomTextField(
-                    hintText: passwordHintText,  // الترجمة هنا
+                    hintText: passwordHintText,
                     obscureText: true,
                     suffixIcon: Icons.visibility_off,
                     controller: passwordController,
@@ -69,60 +111,36 @@ class SignInScreen extends StatelessWidget {
                   Align(
                     alignment: Alignment.centerRight,
                     child: TextButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => ForgotPasswordScreen()),
-                        );
-                      },
-                      child: Text(
-                        forgetPasswordText,  // الترجمة هنا
-                        style: TextStyle(color: theme.colorScheme.error),
-                      ),
+                      onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ForgotPasswordScreen())),
+                      child: Text(forgetPasswordText, style: TextStyle(color: theme.colorScheme.error)),
                     ),
                   ),
                   SizedBox(height: 10),
                   CustomButton(
-                    text: signInText,  // الترجمة هنا
+                    text: isLoading ? "Loading..." : signInText,
                     width: double.infinity,
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => HomePage()), // الانتقال إلى الصفحة الرئيسية
-                      );
-                    },
+                    onPressed: isLoading ? () {} : () => signIn(context),
                   ),
                   SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      SocialButton(assetPath: "assets/image-removebg-preview4.png"),
-                      SizedBox(width: 15),
-                      SocialButton(assetPath: "assets/image-removebg-preview4.png"),
-                      SizedBox(width: 15),
-                      SocialButton(assetPath: "assets/image-removebg-preview5.png"),
-                    ],
-                  ),
+                  Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                    SocialButton(assetPath: "assets/image-removebg-preview4.png"),
+                    SizedBox(width: 15),
+                    SocialButton(assetPath: "assets/image-removebg-preview4.png"),
+                    SizedBox(width: 15),
+                    SocialButton(assetPath: "assets/image-removebg-preview5.png"),
+                  ]),
                   Spacer(),
                   Center(
                     child: TextButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => SignUpScreen()),
-                        );
-                      },
+                      onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => SignUpScreen())),
                       child: Text.rich(
                         TextSpan(
-                          text: signUpText,  // الترجمة هنا
+                          text: signUpText,
                           style: TextStyle(color: theme.textTheme.bodyMedium?.color),
                           children: [
                             TextSpan(
-                              text: signUpLinkText,  // الترجمة هنا
-                              style: TextStyle(
-                                color: theme.primaryColor,
-                                fontWeight: FontWeight.bold,
-                              ),
+                              text: signUpLinkText,
+                              style: TextStyle(color: theme.primaryColor, fontWeight: FontWeight.bold),
                             ),
                           ],
                         ),
