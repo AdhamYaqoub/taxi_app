@@ -1,10 +1,13 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:taxi_app/screens/components/custom_button.dart';
 import 'package:taxi_app/screens/components/custom_text_field.dart';
 import 'package:country_picker/country_picker.dart';
+import 'package:taxi_app/screens/ecxel.dart';
 import 'package:taxi_app/screens/signin_screen.dart';
 import 'package:taxi_app/widgets/CustomAppBar.dart';
 import 'package:taxi_app/language/localization.dart';
+import 'package:http/http.dart' as http;
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -23,14 +26,55 @@ class _SignUpScreenState extends State<SignUpScreen> {
   String selectedCountryCode = '+1';
   String selectedCountryFlag = '🇺🇸';
   String? selectedGender = 'Male';
-  String? selectedRole = 'User';  // Added role selection
-  String? selectedTaxiOffice; // Added taxi office field for drivers
+  String? selectedRole = 'User';
+  String? selectedTaxiOffice;
   bool isPrivacyAccepted = false;
   bool isPasswordVisible = false;
   bool isConfirmPasswordVisible = false;
 
-  // List of taxi offices (for demonstration purposes)
   List<String> taxiOffices = ['Office 1', 'Office 2', 'Office 3'];
+Future<void> signUp() async {
+  if (selectedRole == 'Driver') {
+    bool isDriverValid = await isDriverInExcel(fullNameController.text);
+    if (!isDriverValid) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('السائق غير مسجل في قاعدة البيانات، يرجى إعادة المحاولة.')),
+      );
+      return;
+    }
+  }
+
+  final String url = 'http://localhost:5000/api/users/signup';
+  final response = await http.post(
+    Uri.parse(url),
+    headers: {'Content-Type': 'application/json'},
+    body: jsonEncode({
+      'fullName': fullNameController.text,
+      'phone': phoneController.text,
+      'email': emailController.text,
+      'password': passwordController.text,
+      'confirmPassword': confirmPasswordController.text,
+      'role': selectedRole,
+      'gender': selectedGender,
+      'taxiOffice': selectedRole == 'Driver' ? selectedTaxiOffice : null,
+    }),
+  );
+
+  if (response.statusCode == 201) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('تم إنشاء الحساب بنجاح')),
+    );
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => SignInScreen()),
+    );
+  } else {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('حدث خطأ أثناء إنشاء الحساب')),
+    );
+  }
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -55,7 +99,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   child: Column(
                     children: [
                       const SizedBox(height: 40),
-
                       CustomTextField(
                         hintText: localizations.translate('full_name'),
                         controller: fullNameController,
@@ -64,7 +107,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         textColor: textColor,
                       ),
                       const SizedBox(height: 15),
-
                       InkWell(
                         onTap: () {
                           showCountryPicker(
@@ -127,10 +169,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         hintTextColor: Colors.grey,
                         textColor: textColor,
                       ),
-
                       const SizedBox(height: 15),
-
-                      // Role selection (Driver or User)
                       DropdownButton<String>(
                         value: selectedRole,
                         dropdownColor: isDarkMode ? Colors.grey[900] : Colors.white,
@@ -138,7 +177,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           setState(() {
                             selectedRole = newValue;
                             if (selectedRole == 'User') {
-                              selectedTaxiOffice = null; // Clear taxi office if User is selected
+                              selectedTaxiOffice = null;
                             }
                           });
                         },
@@ -152,8 +191,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         hint: Text(localizations.translate('select_role'), style: TextStyle(color: textColor)),
                       ),
                       const SizedBox(height: 15),
-
-                      // Show taxi office dropdown only if "Driver" is selected
                       if (selectedRole == 'Driver')
                         DropdownButton<String>(
                           value: selectedTaxiOffice,
@@ -173,8 +210,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           hint: Text(localizations.translate('select_taxi_office'), style: TextStyle(color: textColor)),
                         ),
                       const SizedBox(height: 15),
-
-                      // Gender selection
                       DropdownButton<String>(
                         value: selectedGender,
                         dropdownColor: isDarkMode ? Colors.grey[900] : Colors.white,
@@ -193,7 +228,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         hint: Text(localizations.translate('select_gender'), style: TextStyle(color: textColor)),
                       ),
                       const SizedBox(height: 15),
-
                       Row(
                         children: [
                           Checkbox(
@@ -213,14 +247,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         ],
                       ),
                       const SizedBox(height: 10),
-
                       CustomButton(
                         text: localizations.translate('sign_up'),
                         width: double.infinity,
-                        onPressed: () {},
+                        onPressed: signUp,
                       ),
                       const SizedBox(height: 20),
-
                       Center(
                         child: TextButton(
                           onPressed: () {
