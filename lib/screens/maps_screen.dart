@@ -1,11 +1,24 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:location/location.dart';
+import 'package:flutter_compass/flutter_compass.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:async'; // لإضافة Timer
+
+void main() {
+  runApp(MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      home: MapScreen(),
+    );
+  }
+}
 
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
@@ -15,215 +28,249 @@ class MapScreen extends StatefulWidget {
 }
 
 class _MapScreenState extends State<MapScreen> {
-  final MapController _mapController = MapController();
-  final String mapboxAccessToken = "pk.eyJ1IjoiYWRoYW15YXFvdWIiLCJhIjoiY204M2d3c2Y0MTVtcjJqcXJwYm5ybWF3MyJ9.dISrwzTh0ZHENDm-MxEGwA";
-  LatLng _initialPosition = LatLng(37.7749, -122.4194); // San Francisco
-  final List<Marker> _markers = [];
-  final List<List<LatLng>> _routeOptions = [];
-  List<double> _routeDurations = [];
-  late Marker _carMarker;
-  String _estimatedTime = "";
-  List<String> closedRoads = [];
+  final MapController mapController = MapController();
+  final TextEditingController searchController = TextEditingController();
+  LocationData? currentLocation;
+  LatLng? destination;
+  List<LatLng> routePoints = [LatLng(0, 0)];
+  List<Marker> markers = [];
+  bool isRouteBlocked = false;
+  final String orsApiKey =
+      '5b3ce3597851110001cf62485bf8e58a124640b1bc61ce2b4825433e';
+  final String botToken = '7608922442:AAHaWNXgfJFxgPBi2VJgdWekfznFIQ-4ZOQ';
+  final String chatId = '-1002436928564';
+  Timer? _timer; // Timer للفحص التلقائي
+  double? deviceDirection = 0.0;
 
   @override
   void initState() {
     super.initState();
-    _getCurrentLocation();  // طلب الموقع عند بداية التطبيق
+    _getCurrentLocation();
+    _startRouteStatusChecker(); // بدء الفحص التلقائي
+    _listenToDeviceDirection(); // بدء الاستماع لاتجاه الجهاز
   }
 
-  Future<void> _getCurrentLocation() async {
-    // التحقق إذا كان لدينا إذن للوصول إلى الموقع
-    LocationPermission permission = await Geolocator.requestPermission();
-    if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
-      // إذا كان الإذن مرفوضًا، عرض رسالة للمستخدم
-      return;
-    }
+  @override
+  void dispose() {
+    _timer?.cancel(); // إيقاف الـ Timer عند إغلاق الصفحة
+    super.dispose();
+  }
 
-    // إذا كان الإذن معطى، نحدد الموقع الحالي
-    Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
-    setState(() {
-      _initialPosition = LatLng(position.latitude, position.longitude);  // تعيين الموقع الحالي كنقطة بداية
-      _carMarker = Marker(
-        width: 50.0,
-        height: 50.0,
-        point: _initialPosition,
-        child: Icon(Icons.directions_car, color: Colors.black, size: 40),
-      );
+  // بدء الفحص التلقائي كل 3 ثواني
+  void _startRouteStatusChecker() {
+    _timer = Timer.periodic(Duration(seconds: 3), (timer) async {
+      await _checkRouteStatus();
     });
-    _mapController.move(_initialPosition, 14.0);  // تحريك الخريطة إلى الموقع الحالي
   }
 
-  Future<void> _searchLocation(String query) async {
-    if (query.isEmpty) return;
-    final url = Uri.parse(
-        'https://api.mapbox.com/geocoding/v5/mapbox.places/$query.json?access_token=$mapboxAccessToken');
-    final response = await http.get(url);
+  // الحصول على الموقع الحالي للمستخدم
+  Future<void> _getCurrentLocation() async {
+    var location = Location();
+    try {
+      var userLocation = await location.getLocation();
+      setState(() {
+        currentLocation = userLocation;
+        markers.add(
+          Marker(
+            width: 80.0,
+            height: 80.0,
+            point: LatLng(userLocation.latitude!, userLocation.longitude!),
+            child:
+                const Icon(Icons.my_location, color: Colors.blue, size: 40.0),
+          ),
+        );
+      });
+    } catch (e) {
+      currentLocation = null;
+    }
+  }
+
+  // البحث عن المكان
+  Future<void> _searchLocation(String placeName) async {
+    if (placeName.isEmpty) return;
+
+    final response = await http.get(
+      Uri.parse(
+          'https://nominatim.openstreetmap.org/search?q=$placeName&format=json'),
+    );
+
+    if (response.statusCode != 200) return;
+
+    final List<dynamic> data = json.decode(response.body);
+    if (data.isEmpty) return;
+
+    final double lat = double.parse(data[0]['lat']);
+    final double lon = double.parse(data[0]['lon']);
+    setState(() {
+      destination = LatLng(lat, lon);
+      markers.add(
+        Marker(
+          width: 80.0,
+          height: 80.0,
+          point: destination!,
+          child: const Icon(Icons.location_on, color: Colors.red, size: 40.0),
+        ),
+      );
+      mapController.move(destination!, 15.0);
+    });
+  }
+
+  // الحصول على المسار من API
+  Future<void> _getRoute() async {
+    if (currentLocation == null || destination == null) return;
+
+    final start =
+        LatLng(currentLocation!.latitude!, currentLocation!.longitude!);
+    final response = await http.get(
+      Uri.parse(
+          'https://api.openrouteservice.org/v2/directions/driving-car?api_key=$orsApiKey&start=${start.longitude},${start.latitude}&end=${destination!.longitude},${destination!.latitude}'),
+    );
+
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       if (data['features'].isNotEmpty) {
-        final place = data['features'][0];
-        final location = LatLng(place['center'][1], place['center'][0]);
-        setState(() {
-          _markers.add(Marker(
-            width: 80.0,
-            height: 80.0,
-            point: location,
-            child: Icon(Icons.location_on, color: Colors.red, size: 40),
-          ));
-        });
-        _mapController.move(location, 14.0);
+        final List<dynamic> coords =
+            data['features'][0]['geometry']['coordinates'];
+        if (coords.isNotEmpty) {
+          setState(() {
+            routePoints =
+                coords.map((coord) => LatLng(coord[1], coord[0])).toList();
+          });
+        }
       }
     }
   }
 
-  Future<void> _drawRoutes(LatLng start, LatLng end) async {
-    final url = Uri.parse(
-        'https://api.mapbox.com/directions/v5/mapbox/driving/${start.longitude},${start.latitude};${end.longitude},${end.latitude}?geometries=geojson&alternatives=true&access_token=$mapboxAccessToken');
-    final response = await http.get(url);
+  // التحقق من حالة الطريق من التلجرام
+  Future<void> _checkRouteStatus() async {
+    final response = await http.get(
+      Uri.parse(
+          'https://api.telegram.org/bot$botToken/getUpdates?chat_id=$chatId'),
+    );
+
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
-      setState(() {
-        _routeOptions.clear();
-        _routeDurations.clear();
-        for (var route in data['routes']) {
-          final coordinates = route['geometry']['coordinates'] as List;
-          final duration = route['duration'] / 60; // تحويل الوقت من ثواني إلى دقائق
-          _routeDurations.add(duration);
-          _routeOptions.add(coordinates.map((coord) => LatLng(coord[1], coord[0])).toList());
-        }
-        _estimatedTime = "${_routeDurations[0].toStringAsFixed(1)} دقيقة";
-      });
-    }
-  }
-
-  void _startNavigation() {
-    if (_routeOptions.isNotEmpty) {
-      setState(() {
-        // Create dynamic polyline based on route options
-        // For now, just show the first available route
-        _routeOptions.forEach((route) {
-          PolylineLayer(
-            polylines: [
-              Polyline(
-                points: route,
-                strokeWidth: 4.0,
-                color: Colors.blue,  // or logic based on the route
-              ),
-            ],
-          );
+      final List<dynamic> updates = data['result'];
+      if (updates.isNotEmpty) {
+        final String lastMessage = updates.last['message']['text'] ?? '';
+        setState(() {
+          isRouteBlocked =
+              lastMessage.contains('مسكرة'); // تغيير الشرط حسب الرسالة
         });
-      });
+      }
     }
   }
 
-  void _listenForRoadClosures() {
-    // هنا يجب استبدالها بمصدر بيانات مثل Firebase أو API
-    setState(() {
-      closedRoads = ["37.7749,-122.4194"]; // مثال لطريق مغلق
+  // تحديث اتجاه الجهاز
+  void _listenToDeviceDirection() {
+    FlutterCompass.events?.listen((CompassEvent event) {
+      setState(() {
+        deviceDirection = event.heading;
+      });
+      _updateUserMarker();
     });
+  }
+
+  // تحديث رمز المستخدم مع اتجاه الجهاز
+  void _updateUserMarker() {
+    if (currentLocation == null) return;
+    markers = [
+      Marker(
+        width: 80.0,
+        height: 80.0,
+        point: LatLng(currentLocation!.latitude!, currentLocation!.longitude!),
+        child: Transform.rotate(
+          angle: (deviceDirection ?? 0) * (3.14159265359 / 180),
+          child: const Icon(Icons.navigation, color: Colors.blue, size: 50.0),
+        ),
+      ),
+    ];
+    setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("الخريطة التفاعلية - Mapbox")),
-      body: Stack(
+      appBar: AppBar(title: const Text('OpenStreetMap مع Flutter')),
+      body: Column(
         children: [
-          FlutterMap(
-            mapController: _mapController,
-            options: MapOptions(
-              initialCenter: _initialPosition,
-              maxZoom: 18,
-              onTap: (tapPosition, point) {
-                if (_markers.length >= 2) {
-                  _markers.clear();
-                  _routeOptions.clear();
-                  _routeDurations.clear();
-                }
-                setState(() {
-                  _markers.add(Marker(
-                    width: 80.0,
-                    height: 80.0,
-                    point: point,
-                    child: Icon(Icons.location_on, color: Colors.blue, size: 40),
-                  ));
-                });
-                if (_markers.length == 2) {
-                  _drawRoutes(_markers[0].point, _markers[1].point);
-                }
-              },
-            ),
-            children: [
-              TileLayer(
-                urlTemplate:
-                    "https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/{z}/{x}/{y}?access_token=$mapboxAccessToken",
-                additionalOptions: {'access_token': mapboxAccessToken},
-              ),
-              if (_routeOptions.isNotEmpty)
-                PolylineLayer(
-                  polylines: _routeOptions
-                      .asMap()
-                      .entries
-                      .map(
-                        (entry) => Polyline(
-                          points: entry.value,
-                          strokeWidth: 4.0,
-                          color: closedRoads.contains(entry.value.toString())
-                              ? Colors.red
-                              : entry.key == 0
-                                  ? Colors.blue
-                                  : Colors.green,
-                        ),
-                      )
-                      .toList(),
-                ),
-              MarkerLayer(markers: [..._markers, _carMarker]),
-            ],
-          ),
-          Positioned(
-            top: 10,
-            left: 15,
-            right: 15,
-            child: TextField(
-              style: TextStyle(color: Colors.black),
-              decoration: InputDecoration(
-                hintText: "ابحث عن مكان...",
-                hintStyle: TextStyle(color: Colors.grey),
-                fillColor: Colors.white,
-                filled: true,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                suffixIcon: Icon(Icons.search, color: Colors.black),
-              ),
-              onSubmitted: (value) => _searchLocation(value),
-            ),
-          ),
-          if (_routeDurations.isNotEmpty)
-            Positioned(
-              bottom: 80,
-              left: 15,
-              right: 15,
-              child: Container(
-                padding: EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: const Color.fromARGB(255, 16, 15, 15),
-                  borderRadius: BorderRadius.circular(10),
-                  boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 5)],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text("المسافة: ${(_routeDurations[0] * 1.5).toStringAsFixed(1)} كم",
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                    Text("الوقت المتوقع: $_estimatedTime",
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                    ElevatedButton(
-                      onPressed: _startNavigation,
-                      child: Text("ابدأ الرحلة"),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: searchController,
+                    decoration: const InputDecoration(
+                      hintText: 'ابحث عن مكان...',
+                      border: OutlineInputBorder(),
+                      suffixIcon: Icon(Icons.search),
                     ),
-                  ],
+                  ),
                 ),
-              ),
+                IconButton(
+                  icon: const Icon(Icons.search),
+                  onPressed: () {
+                    _searchLocation(searchController.text);
+                  },
+                ),
+              ],
             ),
+          ),
+          Expanded(
+            child: currentLocation == null
+                ? const Center(child: CircularProgressIndicator())
+                : FlutterMap(
+                    mapController: mapController,
+                    options: MapOptions(
+                      initialCenter: LatLng(currentLocation!.latitude!,
+                          currentLocation!.longitude!),
+                      initialZoom: 15.0,
+                    ),
+                    children: [
+                      TileLayer(
+                        urlTemplate:
+                            "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+                        subdomains: const ['a', 'b', 'c'],
+                      ),
+                      MarkerLayer(markers: markers),
+                      PolylineLayer<LatLng>(polylines: [
+                        Polyline<LatLng>(
+                          points: routePoints,
+                          strokeWidth: 4.0,
+                          color: isRouteBlocked ? Colors.red : Colors.blue,
+                        ),
+                      ]),
+                    ],
+                  ),
+          ),
+        ],
+      ),
+      floatingActionButton: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          FloatingActionButton(
+            onPressed: () {
+              if (destination != null) {
+                _getRoute();
+              }
+            },
+            tooltip: 'ابدأ المسار',
+            child: const Icon(Icons.directions),
+          ),
+          const SizedBox(height: 10),
+          FloatingActionButton(
+            onPressed: () {
+              if (currentLocation != null) {
+                mapController.move(
+                  LatLng(
+                      currentLocation!.latitude!, currentLocation!.longitude!),
+                  15.0,
+                );
+              }
+            },
+            child: const Icon(Icons.my_location),
+          ),
         ],
       ),
     );

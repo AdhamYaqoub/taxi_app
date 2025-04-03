@@ -10,6 +10,11 @@ const db = require('./config/db');
 // استيراد المسارات (routes)
 const userRoutes = require('./routes/userRoutes');
 
+const driverRoutes = require('./routes/tripsRoutes');
+
+const tripRoutes = require('./routes/tripsRoutes');
+
+
 // تحميل ملف البيئة
 dotenv.config();
 
@@ -24,6 +29,11 @@ db();
 
 // استخدام المسارات الخاصة بالمستخدم
 app.use('/api/users', userRoutes);
+// استخدام المسارات الخاصة بالسائق
+app.use('/api/drivers', driverRoutes);
+
+// استخدام المسارات الخاصة بالرحلات
+app.use('/api', tripRoutes);  // مسارات الرحلات
 
 // بدء السيرفر
 const PORT = process.env.PORT || 5000;
