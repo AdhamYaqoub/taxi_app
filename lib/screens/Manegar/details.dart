@@ -47,7 +47,8 @@ class DriverDetailsPage extends StatelessWidget {
               CircleAvatar(
                 radius: 80,
                 backgroundColor: Colors.yellow.shade700,
-                child: Text(driver["name"]![0], style: const TextStyle(fontSize: 50, color: Colors.white)),
+                child: Text(driver["name"]![0],
+                    style: const TextStyle(fontSize: 50, color: Colors.white)),
               ),
               const SizedBox(width: 30),
 
@@ -56,12 +57,17 @@ class DriverDetailsPage extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildDetailRow(Icons.phone, "رقم الهاتف", driver["phone"]!),
-                    _buildDetailRow(Icons.directions_car, "عدد الرحلات", driver["trips"]!),
-                    _buildDetailRow(Icons.attach_money, "إجمالي الأرباح", driver["earnings"]!),
+                    _buildDetailRow(
+                        Icons.phone, "رقم الهاتف", driver["phone"]!),
+                    _buildDetailRow(
+                        Icons.directions_car, "عدد الرحلات", driver["trips"]!),
+                    _buildDetailRow(Icons.attach_money, "إجمالي الأرباح",
+                        driver["earnings"]!),
                     _buildDetailRow(Icons.star, "التقييم", "4.8 ⭐"),
-                    _buildDetailRow(Icons.access_time, "آخر رحلة", "قبل 2 ساعة"),
-                    _buildDetailRow(Icons.location_on, "الموقع الحالي", "رام الله - فلسطين"),
+                    _buildDetailRow(
+                        Icons.access_time, "آخر رحلة", "قبل 2 ساعة"),
+                    _buildDetailRow(Icons.location_on, "الموقع الحالي",
+                        "رام الله - فلسطين"),
                     _buildDetailRow(Icons.wifi, "حالة الإنترنت", "متصل ✅"),
 
                     const SizedBox(height: 20),
@@ -69,9 +75,11 @@ class DriverDetailsPage extends StatelessWidget {
                     // 🔘 أزرار العمليات
                     Row(
                       children: [
-                        _buildButton(Icons.phone, "اتصل بالسائق", Colors.green, () => _callDriver(driver["phone"]!)),
+                        _buildButton(Icons.phone, "اتصل بالسائق", Colors.green,
+                            () => _callDriver(driver["phone"]!)),
                         const SizedBox(width: 15),
-                        _buildButton(Icons.history, "سجل الرحلات", Colors.blueAccent, () => _navigateToTrips(context)),
+                        _buildButton(Icons.history, "سجل الرحلات",
+                            Colors.blueAccent, () => _navigateToTrips(context)),
                       ],
                     ),
                   ],
@@ -93,27 +101,29 @@ class DriverDetailsPage extends StatelessWidget {
           child: CircleAvatar(
             radius: 50,
             backgroundColor: Colors.yellow.shade700,
-            child: Text(driver["name"]![0], style: const TextStyle(fontSize: 30, color: Colors.white)),
+            child: Text(driver["name"]![0],
+                style: const TextStyle(fontSize: 30, color: Colors.white)),
           ),
         ),
         const SizedBox(height: 16),
-
         _buildDetailRow(Icons.phone, "رقم الهاتف", driver["phone"]!),
         _buildDetailRow(Icons.directions_car, "عدد الرحلات", driver["trips"]!),
-        _buildDetailRow(Icons.attach_money, "إجمالي الأرباح", driver["earnings"]!),
+        _buildDetailRow(
+            Icons.attach_money, "إجمالي الأرباح", driver["earnings"]!),
         _buildDetailRow(Icons.star, "التقييم", "4.8 ⭐"),
         _buildDetailRow(Icons.access_time, "آخر رحلة", "قبل 2 ساعة"),
-        _buildDetailRow(Icons.location_on, "الموقع الحالي", "رام الله - فلسطين"),
+        _buildDetailRow(
+            Icons.location_on, "الموقع الحالي", "رام الله - فلسطين"),
         _buildDetailRow(Icons.wifi, "حالة الإنترنت", "متصل ✅"),
-
         const SizedBox(height: 20),
-
         Center(
           child: Column(
             children: [
-              _buildButton(Icons.phone, "اتصل بالسائق", Colors.green, () => _callDriver(driver["phone"]!)),
+              _buildButton(Icons.phone, "اتصل بالسائق", Colors.green,
+                  () => _callDriver(driver["phone"]!)),
               const SizedBox(height: 10),
-              _buildButton(Icons.history, "سجل الرحلات", Colors.blueAccent, () => _navigateToTrips(context)),
+              _buildButton(Icons.history, "سجل الرحلات", Colors.blueAccent,
+                  () => _navigateToTrips(context)),
             ],
           ),
         ),
@@ -122,7 +132,8 @@ class DriverDetailsPage extends StatelessWidget {
   }
 
   // 🎨 زر موحد
-  Widget _buildButton(IconData icon, String text, Color color, VoidCallback onPressed) {
+  Widget _buildButton(
+      IconData icon, String text, Color color, VoidCallback onPressed) {
     return ElevatedButton.icon(
       onPressed: onPressed,
       icon: Icon(icon),
@@ -143,9 +154,12 @@ class DriverDetailsPage extends StatelessWidget {
         children: [
           Icon(icon, color: Colors.yellow.shade700, size: 28),
           const SizedBox(width: 10),
-          Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          Text(title,
+              style:
+                  const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const Spacer(),
-          Text(value, style: const TextStyle(fontSize: 16, color: Colors.black54)),
+          Text(value,
+              style: const TextStyle(fontSize: 16, color: Colors.black54)),
         ],
       ),
     );
@@ -154,14 +168,37 @@ class DriverDetailsPage extends StatelessWidget {
   // 📂 التنقل إلى سجل الرحلات
   void _navigateToTrips(BuildContext context) {
     List<Map<String, String>> sampleTrips = [
-      {"date": "22-03-2025", "distance": "12", "duration": "20 دقيقة", "fare": "15", "status": "مدفوع", "rating": "5⭐"},
-      {"date": "21-03-2025", "distance": "8", "duration": "15 دقيقة", "fare": "10", "status": "غير مدفوع", "rating": "4.5⭐"},
-      {"date": "20-03-2025", "distance": "20", "duration": "30 دقيقة", "fare": "25", "status": "مدفوع", "rating": "4⭐"},
+      {
+        "date": "22-03-2025",
+        "distance": "12",
+        "duration": "20 دقيقة",
+        "fare": "15",
+        "status": "مدفوع",
+        "rating": "5⭐"
+      },
+      {
+        "date": "21-03-2025",
+        "distance": "8",
+        "duration": "15 دقيقة",
+        "fare": "10",
+        "status": "غير مدفوع",
+        "rating": "4.5⭐"
+      },
+      {
+        "date": "20-03-2025",
+        "distance": "20",
+        "duration": "30 دقيقة",
+        "fare": "25",
+        "status": "مدفوع",
+        "rating": "4⭐"
+      },
     ];
 
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => DriverTripsPage(driverName: driver["name"]!, trips: sampleTrips)),
+      MaterialPageRoute(
+        builder: (context) => DriverTripsPage(driverId: 1),
+      ),
     );
   }
 }

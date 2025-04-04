@@ -79,5 +79,37 @@ const getDriverTrips = async (req, res) => {
     }
 };
 
+// الحصول على آخر الرحلات للسائق مع تحديد الحد الأقصى
+const getRecentTrips = async (req, res) => {
+  try {
+      const driverUserId = Number(req.params.userId);
+      const limit = parseInt(req.query.limit) || 3; // القيمة الافتراضية 2 إذا لم يتم تحديد limit
 
-module.exports = { addTrip, updateTripStatus, getDriverTrips };
+      if (isNaN(driverUserId)) {
+          return res.status(400).json({ message: "Invalid driver ID" });
+      }
+
+      const driver = await User.findOne({ userId: driverUserId });
+      if (!driver) {
+          return res.status(404).json({ message: "Driver not found" });
+      }
+
+      const trips = await Trip.find({ driverId: driver.userId })
+          .sort({ createdAt: -1 }) // ترتيب تنازلي حسب تاريخ الإنشاء
+          .limit(limit); // تحديد عدد العناصر المراد عرضها
+
+      res.status(200).json({ trips });
+  } catch (error) {
+      console.error("Error fetching recent trips:", error);
+      res.status(500).json({ message: "Error fetching recent trips" });
+  }
+};
+
+
+// أضف الدوال الجديدة للتصدير
+module.exports = { 
+  addTrip, 
+  updateTripStatus, 
+  getDriverTrips,
+  getRecentTrips,
+};

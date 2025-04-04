@@ -1,9 +1,38 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:taxi_app/language/localization.dart';
+import 'package:taxi_app/models/trip.dart';
+import 'package:taxi_app/services/trips_api.dart';
 
-class DriverHomePage extends StatelessWidget {
-  const DriverHomePage({super.key});
+class DriverHomePage extends StatefulWidget {
+  final int driverId;
+
+  const DriverHomePage({super.key, required this.driverId});
+
+  @override
+  State<DriverHomePage> createState() => _DriverHomePageState();
+}
+
+class _DriverHomePageState extends State<DriverHomePage> {
+  late Future<List<Trip>> _recentTripsFuture;
+  late Future<Map<String, dynamic>> _statsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _recentTripsFuture = TripsApi.getRecentTrips(widget.driverId, limit: 2);
+    _statsFuture = _fetchDriverStats();
+  }
+
+  Future<Map<String, dynamic>> _fetchDriverStats() async {
+    // يمكنك استبدال هذا باستدعاء API فعلي
+    return {
+      'today_trips': 12,
+      'today_earnings': 150,
+      'ratings': 4.8,
+      'active_hours': 8,
+    };
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -22,10 +51,27 @@ class DriverHomePage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            children: _buildStats(context),
+          FutureBuilder<Map<String, dynamic>>(
+            future: _statsFuture,
+            builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                return Text('Error: ${snapshot.error}');
+              }
+
+              final stats = snapshot.data ??
+                  {
+                    'today_trips': '--',
+                    'today_earnings': '--',
+                    'ratings': '--',
+                    'active_hours': '--',
+                  };
+
+              return Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: _buildStats(context, stats),
+              );
+            },
           ),
           const SizedBox(height: 20),
           _buildRecentTrips(context),
@@ -34,32 +80,32 @@ class DriverHomePage extends StatelessWidget {
     );
   }
 
-  List<Widget> _buildStats(BuildContext context) {
+  List<Widget> _buildStats(BuildContext context, Map<String, dynamic> stats) {
     final local = AppLocalizations.of(context);
 
     return [
       _buildStatCard(
         context,
         title: local.translate('today_trips'),
-        value: "12",
+        value: "${stats['today_trips']}",
         icon: LucideIcons.car,
       ),
       _buildStatCard(
         context,
         title: local.translate('today_earnings'),
-        value: "\$150",
+        value: "\$${stats['today_earnings']}",
         icon: LucideIcons.dollarSign,
       ),
       _buildStatCard(
         context,
         title: local.translate('ratings'),
-        value: "4.8",
+        value: "${stats['ratings']}",
         icon: LucideIcons.star,
       ),
       _buildStatCard(
         context,
         title: local.translate('active_hours'),
-        value: "8h",
+        value: "${stats['active_hours']}h",
         icon: LucideIcons.clock,
       ),
     ];
@@ -135,34 +181,63 @@ class DriverHomePage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 12),
-            ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: 5,
-              separatorBuilder: (context, index) => Divider(
-                height: 1,
-                color: theme.dividerColor,
-              ),
-              itemBuilder: (context, index) {
-                return ListTile(
-                  leading: Icon(
-                    LucideIcons.car,
-                    color: theme.colorScheme.secondary,
+            FutureBuilder<List<Trip>>(
+              future: _recentTripsFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                if (snapshot.hasError) {
+                  return Text('Error: ${snapshot.error}');
+                }
+
+                final trips = snapshot.data ?? [];
+
+                if (trips.isEmpty) {
+                  return Text(local.translate('no_recent_trips'));
+                }
+
+                return ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: trips.length,
+                  separatorBuilder: (context, index) => Divider(
+                    height: 1,
+                    color: theme.dividerColor,
                   ),
-                  title: Text(
-                    "${local.translate('trip')} #${index + 1}",
-                    style: theme.textTheme.bodyLarge,
-                  ),
-                  subtitle: Text(
-                    "${local.translate('distance')}: ${(index + 1) * 5} ${local.translate('km')}",
-                    style: theme.textTheme.bodySmall,
-                  ),
-                  trailing: Text(
-                    "\$${(index + 1) * 10}",
-                    style: theme.textTheme.bodyLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  itemBuilder: (context, index) {
+                    final trip = trips[index];
+                    return ListTile(
+                      leading: Icon(
+                        LucideIcons.car,
+                        color: theme.colorScheme.secondary,
+                      ),
+                      title: Text(
+                        "${local.translate('trip')} #${trip.tripId}",
+                        style: theme.textTheme.bodyLarge,
+                      ),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "${local.translate('from')}: ${trip.startLocation}",
+                            style: theme.textTheme.bodySmall,
+                          ),
+                          Text(
+                            "${local.translate('to')}: ${trip.endLocation}",
+                            style: theme.textTheme.bodySmall,
+                          ),
+                        ],
+                      ),
+                      trailing: Text(
+                        "\$${trip.earnings.toStringAsFixed(2)}",
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    );
+                  },
                 );
               },
             ),
