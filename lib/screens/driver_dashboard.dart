@@ -19,9 +19,13 @@ class _DriverDashboardState extends State<DriverDashboard> {
   int _selectedIndex = 0;
 
   final List<Widget> _pages = [
-    const DriverHomePage(),
-    const DriverTripsPage(driverName: '', trips: []),
-    const EarningsPage(),
+    const DriverHomePage(
+      driverId: 1,
+    ),
+    const DriverTripsPage(driverId: 1), // استبدل 123 بالـ driverId الفعلي
+    const EarningsPage(
+      driverId: 1,
+    ),
     const SupportPage(),
     const DriverSettingsPage(),
   ];
@@ -106,6 +110,7 @@ class _DriverDashboardState extends State<DriverDashboard> {
         color: theme.colorScheme.primary,
         boxShadow: [
           BoxShadow(
+            // ignore: deprecated_member_use
             color: Colors.black.withOpacity(0.1),
             blurRadius: 10,
           ),
@@ -175,6 +180,7 @@ class _DriverDashboardState extends State<DriverDashboard> {
           ),
           const SizedBox(height: 10),
           Divider(
+            // ignore: deprecated_member_use
             color: theme.colorScheme.onPrimary.withOpacity(0.2),
             thickness: 1,
           ),
@@ -193,6 +199,7 @@ class _DriverDashboardState extends State<DriverDashboard> {
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
         color: _selectedIndex == index
+            // ignore: deprecated_member_use
             ? theme.colorScheme.secondary.withOpacity(0.2)
             : Colors.transparent,
         borderRadius: BorderRadius.circular(8),
@@ -202,6 +209,7 @@ class _DriverDashboardState extends State<DriverDashboard> {
           icon,
           color: _selectedIndex == index
               ? theme.colorScheme.secondary
+              // ignore: deprecated_member_use
               : theme.colorScheme.onPrimary.withOpacity(0.8),
         ),
         title: Text(
@@ -225,6 +233,7 @@ class _DriverDashboardState extends State<DriverDashboard> {
       type: BottomNavigationBarType.fixed,
       backgroundColor: theme.colorScheme.primary,
       selectedItemColor: theme.colorScheme.onPrimary,
+      // ignore: deprecated_member_use
       unselectedItemColor: theme.colorScheme.onPrimary.withOpacity(0.6),
       selectedLabelStyle: theme.textTheme.labelSmall?.copyWith(
         fontWeight: FontWeight.bold,
