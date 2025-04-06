@@ -1,19 +1,45 @@
 const express = require('express');
-const { addTrip, updateTripStatus, getDriverTrips, getRecentTrips} = require('../controllers/tripsController');
 const router = express.Router();
+const tripController = require('../controllers/tripsController');
 
-// إضافة رحلة جديدة
-router.post('/trips', addTrip);
+// إنشاء رحلة جديدة من قبل المستخدم
+router.post('/', tripController.createTrip);
 
-// تحديث حالة الرحلة
-router.patch('/trips/status', updateTripStatus);
+// قبول الرحلة من السائق
+router.post('/:tripId/accept', tripController.acceptTrip);
 
-// الحصول على جميع الرحلات الخاصة بسائق
-router.get('/trips/driver/:userId', getDriverTrips);
+// رفض الرحلة من السائق
+router.post('/:tripId/reject', tripController.rejectTrip);
 
-// الحصول على آخر الرحلات للسائق مع تحديد الحد
-router.get('/trips/driver/:userId/recent', getRecentTrips);
+// إنهاء الرحلة
+router.post('/:tripId/complete', tripController.completeTrip);
+
+// جلب جميع الرحلات (اختياري - يمكن تخصيصه لاحقًا)
+// router.get('/trips', tripController.getAllTrips);
+
+// جلب تفاصيل رحلة واحدة (يمكنك تعديلها لاحقاً لجلب رحلة برقم ID مثلاً)
+// router.get('/trips/:tripId', tripController.getTripById);
+
+// ✅ جلب جميع الرحلات لسائق معيّن
+// router.get('/driver/:driverId', tripController.getDriverTrips);
+
+// ✅ جلب آخر 3 رحلات فقط لسائق معيّن
+router.get('/driver/:driverId/recent', tripController.getDriverRecentTrips);
+
+// بدأ الرحلة من قبل السائق
+router.post('/:tripId/start', tripController.startTrip);
+
+// جلب الرحلات بناءً على الحالة (مثلاً: قيد التنفيذ، مكتملة، ملغاة، إلخ)
+router.get('/driver/:driverId/status', tripController.getDriverTripsByStatus);
 
 
+// GET /api/trips/driver/:driverId
+router.get('/driver/:driverId', tripController.getDriverTrips);
+
+// PUT /api/trips/:tripId/status
+router.put('/:tripId/status', tripController.updateTripStatus);
+
+// GET /api/trips/pending
+router.get('/pending', tripController.getPendingTrips);
 
 module.exports = router;

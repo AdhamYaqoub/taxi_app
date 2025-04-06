@@ -25,7 +25,7 @@ class _EarningsPageState extends State<EarningsPage> {
 
   // دالة لحساب إجمالي الأرباح محلياً
   double _calculateTotalEarnings(List<Trip> trips) {
-    return trips.fold(0, (sum, trip) => sum + trip.earnings);
+    return trips.fold(0, (sum, trip) => sum + trip.estimatedFare);
   }
 
   @override
@@ -166,7 +166,7 @@ class _EarningsPageState extends State<EarningsPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "${local.translate('date')}: ${DateFormat('yyyy-MM-dd').format(trip.startTime)}",
+                  "${local.translate('date')}: ${trip.startTime != null ? DateFormat('yyyy-MM-dd').format(trip.startTime!) : local.translate('unknown')}",
                   style: theme.textTheme.bodySmall,
                 ),
                 Text(
@@ -176,7 +176,7 @@ class _EarningsPageState extends State<EarningsPage> {
               ],
             ),
             trailing: Text(
-              "\$${trip.earnings.toStringAsFixed(2)}",
+              "\$${trip.estimatedFare.toStringAsFixed(2)}",
               style: theme.textTheme.bodyLarge?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: theme.colorScheme.primary,
