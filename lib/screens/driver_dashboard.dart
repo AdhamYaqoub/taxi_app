@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:taxi_app/language/localization.dart';
+import 'package:taxi_app/screens/Driver/driver_requests.dart';
 import 'Driver/driver_home.dart';
 import 'Driver/driver_trips.dart';
 import 'Driver/earnings.dart';
@@ -19,13 +20,12 @@ class _DriverDashboardState extends State<DriverDashboard> {
   int _selectedIndex = 0;
 
   final List<Widget> _pages = [
-    const DriverHomePage(
+    const DriverHomePage(driverId: 1),
+    const DriverRequestsPage(
       driverId: 1,
     ),
-    const DriverTripsPage(driverId: 1), // استبدل 123 بالـ driverId الفعلي
-    const EarningsPage(
-      driverId: 1,
-    ),
+    const DriverTripsPage(driverId: 1),
+    const EarningsPage(driverId: 1),
     const SupportPage(),
     const DriverSettingsPage(),
   ];
@@ -74,27 +74,33 @@ class _DriverDashboardState extends State<DriverDashboard> {
               theme,
             ),
             _buildSidebarItem(
+              local.translate('trip_requests'), // ترجمة جديدة
+              LucideIcons.list,
+              1,
+              theme,
+            ),
+            _buildSidebarItem(
               local.translate('my_trips'),
               LucideIcons.car,
-              1,
+              2,
               theme,
             ),
             _buildSidebarItem(
               local.translate('earnings'),
               LucideIcons.dollarSign,
-              2,
+              3,
               theme,
             ),
             _buildSidebarItem(
               local.translate('support'),
               LucideIcons.headphones,
-              3,
+              4,
               theme,
             ),
             _buildSidebarItem(
               local.translate('settings'),
               LucideIcons.settings,
-              4,
+              5,
               theme,
             ),
           ],
@@ -129,27 +135,33 @@ class _DriverDashboardState extends State<DriverDashboard> {
                   theme,
                 ),
                 _buildSidebarItem(
+                  local.translate('trip_requests'),
+                  LucideIcons.list,
+                  1,
+                  theme,
+                ),
+                _buildSidebarItem(
                   local.translate('my_trips'),
                   LucideIcons.car,
-                  1,
+                  2,
                   theme,
                 ),
                 _buildSidebarItem(
                   local.translate('earnings'),
                   LucideIcons.dollarSign,
-                  2,
+                  3,
                   theme,
                 ),
                 _buildSidebarItem(
                   local.translate('support'),
                   LucideIcons.headphones,
-                  3,
+                  4,
                   theme,
                 ),
                 _buildSidebarItem(
                   local.translate('settings'),
                   LucideIcons.settings,
-                  4,
+                  5,
                   theme,
                 ),
               ],
@@ -244,6 +256,10 @@ class _DriverDashboardState extends State<DriverDashboard> {
           label: local.translate('home'),
         ),
         BottomNavigationBarItem(
+          icon: Icon(LucideIcons.list),
+          label: local.translate('trip_requests'),
+        ),
+        BottomNavigationBarItem(
           icon: Icon(LucideIcons.car),
           label: local.translate('my_trips'),
         ),
@@ -254,10 +270,6 @@ class _DriverDashboardState extends State<DriverDashboard> {
         BottomNavigationBarItem(
           icon: Icon(LucideIcons.headphones),
           label: local.translate('support'),
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(LucideIcons.settings),
-          label: local.translate('settings'),
         ),
       ],
     );
