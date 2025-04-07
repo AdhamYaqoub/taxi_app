@@ -8,7 +8,7 @@ const bodyParser = require('body-parser');
 const db = require('./config/db');
 
 // استيراد المسارات (routes)
-const userRoutes = require('./routes/userRoutes');
+const userRoutes = require('./routes/user.Routes');
 
 // تحميل ملف البيئة
 dotenv.config();

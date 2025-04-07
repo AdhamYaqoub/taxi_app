@@ -4,6 +4,8 @@ import 'package:flutter_sound/flutter_sound.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'dart:io';
 
+import 'package:taxi_app/screens/call_page.dart';
+
 class ChatScreen extends StatefulWidget {
   @override
   _ChatScreenState createState() => _ChatScreenState();
@@ -200,6 +202,18 @@ class _ChatScreenState extends State<ChatScreen> {
             icon: Icon(_isRecording ? Icons.stop : Icons.mic, color: Colors.red),
             onPressed: _isRecording ? _stopRecording : _startRecording,
           ),
+          IconButton(
+  icon: Icon(Icons.call, color: Colors.green),
+  onPressed: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => VoiceCallScreen(channelName: "chat_room", uid: 1),
+      ),
+    );
+  },
+),
+
         ],
       ),
     );

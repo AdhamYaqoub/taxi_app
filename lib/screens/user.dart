@@ -7,7 +7,18 @@ import 'User/payment_page.dart';
 import 'User/offers_page.dart';
 import 'User/settings_page.dart';
 import 'User/support_page.dart';
+void main() => runApp(MyApp());
 
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Taxi App with Google Maps',
+      theme: ThemeData(primarySwatch: Colors.blue),
+      home: UserDashboard(),
+    );
+  }
+}
 class UserDashboard extends StatefulWidget {
   const UserDashboard({super.key});
 

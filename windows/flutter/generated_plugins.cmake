@@ -3,14 +3,13 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
-  audioplayers_windows
+  agora_rtc_engine
   file_selector_windows
   firebase_core
   flutter_secure_storage_windows
   geolocator_windows
-  objectbox_flutter_libs
+  iris_method_channel
   permission_handler_windows
-  record_windows
   share_plus
   url_launcher_windows
 )
