@@ -198,9 +198,8 @@ class _HomePageState extends State<HomePage> {
               Navigator.of(context).push(
                   MaterialPageRoute(builder: (context) => const AboutPage()));
 
-              Navigator.of(context).push(MaterialPageRoute(
-                  builder: (context) =>  const AboutPage()));
-
+              Navigator.of(context).push(
+                  MaterialPageRoute(builder: (context) => const AboutPage()));
             },
           ),
           ListTile(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:taxi_app/language/localization.dart';
+import 'package:taxi_app/screens/Driver/driver_requests.dart';
 import 'Driver/driver_home.dart';
 import 'Driver/driver_trips.dart';
 import 'Driver/earnings.dart';
@@ -11,6 +12,7 @@ class DriverDashboard extends StatefulWidget {
   const DriverDashboard({super.key});
 
   @override
+  // ignore: library_private_types_in_public_api
   _DriverDashboardState createState() => _DriverDashboardState();
 }
 
@@ -18,9 +20,12 @@ class _DriverDashboardState extends State<DriverDashboard> {
   int _selectedIndex = 0;
 
   final List<Widget> _pages = [
-    const DriverHomePage(),
-    const DriverTripsPage(driverName: '', trips: []),
-    const EarningsPage(),
+    const DriverHomePage(driverId: 1),
+    const DriverRequestsPage(
+      driverId: 1,
+    ),
+    const DriverTripsPage(driverId: 1),
+    const EarningsPage(driverId: 1),
     const SupportPage(),
     const DriverSettingsPage(),
   ];
@@ -69,27 +74,33 @@ class _DriverDashboardState extends State<DriverDashboard> {
               theme,
             ),
             _buildSidebarItem(
+              local.translate('trip_requests'), // ترجمة جديدة
+              LucideIcons.list,
+              1,
+              theme,
+            ),
+            _buildSidebarItem(
               local.translate('my_trips'),
               LucideIcons.car,
-              1,
+              2,
               theme,
             ),
             _buildSidebarItem(
               local.translate('earnings'),
               LucideIcons.dollarSign,
-              2,
+              3,
               theme,
             ),
             _buildSidebarItem(
               local.translate('support'),
               LucideIcons.headphones,
-              3,
+              4,
               theme,
             ),
             _buildSidebarItem(
               local.translate('settings'),
               LucideIcons.settings,
-              4,
+              5,
               theme,
             ),
           ],
@@ -105,6 +116,7 @@ class _DriverDashboardState extends State<DriverDashboard> {
         color: theme.colorScheme.primary,
         boxShadow: [
           BoxShadow(
+            // ignore: deprecated_member_use
             color: Colors.black.withOpacity(0.1),
             blurRadius: 10,
           ),
@@ -123,27 +135,33 @@ class _DriverDashboardState extends State<DriverDashboard> {
                   theme,
                 ),
                 _buildSidebarItem(
+                  local.translate('trip_requests'),
+                  LucideIcons.list,
+                  1,
+                  theme,
+                ),
+                _buildSidebarItem(
                   local.translate('my_trips'),
                   LucideIcons.car,
-                  1,
+                  2,
                   theme,
                 ),
                 _buildSidebarItem(
                   local.translate('earnings'),
                   LucideIcons.dollarSign,
-                  2,
+                  3,
                   theme,
                 ),
                 _buildSidebarItem(
                   local.translate('support'),
                   LucideIcons.headphones,
-                  3,
+                  4,
                   theme,
                 ),
                 _buildSidebarItem(
                   local.translate('settings'),
                   LucideIcons.settings,
-                  4,
+                  5,
                   theme,
                 ),
               ],
@@ -174,6 +192,7 @@ class _DriverDashboardState extends State<DriverDashboard> {
           ),
           const SizedBox(height: 10),
           Divider(
+            // ignore: deprecated_member_use
             color: theme.colorScheme.onPrimary.withOpacity(0.2),
             thickness: 1,
           ),
@@ -192,6 +211,7 @@ class _DriverDashboardState extends State<DriverDashboard> {
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
         color: _selectedIndex == index
+            // ignore: deprecated_member_use
             ? theme.colorScheme.secondary.withOpacity(0.2)
             : Colors.transparent,
         borderRadius: BorderRadius.circular(8),
@@ -201,6 +221,7 @@ class _DriverDashboardState extends State<DriverDashboard> {
           icon,
           color: _selectedIndex == index
               ? theme.colorScheme.secondary
+              // ignore: deprecated_member_use
               : theme.colorScheme.onPrimary.withOpacity(0.8),
         ),
         title: Text(
@@ -224,6 +245,7 @@ class _DriverDashboardState extends State<DriverDashboard> {
       type: BottomNavigationBarType.fixed,
       backgroundColor: theme.colorScheme.primary,
       selectedItemColor: theme.colorScheme.onPrimary,
+      // ignore: deprecated_member_use
       unselectedItemColor: theme.colorScheme.onPrimary.withOpacity(0.6),
       selectedLabelStyle: theme.textTheme.labelSmall?.copyWith(
         fontWeight: FontWeight.bold,
@@ -232,6 +254,10 @@ class _DriverDashboardState extends State<DriverDashboard> {
         BottomNavigationBarItem(
           icon: Icon(LucideIcons.home),
           label: local.translate('home'),
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(LucideIcons.list),
+          label: local.translate('trip_requests'),
         ),
         BottomNavigationBarItem(
           icon: Icon(LucideIcons.car),
@@ -244,10 +270,6 @@ class _DriverDashboardState extends State<DriverDashboard> {
         BottomNavigationBarItem(
           icon: Icon(LucideIcons.headphones),
           label: local.translate('support'),
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(LucideIcons.settings),
-          label: local.translate('settings'),
         ),
       ],
     );
