@@ -73,7 +73,7 @@ class TripsApi {
     }
   }
 
-  static Future<List<Trip>> getDriverTripsWithStatus(int driverId,
+  static Future<List<Trip>> getDriverTripsWithStatus(int driverId, String s,
       {String? status}) async {
     try {
       // بناء الرابط مع باراميتر الحالة إذا كان موجود

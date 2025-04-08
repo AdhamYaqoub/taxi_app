@@ -1,10 +1,10 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_sound/flutter_sound.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'dart:io';
-
-import 'package:taxi_app/screens/call_page.dart';
+import 'package:http/http.dart' as http;
 
 class ChatScreen extends StatefulWidget {
   @override
@@ -12,24 +12,20 @@ class ChatScreen extends StatefulWidget {
 }
 
 class _ChatScreenState extends State<ChatScreen> {
-  final List<Map<String, dynamic>> messages = [];
-  final TextEditingController _controller = TextEditingController();
+  List<Map<String, dynamic>> drivers = [];
+  List<Map<String, dynamic>> messages = [];
+  String? selectedDriver;
+  TextEditingController _controller = TextEditingController();
   final ImagePicker _picker = ImagePicker();
   final FlutterSoundRecorder _recorder = FlutterSoundRecorder();
   final FlutterSoundPlayer _player = FlutterSoundPlayer();
   bool _isRecording = false;
   String? _audioPath;
 
-  List<Map<String, String>> drivers = [
-    {'name': 'أحمد', 'image': 'https://via.placeholder.com/50'},
-    {'name': 'محمد', 'image': 'https://via.placeholder.com/50'},
-    {'name': 'سامي', 'image': 'https://via.placeholder.com/50'},
-  ];
-  String? selectedDriver;
-
   @override
   void initState() {
     super.initState();
+    _loadDrivers();
     _initAudio();
   }
 
@@ -37,6 +33,70 @@ class _ChatScreenState extends State<ChatScreen> {
     await Permission.microphone.request();
     await _recorder.openRecorder();
     await _player.openPlayer();
+  }
+
+  Future<void> _loadDrivers() async {
+    final response = await http.get(Uri.parse('http://localhost:5000/api/users'));
+    if (response.statusCode == 200) {
+      final List<dynamic> data = json.decode(response.body);
+      setState(() {
+        drivers = data
+            .where((driver) => driver['role'] == 'Driver')
+            .map((driver) {
+          return {
+            'name': driver['fullName'],
+            'image': driver['image'] ?? '',
+          };
+        }).toList();
+      });
+    } else {
+      throw Exception('Failed to load drivers');
+    }
+  }
+
+  Future<void> _loadMessages() async {
+    if (selectedDriver != null) {
+      final response = await http.get(Uri.parse('http://localhost:5000/messages?receiver=$selectedDriver'));
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        setState(() {
+          messages = List<Map<String, dynamic>>.from(data);
+        });
+      } else {
+        throw Exception('Failed to load messages');
+      }
+    }
+  }
+
+  Future<void> _sendMessage(String message, {String? imagePath, String? audioPath}) async {
+    if (message.isNotEmpty || imagePath != null || audioPath != null) {
+      final response = await http.post(
+        Uri.parse('http://localhost:5000/messages'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'sender': 'User',
+          'receiver': selectedDriver,
+          'message': message,
+          'image': imagePath,
+          'audio': audioPath,
+        }),
+      );
+      if (response.statusCode == 201) {
+        print('Message sent');
+        _loadMessages();  // تحديث الرسائل بعد الإرسال
+      } else {
+        print('Failed to send message');
+      }
+    }
+  }
+
+  Future<void> _pickImage(ImageSource source) async {
+    final XFile? pickedFile = await _picker.pickImage(source: source);
+    if (pickedFile != null) {
+      setState(() {
+        _sendMessage('', imagePath: pickedFile.path);
+      });
+    }
   }
 
   Future<void> _startRecording() async {
@@ -50,123 +110,13 @@ class _ChatScreenState extends State<ChatScreen> {
     setState(() {
       _isRecording = false;
       if (path != null) {
-        messages.add({'type': 'audio', 'content': path});
+        _sendMessage('', audioPath: path);
       }
     });
   }
 
   Future<void> _playAudio(String path) async {
     await _player.startPlayer(fromURI: path);
-  }
-
-  Future<void> _pickImage(ImageSource source) async {
-    final XFile? pickedFile = await _picker.pickImage(source: source);
-    if (pickedFile != null) {
-      setState(() {
-        messages.add({'type': 'image', 'content': pickedFile.path});
-      });
-    }
-  }
-
-  void _sendMessage() {
-    if (_controller.text.isNotEmpty) {
-      setState(() {
-        messages.add({'type': 'text', 'content': _controller.text});
-        _controller.clear();
-      });
-    }
-  }
-
-  @override
-  void dispose() {
-    _recorder.closeRecorder();
-    _player.closePlayer();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    bool isWeb = MediaQuery.of(context).size.width > 600;
-    
-    return Scaffold(
-      appBar: AppBar(
-        title: Text("الدردشة"),
-        backgroundColor: Colors.yellow[700],
-      ),
-      body: Row(
-        children: [
-          if (isWeb) _buildDriversList(),
-          Expanded(
-            child: selectedDriver == null
-                ? Center(child: Text("اختر سائقًا لبدء المحادثة", style: TextStyle(color: Colors.black)))
-                : _buildChatUI(),
-          ),
-        ],
-      ),
-      drawer: !isWeb ? Drawer(child: _buildDriversList()) : null,
-    );
-  }
-
-  Widget _buildDriversList() {
-    return Container(
-      width: 250,
-      color: Colors.yellow[100],
-      child: ListView(
-        children: [
-          for (var driver in drivers)
-            ListTile(
-              leading: CircleAvatar(
-                backgroundImage: NetworkImage(driver['image']!),
-              ),
-              title: Text(driver['name']!, style: TextStyle(color: Colors.black)),
-              onTap: () {
-                setState(() {
-                  selectedDriver = driver['name'];
-                });
-                if (!(MediaQuery.of(context).size.width > 600)) {
-                  Navigator.pop(context); // إغلاق القائمة في الموبايل
-                }
-              },
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildChatUI() {
-    return Column(
-      children: [
-        Expanded(
-          child: ListView.builder(
-            reverse: true,
-            itemCount: messages.length,
-            itemBuilder: (context, index) {
-              final msg = messages[messages.length - 1 - index];
-              return Align(
-                alignment: Alignment.centerRight,
-                child: Container(
-                  padding: EdgeInsets.all(10),
-                  margin: EdgeInsets.symmetric(vertical: 5, horizontal: 10),
-                  decoration: BoxDecoration(
-                    color: Colors.yellow[200],
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: msg['type'] == 'text'
-                      ? Text(msg['content'], style: TextStyle(color: Colors.black))
-                      : msg['type'] == 'image'
-                          ? Image.file(File(msg['content']), height: 150)
-                          : IconButton(
-                              icon: Icon(Icons.play_arrow, size: 30, color: Colors.blue),
-                              onPressed: () => _playAudio(msg['content']),
-                            ),
-                ),
-              );
-            },
-          ),
-        ),
-        _buildMessageInput(),
-      ],
-    );
   }
 
   Widget _buildMessageInput() {
@@ -196,24 +146,92 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
           IconButton(
             icon: Icon(Icons.send, color: Colors.yellow[700]),
-            onPressed: _sendMessage,
+            onPressed: () {
+              _sendMessage(_controller.text);
+              _controller.clear();
+            },
           ),
           IconButton(
             icon: Icon(_isRecording ? Icons.stop : Icons.mic, color: Colors.red),
             onPressed: _isRecording ? _stopRecording : _startRecording,
           ),
-          IconButton(
-  icon: Icon(Icons.call, color: Colors.green),
-  onPressed: () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => VoiceCallScreen(channelName: "chat_room", uid: 1),
+        ],
       ),
     );
-  },
-),
+  }
 
+  Widget _buildDriversList() {
+    return Container(
+      width: 250,
+      color: Colors.yellow[100],
+      child: ListView(
+        children: [
+          for (var driver in drivers)
+            ListTile(
+              leading: CircleAvatar(
+                backgroundImage: driver['image'] != ''
+                    ? NetworkImage(driver['image'])
+                    : AssetImage('assets/default_avatar.png') as ImageProvider,
+              ),
+              title: Text(driver['name'], style: TextStyle(color: Colors.black)),
+              onTap: () {
+                setState(() {
+                  selectedDriver = driver['name'];
+                  _loadMessages(); // تحميل الرسائل عند اختيار سائق
+                });
+              },
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildChatUI() {
+    return Column(
+      children: [
+        Expanded(
+          child: ListView.builder(
+            reverse: true,
+            itemCount: messages.length,
+            itemBuilder: (context, index) {
+              return Align(
+                alignment: Alignment.centerRight,
+                child: Container(
+                  padding: EdgeInsets.all(10),
+                  margin: EdgeInsets.symmetric(vertical: 5, horizontal: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.yellow[200],
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    messages[index]['message'] ?? "No message",  // عرض الرسالة من قاعدة البيانات
+                    style: TextStyle(color: Colors.black),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        _buildMessageInput(),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("الدردشة"),
+        backgroundColor: Colors.yellow[700],
+      ),
+      body: Row(
+        children: [
+          _buildDriversList(),
+          Expanded(
+            child: selectedDriver == null
+                ? Center(child: Text("اختر سائقًا لبدء المحادثة", style: TextStyle(color: Colors.black)))
+                : _buildChatUI(),
+          ),
         ],
       ),
     );

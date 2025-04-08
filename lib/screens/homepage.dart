@@ -5,7 +5,7 @@ import 'package:taxi_app/screens/about.dart';
 import 'package:taxi_app/screens/admin.dart';
 import 'package:taxi_app/screens/driver_dashboard.dart';
 import 'package:taxi_app/screens/manegar.dart';
-import 'package:taxi_app/screens/map.dart';
+import 'package:taxi_app/screens/maps_screen.dart';
 import 'package:taxi_app/screens/pyment.dart';
 import 'package:taxi_app/screens/setting.dart';
 import 'package:taxi_app/screens/smile.dart';

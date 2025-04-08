@@ -28,8 +28,7 @@ class _DriverRequestsPageState extends State<DriverRequestsPage> {
       _isLoading = true;
       _tripsFuture = _currentTab == 'pending'
           ? TripsApi.getPendingTrips()
-          : TripsApi.getDriverTripsWithStatus(widget.driverId,
-              status: 'accepted');
+          : TripsApi.getDriverTripsWithStatus(widget.driverId, 'accepted');
       _tripsFuture.then((_) => setState(() => _isLoading = false));
     });
   }
