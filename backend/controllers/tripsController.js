@@ -5,7 +5,8 @@ const RATE_PER_KM = 10;
 // إنشاء طلب رحلة جديدة من قبل المستخدم
 exports.createTrip = async (req, res) => {
   try {
-    const { userId, startLocation, endLocation, distance } = req.body;
+    const { userId, startLocation, endLocation, distance, startTime } = req.body;
+
     const estimatedFare = distance * RATE_PER_KM;
 
     const newTrip = new Trip({
@@ -13,7 +14,8 @@ exports.createTrip = async (req, res) => {
       startLocation,
       endLocation,
       distance,
-      estimatedFare
+      estimatedFare,
+      startTime: startTime ? new Date(startTime) : undefined
     });
 
     await newTrip.save();
@@ -39,7 +41,6 @@ exports.acceptTrip = async (req, res) => {
 
     trip.driverId = driverId;
     trip.status = 'accepted';
-    trip.startTime = new Date(); // يمكن نقله لمرحلة startTrip إذا أردت
     
     await trip.save();
     res.json(trip);
@@ -59,23 +60,45 @@ exports.startTrip = async (req, res) => {
     const trip = await Trip.findOne({ tripId });
 
     if (!trip || trip.status !== 'accepted') {
-      return res.status(400).json({ 
-        error: 'لا يمكن بدء الرحلة إلا إذا كانت مقبولة' 
+      return res.status(400).json({
+        error: 'لا يمكن بدء الرحلة إلا إذا كانت مقبولة'
+      });
+    }
+    const now = new Date();
+
+    // تأكد من مقارنة التواريخ باستخدام timestamps (بالمللي ثانية)
+    if (trip.startTime && now.getTime() < new Date(trip.startTime).getTime()) {
+      return res.status(400).json({
+        error: 'لا يمكن بدء الرحلة قبل موعدها المجدول'
       });
     }
 
+    // التحقق من وجود رحلة حالية للسائق
+    const existingTrip = await Trip.findOne({
+      driverId: trip.driverId,
+      status: 'in_progress'
+    });
+
+    if (existingTrip) {
+      return res.status(400).json({
+        error: 'لا يمكنك بدء رحلة جديدة قبل إنهاء الرحلة الحالية'
+      });
+    }
+
+    // تحديث الحالة
     trip.status = 'in_progress';
-    trip.startTime = new Date(); // إذا لم يتم تحديده سابقاً
-    
+    trip.startTime = new Date();
+
     await trip.save();
     res.json(trip);
   } catch (err) {
-    res.status(500).json({ 
-      error: 'فشل بدء الرحلة', 
-      details: err.message 
+    res.status(500).json({
+      error: 'فشل بدء الرحلة',
+      details: err.message
     });
   }
 };
+
 
 // رفض الرحلة من قبل السائق
 exports.rejectTrip = async (req, res) => {
@@ -139,7 +162,6 @@ exports.getDriverRecentTrips = async (req, res) => {
     const trips = await Trip.find({ driverId })
                             .sort({ createdAt: -1 })
                             .limit(3);
-    console.log(trips);
     res.json(trips);
   } catch (err) {
     res.status(500).json({ error: 'فشل جلب الرحلات الأخيرة', details: err.message });
