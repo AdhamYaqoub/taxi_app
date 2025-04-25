@@ -5,6 +5,160 @@ import 'package:taxi_app/models/trip.dart';
 class TripsApi {
   static const String _baseUrl = 'http://localhost:5000/api';
 
+  static Future<Trip> createTrip({
+    required int userId,
+    required Map<String, dynamic> startLocation,
+    required Map<String, dynamic> endLocation,
+    required double distance,
+    DateTime? startTime,
+    required String paymentMethod,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$_baseUrl/trips'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'userId': userId,
+          'startLocation': startLocation,
+          'endLocation': endLocation,
+          'distance': distance,
+          'startTime': startTime?.toIso8601String(),
+          'paymentMethod': paymentMethod, // أضف هذا الحقل
+        }),
+      );
+
+      if (response.statusCode == 201) {
+        return Trip.fromJson(jsonDecode(response.body));
+      } else {
+        throw Exception('فشل في إنشاء الرحلة: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('خطأ في الشبكة: $e');
+    }
+  }
+
+  static Future<void> completeTrip(String tripId) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$_baseUrl/trips/$tripId/complete'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception('فشل في إنهاء الرحلة');
+      }
+    } catch (e) {
+      throw Exception('خطأ في الشبكة: $e');
+    }
+  }
+
+  static Future<Trip> getTripById(String tripId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$_baseUrl/trips/$tripId'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        return Trip.fromJson(jsonDecode(response.body));
+      } else {
+        throw Exception('فشل في جلب الرحلة: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('خطأ في الشبكة: $e');
+    }
+  }
+
+  static Future<List<Trip>> getDriverActiveTrips(int driverId) async {
+    try {
+      final response = await http.get(
+        Uri.parse(
+            '$_baseUrl/trips/driver/$driverId?status=accepted,in_progress'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        final dynamic data = jsonDecode(response.body);
+        if (data is List) {
+          return data.map((json) => Trip.fromJson(json)).toList();
+        } else {
+          throw Exception('تنسيق الاستجابة غير صالح');
+        }
+      } else {
+        throw Exception('فشل في جلب الرحلات النشطة: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('خطأ في الشبكة: $e');
+    }
+  }
+
+  static Future<List<Trip>> getUserTrips(int userId, {String? status}) async {
+    try {
+      String url = '$_baseUrl/trips/user/$userId';
+      if (status != null) url += '?status=$status';
+
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        final dynamic data = jsonDecode(response.body);
+        if (data is List) {
+          return data.map((json) => Trip.fromJson(json)).toList();
+        } else {
+          throw Exception('تنسيق الاستجابة غير صالح');
+        }
+      } else {
+        throw Exception('فشل في جلب رحلات المستخدم: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('خطأ في الشبكة: $e');
+    }
+  }
+
+  static Future<List<Trip>> getNearbyPendingTrips(double lat, double lng,
+      {double maxDistance = 5}) async {
+    try {
+      final response = await http.get(
+        Uri.parse(
+            '$_baseUrl/trips/nearby?latitude=$lat&longitude=$lng&maxDistance=$maxDistance'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        final dynamic data = jsonDecode(response.body);
+        if (data['trips'] is List) {
+          return (data['trips'] as List)
+              .map((json) => Trip.fromJson(json))
+              .toList();
+        } else {
+          throw Exception('تنسيق الاستجابة غير صالح');
+        }
+      } else {
+        throw Exception('فشل في جلب الرحلات القريبة: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('خطأ في الشبكة: $e');
+    }
+  }
+
+  static Future<void> updateTripFare(String tripId, double newFare) async {
+    try {
+      final response = await http.put(
+        Uri.parse('$_baseUrl/trips/$tripId/fare'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'actualFare': newFare}),
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception('فشل في تحديث سعر الرحلة');
+      }
+    } catch (e) {
+      throw Exception('خطأ في الشبكة: $e');
+    }
+  }
+
   static Future<List<Trip>> getDriverTrips(int driverId) async {
     try {
       final response = await http.get(
@@ -64,7 +218,7 @@ class TripsApi {
 
   static Future<void> updateTripStatus(int tripId, String status) async {
     final response = await http.put(
-      Uri.parse('$_baseUrl/api/trips/$tripId/status'),
+      Uri.parse('$_baseUrl/trips/$tripId/status'),
       headers: {'Content-Type': 'application/json'},
       body: json.encode({'status': status}),
     );
@@ -178,6 +332,49 @@ class TripsApi {
         await http.post(Uri.parse('$_baseUrl/trips/$tripId/start'));
     if (response.statusCode != 200) {
       throw Exception('فشل في بدء الرحلة');
+    }
+  }
+
+  /// جلب الرحلات القريبة من إحداثيات معينة
+  static Future<Map<String, dynamic>> getNearbyTrips(
+      double lng, double lat) async {
+    final response = await http.get(Uri.parse(
+        '$_baseUrl/trips/nearby?longitude=$lng&latitude=$lat&maxDistance=5'));
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      final message = data['message'];
+      final tripsJson = data['trips'] as List;
+      final trips = tripsJson.map((json) => Trip.fromJson(json)).toList();
+
+      return {
+        'message': message,
+        'trips': trips,
+      };
+    } else {
+      throw Exception('فشل في تحميل الرحلات القريبة');
+    }
+  }
+
+  static Future<List<dynamic>> getPendingUserTrips(int userId) async {
+    final response = await http.get(
+      Uri.parse('$_baseUrl/trips?userId=$userId&status=pending'),
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to load pending trips');
+    }
+  }
+
+  static Future<void> cancelTrip(int tripId) async {
+    final response = await http.delete(
+      Uri.parse('$_baseUrl/trips/$tripId'),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to cancel trip');
     }
   }
 }

@@ -3,6 +3,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:taxi_app/language/localization.dart';
 import 'package:taxi_app/models/trip.dart';
 import 'package:taxi_app/services/trips_api.dart';
+import 'package:geolocator/geolocator.dart'; // أضف هذه المكتبة
 
 class DriverRequestsPage extends StatefulWidget {
   final int driverId;
@@ -16,21 +17,91 @@ class _DriverRequestsPageState extends State<DriverRequestsPage> {
   late Future<List<Trip>> _tripsFuture;
   bool _isLoading = true;
   String _currentTab = 'pending'; // 'pending' or 'accepted'
+  Position? _currentPosition; // current position of the driver
 
   @override
   void initState() {
     super.initState();
-    _loadTrips();
+    _getCurrentLocation();
+  }
+
+  Future<void> _getCurrentLocation() async {
+    try {
+      // طلب صلاحيات الموقع
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        throw Exception('خدمة الموقع غير مفعلة');
+      }
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          throw Exception('تم رفض صلاحيات الموقع');
+        }
+      }
+
+      // الحصول على الموقع الحالي
+      Position position = await Geolocator.getCurrentPosition(
+        // ignore: deprecated_member_use
+        desiredAccuracy: LocationAccuracy.high,
+      );
+
+      setState(() {
+        _currentPosition = position;
+      });
+
+      _loadTrips(); // تحميل الرحلات بعد الحصول على الموقع
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('فشل في الحصول على الموقع: $e')),
+      );
+      // إذا فشل الحصول على الموقع، نحميل الرحلات بدون تصفية
+      _loadTrips();
+    }
   }
 
   void _loadTrips() {
     setState(() {
       _isLoading = true;
-      _tripsFuture = _currentTab == 'pending'
-          ? TripsApi.getPendingTrips()
-          : TripsApi.getDriverTripsWithStatus(widget.driverId,
-              status: 'accepted');
-      _tripsFuture.then((_) => setState(() => _isLoading = false));
+
+      if (_currentTab == 'pending') {
+        if (_currentPosition != null) {
+          final future = TripsApi.getNearbyTrips(
+            _currentPosition!.longitude,
+            _currentPosition!.latitude,
+          );
+
+          _tripsFuture = future.then((data) {
+            final String message = data['message'];
+            final List<Trip> trips = data['trips'];
+
+            if (message.isNotEmpty) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(message)),
+                );
+              });
+            }
+
+            setState(() => _isLoading = false);
+            return trips;
+          });
+        } else {
+          _tripsFuture = TripsApi.getPendingTrips().then((trips) {
+            setState(() => _isLoading = false);
+            return trips;
+          });
+        }
+      } else {
+        _tripsFuture = TripsApi.getDriverTripsWithStatus(
+          widget.driverId,
+          status: 'accepted',
+        ).then((trips) {
+          setState(() => _isLoading = false);
+          return trips;
+        });
+      }
     });
   }
 
@@ -38,13 +109,11 @@ class _DriverRequestsPageState extends State<DriverRequestsPage> {
     try {
       setState(() => _isLoading = true);
       await TripsApi.acceptTrip(tripId.toString(), widget.driverId);
-      _loadTrips();
-      // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('تم قبول الرحلة')),
+        const SnackBar(content: Text('تم قبول الرحلة بنجاح')),
       );
+      _loadTrips(); // إعادة تحميل الرحلات
     } catch (e) {
-      // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('فشل في قبول الرحلة: $e')),
       );
@@ -196,12 +265,12 @@ class _DriverRequestsPageState extends State<DriverRequestsPage> {
                             _buildTripDetailRow(
                               icon: LucideIcons.mapPin,
                               label: local.translate('from'),
-                              value: trip.startLocation,
+                              value: trip.startLocation.address,
                             ),
                             _buildTripDetailRow(
                               icon: LucideIcons.mapPin,
                               label: local.translate('to'),
-                              value: trip.endLocation,
+                              value: trip.endLocation.address,
                             ),
                             _buildTripDetailRow(
                               icon: LucideIcons.map,
@@ -218,6 +287,10 @@ class _DriverRequestsPageState extends State<DriverRequestsPage> {
                                   ? trip.requestedAt
                                   : trip.acceptedAt),
                             ),
+                            _buildTripDetailRow(
+                                icon: LucideIcons.user,
+                                label: local.translate('payment_method'),
+                                value: trip.paymentMethod),
                             const SizedBox(height: 16),
                             _currentTab == 'pending'
                                 ? Row(
