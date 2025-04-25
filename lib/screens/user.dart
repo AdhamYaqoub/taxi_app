@@ -19,7 +19,7 @@ class _UserDashboardState extends State<UserDashboard> {
   int _selectedIndex = 0;
 
   final List<Widget> _pages = [
-    const HomePage(),
+    HomePage(userId: 12),
     const MyTripsPage(),
     const PaymentPage(),
     const OffersPage(),

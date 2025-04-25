@@ -2,8 +2,8 @@ class Trip {
   final int tripId;
   final int userId;
   final int? driverId; // جعله اختياريًا
-  final String startLocation;
-  final String endLocation;
+  final Location startLocation;
+  final Location endLocation;
   final double distance;
   final double estimatedFare;
   final double actualFare; // تغيير من earnings إلى actualFare
@@ -14,6 +14,7 @@ class Trip {
   final DateTime? startTime; // جعله اختياريًا
   final DateTime? endTime; // جعله اختياريًا
   final DateTime? acceptedAt; // Added field for accepted time
+  final String paymentMethod;
 
   Trip(
       {required this.tripId,
@@ -23,6 +24,7 @@ class Trip {
       required this.endLocation,
       required this.distance,
       required this.estimatedFare,
+      required this.paymentMethod, // Initialize paymentMethod
       required this.actualFare,
       required this.status,
       required this.requestedAt,
@@ -37,8 +39,8 @@ class Trip {
       tripId: json['tripId'] as int? ?? 0,
       userId: json['userId'] as int? ?? 0,
       driverId: json['driverId'] as int?,
-      startLocation: json['startLocation'] as String? ?? '',
-      endLocation: json['endLocation'] as String? ?? '',
+      startLocation: Location.fromJson(json['startLocation']),
+      endLocation: Location.fromJson(json['endLocation']),
       distance: (json['distance'] as num?)?.toDouble() ?? 0.0,
       estimatedFare: (json['estimatedFare'] as num?)?.toDouble() ?? 0.0,
       actualFare: (json['actualFare'] as num?)?.toDouble() ?? 0.0,
@@ -52,6 +54,7 @@ class Trip {
       endTime: json['endTime'] != null
           ? DateTime.parse(json['endTime'] as String)
           : null,
+      paymentMethod: json['paymentMethod'] as String? ?? 'cash',
     );
   }
 
@@ -76,4 +79,24 @@ class Trip {
 
   // إذا كنت تفضل استخدام earnings كاسم بدلاً من actualFare
   double get earnings => actualFare;
+}
+
+class Location {
+  final String address;
+  final double longitude;
+  final double latitude;
+
+  Location({
+    required this.address,
+    required this.longitude,
+    required this.latitude,
+  });
+
+  factory Location.fromJson(Map<String, dynamic> json) {
+    return Location(
+      address: json['address'],
+      longitude: json['coordinates'][0],
+      latitude: json['coordinates'][1],
+    );
+  }
 }

@@ -177,7 +177,7 @@ const Map<String, String> en = {
   "schedule_trip": "Can I schedule a trip?",
   "schedule_trip_answer": "Yes, you can schedule your trip for a future time.",
   "payment_management": "💳 Payment Management - 'Smile to Pay'",
-  "payment_method": "Payment Method: 'Smile to Pay'",
+  "payment_method": "Payment Method",
   "use_face_recognition":
       "Use facial recognition technology to pay for your trips easily and securely.",
   "steps": "Steps:",
@@ -268,4 +268,9 @@ const Map<String, String> en = {
   "trip_in_progress": "Trip in Progress",
   "pending_requests": "pending requests",
   "accepted_trips": "accepted trips",
+  "enter_your_location": "Enter your location",
+  'confirm_cancellation': 'Confirm Cancellation',
+  'are_you_sure_cancel_ride': 'Are you sure you want to cancel the ride?',
+  'confirm': 'Confirm',
+  "search_location": "Search for a location...",
 };

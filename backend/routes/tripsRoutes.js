@@ -42,4 +42,12 @@ router.put('/:tripId/status', tripController.updateTripStatus);
 // GET /api/trips/pending
 router.get('/pending', tripController.getPendingTrips);
 
+// GET /api/trips/nearby    
+router.get('/nearby', tripController.getNearbyTrips);
+
+
+router.get('/', tripController.getPendingUserTrips);
+
+router.delete('/:id', tripController.cancelTrip);
+
 module.exports = router;
