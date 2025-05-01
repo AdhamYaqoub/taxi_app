@@ -8,13 +8,37 @@ const tripSchema = new mongoose.Schema({
   driverId: { type: Number }, // السائق (يضاف عند القبول)
 
   // معلومات الرحلة الأساسية
-  startLocation: { type: String, required: true },
-  endLocation: { type: String, required: true },
+  startLocation: {
+    type: {
+      type: String,
+      default: "Point",
+      enum: ["Point"]
+    },
+    coordinates: [Number], // [longitude, latitude]
+    address: String // يمكن الاحتفاظ بالنص كعنوان
+  },
+  endLocation: {
+    type: {
+      type: String,
+      default: "Point",
+      enum: ["Point"]
+    },
+    coordinates: [Number],
+    address: String
+  },
   distance: { type: Number, required: true }, // بالكيلومتر
   
   // الحسابات المالية
   estimatedFare: { type: Number }, // السعر المقدر (distance * rate)
   actualFare: { type: Number }, // السعر النهائي (قد يتغير)
+  
+  // طريقة الدفع
+  paymentMethod: {
+    type: String,
+    enum: ['cash', 'card', 'wallet'],
+    default: 'cash',
+    required: true
+  },
   
   // التواريخ والأوقات
   requestedAt: { type: Date, default: Date.now }, // وقت الطلب

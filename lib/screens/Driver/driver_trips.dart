@@ -199,12 +199,12 @@ class _DriverTripsPageState extends State<DriverTripsPage> {
               _buildTripDetailRow(
                 icon: LucideIcons.mapPin,
                 label: local.translate('from'),
-                value: trip.startLocation,
+                value: trip.startLocation.address,
               ),
               _buildTripDetailRow(
                 icon: LucideIcons.mapPin,
                 label: local.translate('to'),
-                value: trip.endLocation,
+                value: trip.endLocation.address,
               ),
               _buildTripDetailRow(
                 icon: LucideIcons.map,

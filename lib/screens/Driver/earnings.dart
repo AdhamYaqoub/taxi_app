@@ -20,12 +20,15 @@ class _EarningsPageState extends State<EarningsPage> {
   @override
   void initState() {
     super.initState();
-    _tripsFuture = TripsApi.getDriverTrips(widget.driverId);
+    _tripsFuture =
+        TripsApi.getDriverTripsWithStatus(widget.driverId, status: 'completed');
   }
 
   // دالة لحساب إجمالي الأرباح محلياً
   double _calculateTotalEarnings(List<Trip> trips) {
-    return trips.fold(0, (sum, trip) => sum + trip.estimatedFare);
+    return trips
+        .where((trip) => trip.status == 'completed')
+        .fold(0, (sum, trip) => sum + trip.estimatedFare);
   }
 
   @override
