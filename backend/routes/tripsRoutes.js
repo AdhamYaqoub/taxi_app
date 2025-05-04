@@ -32,6 +32,9 @@ router.post('/:tripId/start', tripController.startTrip);
 // جلب الرحلات بناءً على الحالة (مثلاً: قيد التنفيذ، مكتملة، ملغاة، إلخ)
 router.get('/driver/:driverId/status', tripController.getDriverTripsByStatus);
 
+// جلب رحلات المستخدم بناءً على الحالة
+router.get('/user/:userId/status', tripController.getUserTripsByStatus);
+
 
 // GET /api/trips/driver/:driverId
 router.get('/driver/:driverId', tripController.getDriverTrips);
@@ -49,5 +52,7 @@ router.get('/nearby', tripController.getNearbyTrips);
 router.get('/', tripController.getPendingUserTrips);
 
 router.delete('/:id', tripController.cancelTrip);
+
+router.put('/:id', tripController.updateTrip);
 
 module.exports = router;

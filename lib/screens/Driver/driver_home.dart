@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:taxi_app/language/localization.dart';
+import 'package:taxi_app/models/driver.dart';
 import 'package:taxi_app/models/trip.dart';
+import 'package:taxi_app/services/drivers_api.dart';
 import 'package:taxi_app/services/trips_api.dart';
 
 class DriverHomePage extends StatefulWidget {
@@ -15,7 +17,7 @@ class DriverHomePage extends StatefulWidget {
 
 class _DriverHomePageState extends State<DriverHomePage> {
   late Future<List<Trip>> _recentTripsFuture;
-  late Future<Map<String, dynamic>> _statsFuture;
+  late Future<Driver> _driverInfoFuture;
 
   @override
   void initState() {
@@ -25,6 +27,8 @@ class _DriverHomePageState extends State<DriverHomePage> {
 
   void _loadData() {
     setState(() {
+      _driverInfoFuture = DriversApi.getDriverById(widget.driverId);
+
       _recentTripsFuture = TripsApi.getRecentTrips(widget.driverId)
           .then((trips) =>
               trips.where((trip) => trip.status == 'completed').toList())
@@ -32,84 +36,90 @@ class _DriverHomePageState extends State<DriverHomePage> {
         debugPrint('Error loading recent trips: $error');
         return <Trip>[];
       });
-
-      _statsFuture = _fetchDriverStats();
     });
   }
 
-  Future<Map<String, dynamic>> _fetchDriverStats() async {
-    try {
-      final trips =
-          await TripsApi.getRecentTrips(widget.driverId).catchError((error) {
-        debugPrint('Error loading driver trips: $error');
-        return <Trip>[];
-      });
-
-      final now = DateTime.now();
-      final todayTrips = trips.where((trip) {
-        return trip.startTime?.year == now.year &&
-            trip.startTime?.month == now.month &&
-            trip.startTime?.day == now.day;
-      }).toList();
-
-      return {
-        'today_trips': todayTrips.length,
-        'today_earnings':
-            todayTrips.fold(0.0, (sum, trip) => sum + trip.estimatedFare),
-        'ratings': 4.8,
-        'active_hours': 8,
-      };
-    } catch (e) {
-      debugPrint('Error fetching stats: $e');
-      return {
-        'today_trips': 0,
-        'today_earnings': 0.0,
-        'ratings': 0.0,
-        'active_hours': 0,
-      };
-    }
-  }
-
-  Widget _buildStatCard({
-    required BuildContext context,
-    required String title,
-    required String value,
-    required IconData icon,
-  }) {
+  Widget _buildDriverProfile(BuildContext context, Driver driver) {
     final theme = Theme.of(context);
+    final local = AppLocalizations.of(context);
+    final isDesktop = MediaQuery.of(context).size.width > 768;
 
     return Card(
       elevation: 3,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
-      color: theme.colorScheme.primary,
+      clipBehavior: Clip.antiAlias, // مثل الكود الثاني
       child: Padding(
         padding: const EdgeInsets.all(16),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(
-              icon,
-              size: 28,
-              color: theme.colorScheme.onPrimary,
-            ),
-            const SizedBox(width: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            Row(
               children: [
-                Text(
-                  title,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onPrimary.withOpacity(0.8),
+                CircleAvatar(
+                  radius: isDesktop ? 30 : 25,
+                  backgroundColor: theme.colorScheme.primaryContainer,
+                  backgroundImage: (driver.profileImageUrl != null &&
+                          driver.profileImageUrl!.isNotEmpty)
+                      ? NetworkImage(driver.profileImageUrl!)
+                      : null,
+                  child: (driver.profileImageUrl == null ||
+                          driver.profileImageUrl!.isEmpty)
+                      ? Icon(
+                          LucideIcons.user,
+                          size: isDesktop ? 35 : 30,
+                          color: theme.colorScheme.onPrimaryContainer,
+                        )
+                      : null,
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        driver.fullName,
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        driver.taxiOffice,
+                        style: theme.textTheme.bodyMedium,
+                      ),
+                    ],
                   ),
                 ),
-                Text(
-                  value,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    color: theme.colorScheme.onPrimary,
-                    fontWeight: FontWeight.bold,
-                  ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildDriverDetail(
+                  context,
+                  icon: LucideIcons.car,
+                  title: local.translate('car_model'),
+                  value: driver.carModel,
+                ),
+                _buildDriverDetail(
+                  context,
+                  icon: LucideIcons.car,
+                  title: local.translate('plate_number'),
+                  value: driver.carPlateNumber,
+                ),
+                _buildDriverDetail(
+                  context,
+                  icon: LucideIcons.star,
+                  title: local.translate('rating'),
+                  value: driver.rating.toStringAsFixed(1),
+                ),
+                _buildDriverDetail(
+                  context,
+                  icon: LucideIcons.hash,
+                  title: local.translate('number_of_ratings'),
+                  value: driver.numberOfRatings.toStringAsFixed(1),
                 ),
               ],
             ),
@@ -119,36 +129,27 @@ class _DriverHomePageState extends State<DriverHomePage> {
     );
   }
 
-  Widget _buildStatsSection(BuildContext context, Map<String, dynamic> stats) {
-    final local = AppLocalizations.of(context);
+  Widget _buildDriverDetail(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String value,
+  }) {
+    final theme = Theme.of(context);
 
-    return Wrap(
-      spacing: 12,
-      runSpacing: 12,
+    return Column(
       children: [
-        _buildStatCard(
-          context: context,
-          title: local.translate('today_trips'),
-          value: "${stats['today_trips']}",
-          icon: LucideIcons.car,
+        Icon(icon, size: 20, color: theme.colorScheme.primary),
+        const SizedBox(height: 4),
+        Text(
+          title,
+          style: theme.textTheme.bodySmall,
         ),
-        _buildStatCard(
-          context: context,
-          title: local.translate('today_earnings'),
-          value: "\$${stats['today_earnings'].toStringAsFixed(2)}",
-          icon: LucideIcons.dollarSign,
-        ),
-        _buildStatCard(
-          context: context,
-          title: local.translate('ratings'),
-          value: "${stats['ratings']}",
-          icon: LucideIcons.star,
-        ),
-        _buildStatCard(
-          context: context,
-          title: local.translate('active_hours'),
-          value: "${stats['active_hours']}h",
-          icon: LucideIcons.clock,
+        Text(
+          value,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ],
     );
@@ -200,7 +201,7 @@ class _DriverHomePageState extends State<DriverHomePage> {
                 ListView.separated(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
-                  itemCount: trips.length,
+                  itemCount: trips.take(5).length, // عرض آخر 5 رحلات فقط
                   separatorBuilder: (context, index) => Divider(
                     height: 1,
                     color: theme.dividerColor,
@@ -220,21 +221,17 @@ class _DriverHomePageState extends State<DriverHomePage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            "${local.translate('from')}: ${trip.startLocation}",
+                            "${local.translate('from')}: ${trip.startLocation.address}",
                             style: theme.textTheme.bodySmall,
                           ),
                           Text(
-                            "${local.translate('to')}: ${trip.endLocation}",
-                            style: theme.textTheme.bodySmall,
-                          ),
-                          Text(
-                            "${local.translate('distance')}: ${trip.distance} ${local.translate('km')}",
+                            "${local.translate('to')}: ${trip.endLocation.address}",
                             style: theme.textTheme.bodySmall,
                           ),
                         ],
                       ),
                       trailing: Text(
-                        "\$${trip.earnings.toStringAsFixed(2)}",
+                        "\$${trip.actualFare.toStringAsFixed(2)}",
                         style: theme.textTheme.bodyLarge?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
@@ -266,29 +263,21 @@ class _DriverHomePageState extends State<DriverHomePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              local.translate('welcome_driver'),
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 16),
-            FutureBuilder<Map<String, dynamic>>(
-              future: _statsFuture,
+            FutureBuilder<Driver>(
+              future: _driverInfoFuture,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
                 }
-
-                final stats = snapshot.data ??
-                    {
-                      'today_trips': 0,
-                      'today_earnings': 0.0,
-                      'ratings': 0.0,
-                      'active_hours': 0,
-                    };
-
-                return _buildStatsSection(context, stats);
+                if (snapshot.hasError) {
+                  return Text(
+                    local.translate('error_loading_driver_info'),
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.error,
+                    ),
+                  );
+                }
+                return _buildDriverProfile(context, snapshot.data!);
               },
             ),
             const SizedBox(height: 20),

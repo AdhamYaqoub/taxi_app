@@ -272,4 +272,11 @@ const Map<String, String> ar = {
   'are_you_sure_cancel_ride': 'هل أنت متأكد من إلغاء هذه الرحلة؟',
   'confirm': 'تأكيد',
   "search_location": "بحث عن موقع...",
+  'edit_ride': 'تعديل الرحلة',
+  'start_location': 'موقع البداية',
+  'end_location': 'موقع النهاية',
+  'ride_updated': 'تم تحديث الرحلة بنجاح',
+  'update_failed': 'فشل في التحديث',
+  'no_pending_rides': 'لا توجد رحلات معلقة',
+  "number_of_ratings": "عدد التقييمات",
 };

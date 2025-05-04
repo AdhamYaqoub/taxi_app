@@ -1,5 +1,5 @@
 const Trip = require('../models/Trip');
-
+const Driver = require('../models/Driver');
 const RATE_PER_KM = 10;
 const MAX_ACCEPTED_TRIPS = 3;
 
@@ -147,19 +147,30 @@ exports.rejectTrip = async (req, res) => {
 };
 
 // إتمام الرحلة من قبل السائق (تحديث السعر الفعلي)
+// إتمام الرحلة من قبل السائق (تحديث السعر الفعلي وإضافة الأرباح للسائق)
+// إتمام الرحلة من قبل السائق (تحديث السعر الفعلي وإضافة الأرباح للسائق)
 exports.completeTrip = async (req, res) => {
   try {
     const { tripId } = req.params;
-
     const trip = await Trip.findOne({ tripId });
 
     if (!trip || trip.status !== 'in_progress') {
       return res.status(400).json({ error: 'لا يمكن إنهاء الرحلة في هذه الحالة' });
     }
 
+    const fare = trip.distance * RATE_PER_KM;
     trip.status = 'completed';
     trip.endTime = new Date();
-    trip.actualFare = trip.distance * RATE_PER_KM;
+    trip.actualFare = fare;
+
+    if (trip.driverId) {
+      const driver = await Driver.findOne({ driverUserId: trip.driverId });
+      if (driver) {
+        // زيادة أرباح السائق
+        driver.earnings += fare;
+        await driver.save();
+      }
+    }
 
     await trip.save();
     res.json(trip);
@@ -205,6 +216,28 @@ exports.getDriverTripsByStatus = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+exports.getUserTripsByStatus = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { status } = req.query;
+    console.log('User ID:', userId, 'Status:', status); // Log the userId and status for debugging
+
+    const query = { userId };
+    if (status) query.status = status;
+
+    const trips = await Trip.find(query)
+      .populate('driverId', 'name phone carModel licensePlate')
+      .sort({ createdAt: -1 });
+      
+    res.json(trips);
+    console.log('User trips:', trips); // Log the trips for debugging
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+
 
 exports.getDriverTrips = async (req, res) => {
   try {
@@ -384,5 +417,54 @@ exports.cancelTrip = async (req, res) => {
     res.json({ message: 'تم إلغاء الرحلة' });
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+};
+
+exports.updateTrip = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { startLocation, endLocation } = req.body;
+
+
+    const updateData = {
+      updatedAt: new Date()
+    };
+
+    if (startLocation.address) {
+      updateData['startLocation.address'] = startLocation.address;
+    }
+
+    // تحديث موقع النهاية إذا وجد
+    if (endLocation.address) {
+      updateData['endLocation.address'] = endLocation.address;
+    }
+
+    const trip = await Trip.findOneAndUpdate(
+      { tripId: id }, 
+      { $set: updateData }, 
+      { 
+        new: true,
+        runValidators: true 
+      }
+    );
+
+    if (!trip) {
+      return res.status(404).json({ message: 'الرحلة غير موجودة' });
+    }
+
+    console.log('Trip updated successfully:', trip);
+    res.json({ 
+      success: true,
+      message: 'تم تحديث الرحلة بنجاح',
+      data: trip 
+    });
+
+  } catch (error) {
+    console.error('Error updating trip:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'فشل في تحديث الرحلة',
+      error: error.message 
+    });
   }
 };

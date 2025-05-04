@@ -33,23 +33,23 @@ const userSchema = new mongoose.Schema({
     enum: ['Male', 'Female'],
     required: true,
   },
-  taxiOffice: {
-    type: String,
-    required: function() { return this.role === 'Driver'; }
-  },
-  carDetails: {
-    model: String,
-    plateNumber: String,
-    color: String,
-  },
-  earnings: {
-    type: Number,
-    default: 0,
-  },
-  isAvailable: {
-    type: Boolean,
-    default: true,
-  }
+  // taxiOffice: {
+  //   type: String,
+  //   required: function() { return this.role === 'Driver'; }
+  // },
+  // carDetails: {
+  //   model: String,
+  //   plateNumber: String,
+  //   color: String,
+  // },
+  // earnings: {
+  //   type: Number,
+  //   default: 0,
+  // },
+  // isAvailable: {
+  //   type: Boolean,
+  //   default: true,
+  // }
 }, { timestamps: true });
 
 userSchema.plugin(AutoIncrement, { inc_field: 'userId' });
