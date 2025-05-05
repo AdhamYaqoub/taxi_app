@@ -1,96 +1,82 @@
-// controllers/driverController.js
-const User = require('../models/User');
-const AppError = require('../utils/appError');
-const catchAsync = require('../utils/catchAsync');
 
-// تحديث معلومات السائق
-const updateDriverProfile = catchAsync(async (req, res, next) => {
-  const { id } = req.params;
-  const updateData = req.body;
+const Driver = require('../models/Driver');
 
-  // منع تحديث بعض الحقول
-  if (updateData.role || updateData.email || updateData.phone) {
-    return next(new AppError('لا يمكن تحديث هذه البيانات', 400));
+exports.getAllDrivers = async (req, res) => {
+  try {
+    // نستخدم find({}) بدون شروط لجلب كل السائقين
+    const allDrivers = await Driver.find({})
+      .populate({
+        path: 'user',
+        select: 'fullName userId email phone' // اختر الحقول التي تريدها من نموذج User
+      })
+      // اختر الحقول التي تريدها من نموذج Driver
+      .select('user carDetails rating numberOfRatings profileImageUrl taxiOffice isAvailable')
+      .lean(); // .lean() للحصول على كائنات JavaScript بسيطة أسرع
+
+    res.status(200).json(allDrivers); // أرسل قائمة جميع السائقين
+
+  } catch (error) {
+    console.error("Error fetching all drivers:", error);
+    res.status(500).json({ message: "حدث خطأ أثناء جلب جميع السائقين", error: error.message });
   }
+};
 
-  const driver = await User.findByIdAndUpdate(
-    id,
-    { $set: updateData },
-    { new: true, runValidators: true }
-  ).select('-password');
+exports.getAvailableDrivers = async (req, res) => {
+  try {
+    const availableDrivers = await Driver.find({ isAvailable: true })
+  
+      .populate({
+        path: 'user',           
+        select: 'fullName userId email phone' 
+                                    
+      })
+      .select('user carDetails rating numberOfRatings profileImageUrl taxiOffice isAvailable')
+      .lean();
 
-  if (!driver || driver.role !== 'driver') {
-    return next(new AppError('لم يتم العثور على السائق', 404));
+    res.status(200).json(availableDrivers);
+
+  } catch (error) {
+    console.error("Error fetching available drivers:", error);
+    res.status(500).json({ message: "حدث خطأ أثناء جلب السائقين المتاحين", error: error.message });
   }
+};
 
-  res.status(200).json({
-    status: 'success',
-    data: {
-      driver
+
+exports.getDriverById = async (req, res) => {
+  try {
+    const driverId = req.params.id;
+
+    // البحث باستخدام driverUserId بدلاً من _id
+    const driver = await Driver.findOne({ driverUserId: driverId })
+      .populate({
+        path: 'user',
+        select: 'fullName userId email phone profilePhoto'
+      })
+      .select('user carDetails rating taxiOffice isAvailable currentLocation')
+      .lean();
+
+    if (!driver) {
+      return res.status(404).json({ message: "لم يتم العثور على السائق" });
     }
-  });
-});
 
-// الحصول على معلومات السائق
-const getDriverProfile = catchAsync(async (req, res, next) => {
-  const driver = await User.findById(req.params.id)
-    .select('-password')
-    .populate('taxiOffice');
+    // تحسين هيكل البيانات المرتجع
+    const response = {
+      ...driver,
+      user: {
+        ...driver.user,
+        profilePhoto: driver.user.profilePhoto 
+          ? `${req.protocol}://${req.get('host')}/uploads/${driver.user.profilePhoto}`
+          : null
+      }
+    };
 
-  if (!driver || driver.role !== 'driver') {
-    return next(new AppError('لم يتم العثور على السائق', 404));
+    res.status(200).json(response);
+
+  } catch (error) {
+    console.error("Error fetching driver by ID:", error);
+    res.status(500).json({ 
+      message: "حدث خطأ أثناء جلب بيانات السائق",
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
-
-  res.status(200).json({
-    status: 'success',
-    data: {
-      driver
-    }
-  });
-});
-
-// تغيير حالة السائق (اونلاين/اوفلاين)
-const updateDriverStatus = catchAsync(async (req, res, next) => {
-  const { isOnline, lastLocation } = req.body;
-
-  const driver = await User.findByIdAndUpdate(
-    req.user.id,
-    {
-      isOnline,
-      lastLocation: lastLocation ? {
-        type: 'Point',
-        coordinates: [lastLocation.lng, lastLocation.lat]
-      } : undefined
-    },
-    { new: true }
-  ).select('-password');
-
-  res.status(200).json({
-    status: 'success',
-    data: {
-      driver
-    }
-  });
-});
-
-// الحصول على جميع السائقين
-const getAllDrivers = catchAsync(async (req, res, next) => {
-  const drivers = await User.find({ role: 'driver' })
-    .select('-password')
-    .populate('taxiOffice');
-
-  res.status(200).json({
-    status: 'success',
-    results: drivers.length,
-    data: {
-      drivers
-    }
-  });
-});
-
-module.exports = {
-  updateDriverProfile,
-  getDriverProfile,
-  updateDriverStatus,
-  getAllDrivers
 };

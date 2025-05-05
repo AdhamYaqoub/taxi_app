@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:taxi_app/language/localization.dart';
+import 'package:taxi_app/screens/User/drivers_list_page.dart';
 import 'User/user_home.dart';
 import 'User/mytrip.dart';
 import 'User/payment_page.dart';
@@ -31,7 +32,8 @@ class _UserDashboardState extends State<UserDashboard> {
 
   final List<Widget> _pages = [
     HomePage(userId: 12),
-    const MyTripsPage(),
+    ClientTripsPage(userId: 12),
+    const DriversListPage(),
     const PaymentPage(),
     const OffersPage(),
     const SettingsPage(),
@@ -76,8 +78,9 @@ class _UserDashboardState extends State<UserDashboard> {
                     icon: Icon(LucideIcons.home),
                     label: AppLocalizations.of(context).translate('home')),
                 BottomNavigationBarItem(
-                    icon: Icon(LucideIcons.user),
-                    label: AppLocalizations.of(context).translate('profile')),
+                    icon: Icon(LucideIcons.history),
+                    label: AppLocalizations.of(context)
+                        .translate('trips_history')),
                 BottomNavigationBarItem(
                     icon: Icon(LucideIcons.history),
                     label: AppLocalizations.of(context)
@@ -114,8 +117,11 @@ class _UserDashboardState extends State<UserDashboard> {
           Divider(color: theme.colorScheme.onPrimary),
           _buildSidebarItem(AppLocalizations.of(context).translate('home'),
               LucideIcons.home, 0, theme),
-          _buildSidebarItem(AppLocalizations.of(context).translate('profile'),
-              LucideIcons.user, 1, theme),
+          _buildSidebarItem(
+              AppLocalizations.of(context).translate('trips_history'),
+              LucideIcons.history,
+              1,
+              theme),
           _buildSidebarItem(
               AppLocalizations.of(context).translate('trips_history'),
               LucideIcons.history,

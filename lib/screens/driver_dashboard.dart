@@ -20,12 +20,12 @@ class _DriverDashboardState extends State<DriverDashboard> {
   int _selectedIndex = 0;
 
   final List<Widget> _pages = [
-    const DriverHomePage(driverId: 1),
+    const DriverHomePage(driverId: 7),
     const DriverRequestsPage(
-      driverId: 1,
+      driverId: 7,
     ),
-    const DriverTripsPage(driverId: 1),
-    const EarningsPage(driverId: 1),
+    const DriverTripsPage(driverId: 7),
+    const EarningsPage(driverId: 7),
     const SupportPage(),
     const DriverSettingsPage(),
   ];
@@ -63,46 +63,23 @@ class _DriverDashboardState extends State<DriverDashboard> {
   Widget _buildMobileSidebar(ThemeData theme, AppLocalizations local) {
     return Drawer(
       backgroundColor: theme.colorScheme.primary,
-      child: SingleChildScrollView(
-        child: Column(
+      child: SafeArea(
+        child: ListView(
+          padding: EdgeInsets.zero,
           children: [
             _buildSidebarHeader(theme),
             _buildSidebarItem(
-              local.translate('home'),
-              LucideIcons.home,
-              0,
-              theme,
-            ),
+                local.translate('home'), LucideIcons.home, 0, theme),
             _buildSidebarItem(
-              local.translate('trip_requests'), // ترجمة جديدة
-              LucideIcons.list,
-              1,
-              theme,
-            ),
+                local.translate('trip_requests'), LucideIcons.list, 1, theme),
             _buildSidebarItem(
-              local.translate('my_trips'),
-              LucideIcons.car,
-              2,
-              theme,
-            ),
+                local.translate('my_trips'), LucideIcons.car, 2, theme),
             _buildSidebarItem(
-              local.translate('earnings'),
-              LucideIcons.dollarSign,
-              3,
-              theme,
-            ),
+                local.translate('earnings'), LucideIcons.dollarSign, 3, theme),
             _buildSidebarItem(
-              local.translate('support'),
-              LucideIcons.headphones,
-              4,
-              theme,
-            ),
+                local.translate('support'), LucideIcons.headphones, 4, theme),
             _buildSidebarItem(
-              local.translate('settings'),
-              LucideIcons.settings,
-              5,
-              theme,
-            ),
+                local.translate('settings'), LucideIcons.settings, 5, theme),
           ],
         ),
       ),
@@ -247,9 +224,11 @@ class _DriverDashboardState extends State<DriverDashboard> {
       selectedItemColor: theme.colorScheme.onPrimary,
       // ignore: deprecated_member_use
       unselectedItemColor: theme.colorScheme.onPrimary.withOpacity(0.6),
-      selectedLabelStyle: theme.textTheme.labelSmall?.copyWith(
+      selectedLabelStyle:
+          (theme.textTheme.labelSmall ?? const TextStyle()).copyWith(
         fontWeight: FontWeight.bold,
       ),
+
       items: [
         BottomNavigationBarItem(
           icon: Icon(LucideIcons.home),

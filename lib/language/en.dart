@@ -273,4 +273,11 @@ const Map<String, String> en = {
   'are_you_sure_cancel_ride': 'Are you sure you want to cancel the ride?',
   'confirm': 'Confirm',
   "search_location": "Search for a location...",
+  'edit_ride': 'Edit Ride',
+  'start_location': 'start location',
+  'end_location': 'end location',
+  'ride_updated': 'Ride Updated successfully',
+  'update_failed': 'update failed',
+  'no_pending_rides': 'No pending rides',
+  "number_of_ratings": "Number of Ratings",
 };

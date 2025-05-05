@@ -65,6 +65,22 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  Future<void> _updateTrip(int tripId, String newStart, String newEnd) async {
+    try {
+      await TripsApi.updateTrip(
+        tripId: tripId,
+        startAddress: newStart,
+        endAddress: newEnd,
+      );
+
+      _showSnackBar(AppLocalizations.of(context).translate('ride_updated'));
+      _loadPendingTrips();
+    } catch (e) {
+      _showSnackBar(
+          '${AppLocalizations.of(context).translate('update_failed')}: $e');
+    }
+  }
+
   void _showDeleteConfirmation(int tripId) {
     final local = AppLocalizations.of(context);
 
@@ -87,6 +103,56 @@ class _HomePageState extends State<HomePage> {
               local.translate('confirm'),
               style: const TextStyle(color: Colors.red),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEditDialog(Map<String, dynamic> trip) {
+    final TextEditingController startController =
+        TextEditingController(text: trip['startLocation']['address']);
+    final TextEditingController endController =
+        TextEditingController(text: trip['endLocation']['address']);
+    final local = AppLocalizations.of(context);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(local.translate('edit_ride')),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: startController,
+              decoration: InputDecoration(
+                labelText: local.translate('start_location'),
+              ),
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: endController,
+              decoration: InputDecoration(
+                labelText: local.translate('end_location'),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(local.translate('cancel')),
+          ),
+          TextButton(
+            onPressed: () {
+              _updateTrip(
+                trip['tripId'],
+                startController.text,
+                endController.text,
+              );
+              Navigator.pop(context);
+            },
+            child: Text(local.translate('save')),
           ),
         ],
       ),
@@ -323,7 +389,7 @@ class _HomePageState extends State<HomePage> {
     }
 
     if (pendingTrips.isEmpty) {
-      return const Text('لا توجد رحلات معلقة');
+      return Text(AppLocalizations.of(context).translate('no_pending_rides'));
     }
 
     return ListView.builder(
@@ -335,11 +401,22 @@ class _HomePageState extends State<HomePage> {
         return Card(
           margin: const EdgeInsets.only(bottom: 10),
           child: ListTile(
-            title: Text('من ${trip['startLocation']['address']}'),
-            subtitle: Text('إلى ${trip['endLocation']['address']}'),
-            trailing: IconButton(
-              icon: const Icon(Icons.delete, color: Colors.red),
-              onPressed: () => _showDeleteConfirmation(trip['tripId']),
+            title: Text(
+                '${AppLocalizations.of(context).translate('from')}: ${trip['startLocation']['address']}'),
+            subtitle: Text(
+                '${AppLocalizations.of(context).translate('to')}: ${trip['endLocation']['address']}'),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.edit, color: Colors.blue),
+                  onPressed: () => _showEditDialog(trip),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete, color: Colors.red),
+                  onPressed: () => _showDeleteConfirmation(trip['tripId']),
+                ),
+              ],
             ),
           ),
         );

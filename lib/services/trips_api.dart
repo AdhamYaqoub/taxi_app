@@ -258,6 +258,27 @@ class TripsApi {
     }
   }
 
+  static Future<List<Trip>> getClientTripsWithStatus(int userId,
+      {String? status}) async {
+    try {
+      final url = '$_baseUrl/trips/user/$userId/status?status=$status';
+
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body) as List;
+        return data.map((e) => Trip.fromJson(e)).toList();
+      } else {
+        throw Exception('Failed with status: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error: $e');
+    }
+  }
+
   static Future<List<Trip>> getPendingTrips() async {
     try {
       final response = await http.get(
@@ -375,6 +396,35 @@ class TripsApi {
 
     if (response.statusCode != 200) {
       throw Exception('Failed to cancel trip');
+    }
+  }
+
+  static Future<void> updateTrip({
+    required int tripId,
+    required String startAddress,
+    required String endAddress,
+    double? startLongitude,
+    double? startLatitude,
+    double? endLongitude,
+    double? endLatitude,
+  }) async {
+    final body = {
+      'startLocation': {
+        'address': startAddress,
+      },
+      'endLocation': {
+        'address': endAddress,
+      }
+    };
+
+    final response = await http.put(
+      Uri.parse('$_baseUrl/trips/$tripId'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(body),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to update trip: ${response.body}');
     }
   }
 }
