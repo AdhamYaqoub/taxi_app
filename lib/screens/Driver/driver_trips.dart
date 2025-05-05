@@ -30,12 +30,12 @@ class _DriverTripsPageState extends State<DriverTripsPage> {
 
       _completedTripsFuture = TripsApi.getDriverTripsWithStatus(
         widget.driverId,
-        'completed',
+        status: 'completed',
       );
 
       _inProgressTripsFuture = TripsApi.getDriverTripsWithStatus(
         widget.driverId,
-        'in_progress',
+       status:  'in_progress',
       );
 
       Future.wait([

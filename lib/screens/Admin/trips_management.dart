@@ -30,12 +30,12 @@ class _DriverTripsPageState extends State<DriverTripsPage> {
 
       _completedTripsFuture = TripsApi.getDriverTripsWithStatus(
         widget.driverId,
-        'completed',
+        status: 'completed',
       );
 
       _inProgressTripsFuture = TripsApi.getDriverTripsWithStatus(
         widget.driverId,
-        'in_progress',
+        status: 'in_progress',
       );
 
       Future.wait([
@@ -199,12 +199,12 @@ class _DriverTripsPageState extends State<DriverTripsPage> {
               _buildTripDetailRow(
                 icon: LucideIcons.mapPin,
                 label: local.translate('from'),
-                value: trip.startLocation,
+                value: trip.startLocation.toString(),
               ),
               _buildTripDetailRow(
                 icon: LucideIcons.mapPin,
                 label: local.translate('to'),
-                value: trip.endLocation,
+                value: trip.endLocation.toString(),
               ),
               _buildTripDetailRow(
                 icon: LucideIcons.map,
