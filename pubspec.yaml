@@ -51,6 +51,12 @@ dependencies:
   file_picker: ^9.2.1
   excel: ^4.0.6
   flutter_map_tile_caching: 10.1.1  
+  agora_rtc_engine: ^6.5.1
+  google_ml_kit: ^0.19.0
+  flutter_dotenv: ^5.2.1
+  
+  # tflite_flutter: ^0.11.0
+  # tflite_flutter_helper: ^0.2.1
 
 dev_dependencies:
   flutter_test:
