@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:taxi_app/screens/Manegar/details.dart';
-import 'package:taxi_app/screens/chat.dart'; // استيراد صفحة الدردشة
-import 'package:taxi_app/widgets/CustomAppBar.dart';
+import 'package:taxi_app/language/localization.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:taxi_app/language/localization.dart'; // استيراد الترجمة
+import '../../services/driver_detail_page.dart'; // صفحة التفاصيل الجديدة
 
 class OfficeManagerPage extends StatefulWidget {
   final String officeId;
@@ -15,42 +15,64 @@ class OfficeManagerPage extends StatefulWidget {
 }
 
 class _OfficeManagerPageState extends State<OfficeManagerPage> {
-  List<Map<String, String>> drivers = [
-    {"name": "أحمد علي", "phone": "0599123456", "status": "نشط", "trips": "120", "earnings": "\$450"},
-    {"name": "خالد يوسف", "phone": "0599876543", "status": "غير متصل", "trips": "80", "earnings": "\$300"},
-    {"name": "محمد سعيد", "phone": "0591234567", "status": "مشغول", "trips": "200", "earnings": "\$780"},
-  ];
-
+  List<Map<String, dynamic>> drivers = [];
   String searchQuery = "";
   String selectedFilter = "الكل";
+  bool isLoading = true;
 
-  void removeDriver(int index) {
-    setState(() {
-      drivers.removeAt(index);
-    });
+  @override
+  void initState() {
+    super.initState();
+    fetchDrivers();
   }
 
-  void editDriver(int index) {
-    print("✏ تعديل بيانات السائق: ${drivers[index]['name']}");
+  // جلب بيانات السائقين من API
+  Future<void> fetchDrivers() async {
+    try {
+      final response = await http.get(Uri.parse('http://localhost:5000/api/users')); // تأكد من عنوان API
+
+      if (response.statusCode == 200) {
+        List<dynamic> data = json.decode(response.body);
+
+        setState(() {
+          drivers = data
+              .where((user) => user["role"] == "Driver") // تصفية السائقين حسب الدور
+              .map((user) => {
+                    "name": user["fullName"] ?? 'اسم غير موجود',
+                    "status": user["isAvailable"] ?? false,
+                    "rating": user["rating"] ?? 0.0, // يمكنك تعديل هذا حسب المتاح
+                    "rides": user["rides"] ?? 0, // أو أي قيمة متاحة في الـ API
+                    "type": user["role"] ?? 'غير محدد',
+                    "id": user["userId"], // تأكد من أن هناك معرف فريد لكل سائق
+                    "phone": user["phone"] ?? 'غير متاح',
+                    "email": user["email"] ?? 'غير متاح',
+                    "location": user["location"] ?? 'غير متاح',
+                  })
+              .toList();
+          isLoading = false;
+        });
+      } else {
+        throw Exception('فشل في تحميل السائقين');
+      }
+    } catch (error) {
+      setState(() {
+        isLoading = false;
+      });
+      print("Error: $error");
+    }
   }
 
-  void startChat(Map<String, String> driver) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => ChatScreen(),
-      ),
-    );
-  }
-
-  List<Map<String, String>> getFilteredDrivers() {
+  // دالة للبحث والتصفية حسب الحالة
+  List<Map<String, dynamic>> getFilteredDrivers() {
     return drivers.where((driver) {
-      bool matchesSearch = driver["name"]!.contains(searchQuery) || driver["phone"]!.contains(searchQuery);
-      bool matchesFilter = selectedFilter == "الكل" || driver["status"] == selectedFilter;
+      bool matchesSearch = driver["name"].toString().contains(searchQuery) ||
+                           driver["phone"].toString().contains(searchQuery);
+      bool matchesFilter = selectedFilter == "الكل" || (driver["status"] ? "نشط" : "غير متصل") == selectedFilter;
       return matchesSearch && matchesFilter;
     }).toList();
   }
 
+  // الاتصال بالسائق
   void _callDriver(String phoneNumber) async {
     final Uri phoneUri = Uri(scheme: 'tel', path: phoneNumber);
     if (await canLaunchUrl(phoneUri)) {
@@ -62,108 +84,139 @@ class _OfficeManagerPageState extends State<OfficeManagerPage> {
 
   @override
   Widget build(BuildContext context) {
-    String searchLabel = AppLocalizations.of(context).translate('search_driver');
-    String noDriversText = AppLocalizations.of(context).translate('no_drivers');
-    String editLabel = AppLocalizations.of(context).translate('edit');
-    String removeLabel = AppLocalizations.of(context).translate('remove');
-    String chatLabel = AppLocalizations.of(context).translate('chat'); // ترجمة خيار الدردشة
-
-    List<Map<String, String>> filteredDrivers = getFilteredDrivers();
+    var theme = Theme.of(context);
+    List<Map<String, dynamic>> filteredDrivers = getFilteredDrivers();
 
     return Scaffold(
-      appBar: CustomAppBar(),
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          bool isWeb = constraints.maxWidth > 600;
-          return Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              children: [
-                TextField(
-                  decoration: InputDecoration(
-                    labelText: searchLabel,
-                    prefixIcon: const Icon(Icons.search),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                  ),
-                  onChanged: (value) {
-                    setState(() {
-                      searchQuery = value;
-                    });
-                  },
+      backgroundColor: theme.scaffoldBackgroundColor,
+      appBar: AppBar(
+        title: Text(AppLocalizations.of(context).translate('drivers_management')),
+        backgroundColor: theme.colorScheme.primary,
+      ),
+      body: Center(  // محاذاة كل المحتوى في الوسط
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,  // محاذاة العناصر في المنتصف
+            children: [
+              TextField(
+                decoration: const InputDecoration(
+                  labelText: "🔍 بحث عن سائق",
+                  prefixIcon: Icon(Icons.search),
                 ),
-                const SizedBox(height: 10),
-                DropdownButton<String>(
-                  value: selectedFilter,
-                  items: ["الكل", "نشط", "غير متصل", "مشغول"].map((status) {
-                    return DropdownMenuItem<String>(
-                      value: status,
-                      child: Text(status),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      selectedFilter = value!;
-                    });
-                  },
-                ),
-                const SizedBox(height: 10),
-                Expanded(
-                  child: filteredDrivers.isEmpty
-                      ? Center(child: Text(noDriversText))
-                      : ListView.builder(
-                          itemCount: filteredDrivers.length,
-                          itemBuilder: (context, index) {
-                            var driver = filteredDrivers[index];
-                            return Card(
-                              elevation: 4,
-                              margin: const EdgeInsets.symmetric(vertical: 8),
-                              child: ListTile(
-                                leading: CircleAvatar(
-                                  backgroundColor: Colors.yellow.shade700,
-                                  child: Text(driver['name']![0], style: const TextStyle(color: Colors.white)),
-                                ),
-                                title: Text(driver['name']!),
-                                subtitle: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text("📞 ${driver['phone']}"),
-                                    Text("🚗 عدد الرحلات: ${driver['trips']}"),
-                                    Text("💰 الأرباح: ${driver['earnings']}"),
-                                  ],
-                                ),
-                                trailing: PopupMenuButton<String>(
-                                  onSelected: (value) {
-                                    if (value == 'edit') {
-                                      editDriver(index);
-                                    } else if (value == 'remove') {
-                                      removeDriver(index);
-                                    } else if (value == 'chat') {
-                                      startChat(driver);
-                                    }
+                onChanged: (value) {
+                  setState(() {
+                    searchQuery = value;
+                  });
+                },
+              ),
+              const SizedBox(height: 10),
+              DropdownButton<String>(
+                value: selectedFilter,
+                items: ["الكل", "نشط", "غير متصل"].map((status) {
+                  return DropdownMenuItem<String>(
+                    value: status,
+                    child: Text(status),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  setState(() {
+                    selectedFilter = value!;
+                  });
+                },
+              ),
+              const SizedBox(height: 10),
+              Expanded(
+                child: isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : filteredDrivers.isEmpty
+                        ? const Center(child: Text("لا يوجد سائقون"))
+                        : LayoutBuilder(
+                            builder: (context, constraints) {
+                              // إذا كانت الشاشة صغيرة، استخدم قائمة
+                              if (constraints.maxWidth < 600) {
+                                return ListView.builder(
+                                  itemCount: filteredDrivers.length,
+                                  itemBuilder: (context, index) {
+                                    var driver = filteredDrivers[index];
+                                    return Card(
+                                      margin: const EdgeInsets.symmetric(vertical: 8),
+                                      child: ListTile(
+                                        leading: const Icon(Icons.person),
+                                        title: Text(driver['name'].toString()),
+                                        subtitle: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text("📞 ${driver['phone']}"),
+                                            Text("🚗 رحلات: ${driver['rides']}"),
+                                            Text("💰 أرباح: ${driver['earnings']}"),
+                                          ],
+                                        ),
+                                        trailing: IconButton(
+                                          icon: const Icon(Icons.phone, color: Colors.green),
+                                          onPressed: () => _callDriver(driver['phone'].toString()),
+                                        ),
+                                        onTap: () {
+                                          // الانتقال إلى صفحة التفاصيل عند النقر
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) => DriverDetailPageWeb(driver: driver),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    );
                                   },
-                                  itemBuilder: (BuildContext context) => [
-                                    PopupMenuItem(value: 'edit', child: Text(editLabel)),
-                                    PopupMenuItem(value: 'remove', child: Text(removeLabel)),
-                                    PopupMenuItem(value: 'chat', child: Text(chatLabel)), // خيار فتح الدردشة
-                                  ],
-                                ),
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => DriverDetailsPage(driver: driver),
-                                    ),
-                                  );
-                                },
-                              ),
-                            );
-                          },
-                        ),
-                ),
-              ],
-            ),
-          );
-        },
+                                );
+                              } else {
+                                // إذا كانت الشاشة كبيرة، استخدم جدول
+                                return SingleChildScrollView(
+                                  scrollDirection: Axis.horizontal,
+                                  child: DataTable(
+                                    columns: const [
+                                      DataColumn(label: Text("الاسم")),
+                                      DataColumn(label: Text("الهاتف")),
+                                      DataColumn(label: Text("الحالة")),
+                                      DataColumn(label: Text("الرحلات")),
+                                      DataColumn(label: Text("تفاصيل")),
+                                      DataColumn(label: Text("اتصال")),
+                                    ],
+                                    rows: filteredDrivers.map((driver) {
+                                      return DataRow(
+                                        cells: [
+                                          DataCell(Text(driver['name'].toString())),
+                                          DataCell(Text(driver['phone'].toString())),
+                                          DataCell(Text(driver["status"] ? "نشط" : "غير متصل")),
+                                          DataCell(Text(driver['rides'].toString())),
+                                          DataCell(IconButton(
+                                            icon: const Icon(Icons.info, color: Colors.blue),
+                                            onPressed: () {
+                                              // الانتقال إلى صفحة التفاصيل عند النقر
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (context) => DriverDetailPageWeb(driver: driver),
+                                                ),
+                                              );
+                                            },
+                                          )),
+                                          DataCell(IconButton(
+                                            icon: const Icon(Icons.phone, color: Colors.green),
+                                            onPressed: () => _callDriver(driver['phone'].toString()),
+                                          )),
+                                        ],
+                                      );
+                                    }).toList(),
+                                  ),
+                                );
+                              }
+                            },
+                          ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

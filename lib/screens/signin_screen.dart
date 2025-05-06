@@ -1,9 +1,12 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:taxi_app/screens/admin.dart';
 import 'package:taxi_app/screens/homepage.dart';
 import 'package:taxi_app/screens/driver_dashboard.dart'; // صفحة السائق
+import 'package:taxi_app/screens/manegar.dart';
 import 'package:taxi_app/screens/signup_screen.dart';
+import 'package:taxi_app/screens/user.dart';
 import 'package:taxi_app/widgets/CustomAppBar.dart';
 import 'components/custom_text_field.dart';
 import 'components/custom_button.dart';
@@ -23,43 +26,53 @@ class _SignInScreenState extends State<SignInScreen> {
   final TextEditingController passwordController = TextEditingController();
   bool isLoading = false;
 
-  Future<void> signIn(BuildContext context) async {
-    setState(() => isLoading = true);
+Future<void> signIn(BuildContext context) async {
+  setState(() => isLoading = true);
 
-    final String apiUrl = 'http://localhost:5000/api/users/signin'; // تأكد من عنوان السيرفر
-    final response = await http.post(
-      Uri.parse(apiUrl),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'email': emailController.text.trim(),
-        'password': passwordController.text.trim(),
-      }),
-    );
+  final String apiUrl = 'http://localhost:5000/api/users/signin';
+  final response = await http.post(
+    Uri.parse(apiUrl),
+    headers: {'Content-Type': 'application/json'},
+    body: jsonEncode({
+      'email': emailController.text.trim(),
+      'password': passwordController.text.trim(),
+    }),
+  );
 
-    setState(() => isLoading = false);
+  setState(() => isLoading = false);
 
-    if (response.statusCode == 200) {
-      try {
-        final data = jsonDecode(response.body);
-        if (data != null && data['role'] != null) {
-          String role = data['role']; // تأكد أن الـ API يعيد الدور (User/Driver)
-          if (role == "User") {
-            Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => HomePage()));
-          } else if (role == "Driver") {
-            Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => DriverDashboard()));
-          } else {
-            showError("Invalid role received!");
-          }
-        } else {
-          showError("Invalid data received from server.");
-        }
-      } catch (e) {
-        showError("Error parsing response data.");
+ if (response.statusCode == 200) {
+  try {
+    final data = jsonDecode(response.body);
+
+    // الوصول إلى بيانات المستخدم
+    final user = data['user']; // احصل على البيانات من مفتاح 'user'
+    
+    if (user != null && user['role'] != null) {
+      String role = user['role'];  // احصل على الدور من البيانات
+      if (role == "User") {
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => UserDashboard()));
+      } else if (role == "Driver") {
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => DriverDashboard()));
+      } else if (role == "Admin") {
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => AdminDashboard()));
+      } else if (role == "Manager") {
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => OfficeManagerPage(officeId: '',)));
+      } else {
+        showError("Invalid role received!");
       }
     } else {
-      showError("Login failed! Please check your credentials.");
+      showError("Invalid data received from server.");
     }
+  } catch (e) {
+    showError("Error parsing response data.");
   }
+} else {
+  showError("Login failed! Please check your credentials.");
+}
+ 
+}
+
 
   void showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message, style: TextStyle(color: Colors.white)), backgroundColor: Colors.red));

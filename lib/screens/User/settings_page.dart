@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import 'package:taxi_app/language/localization.dart';
 import 'package:taxi_app/providers/theme_provider.dart';
 import 'package:taxi_app/providers/language_provider.dart';
+import 'package:taxi_app/screens/User/setting/profile.dart';
+import 'package:taxi_app/screens/User/setting/change_password.dart';
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
@@ -47,40 +49,28 @@ class SettingsPage extends StatelessWidget {
                   context,
                   'edit_profile',
                   LucideIcons.user,
-                  () {},
+                  () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const EditProfilePage(),
+                      ),
+                    );
+                  },
                 ),
                 _buildSettingsItem(
                   context,
                   'change_password',
                   LucideIcons.lock,
-                  () {},
-                ),
-                _buildSettingsItem(
-                  context,
-                  'manage_addresses',
-                  LucideIcons.mapPin,
-                  () {},
-                ),
-              ]),
-              _buildSettingsSection(context, 'security_privacy', [
-                _buildSettingsItem(
-                  context,
-                  'two_factor_auth',
-                  LucideIcons.shieldCheck,
-                  () {},
-                ),
-                _buildSettingsItem(
-                  context,
-                  'manage_permissions',
-                  LucideIcons.shieldAlert,
-                  () {},
-                ),
-                _buildSettingsItem(
-                  context,
-                  'activity_log',
-                  LucideIcons.fileSearch,
-                  () {},
-                ),
+                  () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ChangePasswordPage(),
+                      ),
+                    );
+                  },
+                ),     
               ]),
               _buildSettingsSection(context, 'app_settings', [
                 _buildSettingsItem(
@@ -196,7 +186,7 @@ class SettingsPage extends StatelessWidget {
         AppLocalizations.of(context).translate(titleKey),
         style: theme.textTheme.bodyLarge,
       ),
-      trailing: trailing ??
+      trailing: trailing ?? 
           Icon(
             Icons.arrow_forward_ios,
             size: 16,

@@ -3,6 +3,8 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:provider/provider.dart';
 import 'package:taxi_app/language/localization.dart';
 import 'package:taxi_app/providers/theme_provider.dart';
+import 'package:taxi_app/screens/chat.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SupportPage extends StatelessWidget {
   const SupportPage({super.key});
@@ -119,9 +121,7 @@ class SupportPage extends StatelessWidget {
                 icon: LucideIcons.phoneCall,
                 color: Colors.green,
                 title: local.translate("call_support"),
-                onTap: () {
-                  // Call support implementation
-                },
+                onTap: () => _showPhoneOptions(context),
               ),
               Divider(height: 1, color: theme.dividerColor),
               _buildSupportTile(
@@ -129,9 +129,7 @@ class SupportPage extends StatelessWidget {
                 icon: LucideIcons.mail,
                 color: Colors.blue,
                 title: local.translate("send_email"),
-                onTap: () {
-                  // Email support implementation
-                },
+                onTap: _sendSupportEmail,
               ),
               Divider(height: 1, color: theme.dividerColor),
               _buildSupportTile(
@@ -140,7 +138,10 @@ class SupportPage extends StatelessWidget {
                 color: Colors.orange,
                 title: local.translate("chat_with_support"),
                 onTap: () {
-                  // Chat support implementation
+                   Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => ChatScreen()),
+    );
                 },
               ),
             ],
@@ -148,6 +149,53 @@ class SupportPage extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  void _showPhoneOptions(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.phone, color: Colors.green),
+              title: const Text("0594348312"),
+              onTap: () {
+                Navigator.pop(context);
+                _callNumber("0594348312");
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.phone, color: Colors.green),
+              title: const Text("0595498035"),
+              onTap: () {
+                Navigator.pop(context);
+                _callNumber("0595498035");
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _callNumber(String number) async {
+    final Uri url = Uri.parse("tel:$number");
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url);
+    }
+  }
+
+  void _sendSupportEmail() async {
+    final Uri emailUri = Uri(
+      scheme: 'mailto',
+      path: 'amamry2024.2002@gmail.com,amamry2021.2002@gmail.com',
+      query: Uri.encodeFull('subject=دعم TaxiGo&body=اكتب مشكلتك هنا'),
+    );
+
+    if (await canLaunchUrl(emailUri)) {
+      await launchUrl(emailUri);
+    }
   }
 
   Widget _buildSupportTile(

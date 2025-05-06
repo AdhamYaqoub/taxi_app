@@ -21,7 +21,7 @@ class _EarningsPageState extends State<EarningsPage> {
   void initState() {
     super.initState();
     _tripsFuture =
-        TripsApi.getDriverTripsWithStatus(widget.driverId, status: 'completed');
+        TripsApi.getDriverTripsWithStatus(widget.driverId, status:'completed');
   }
 
   // دالة لحساب إجمالي الأرباح محلياً

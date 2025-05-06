@@ -114,5 +114,12 @@ const getUsers = async (req, res) => {
     res.status(500).json({ message: 'Error fetching users', error });
   }
 };
-
+// const getUsers = async (filter = {}) => {
+//   try {
+//     const users = await User.find(filter);  // تطبيق الفلتر إن وجد
+//     return users;
+//   } catch (error) {
+//     throw new Error('Error fetching users');
+//   }
+// };
 module.exports = { createUser, loginUser, getUsers };

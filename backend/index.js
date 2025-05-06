@@ -9,10 +9,12 @@ const http = require('http');
 const db = require('./config/db');
 
 // استيراد المسارات (routes)
-const userRoutes = require('./routes/userRoutes');
+const userRoutes = require('./routes/user.Routes');
+// const userRoutes = require('./routes/userRoutes');
 // const driverRoutes = require('./routes/driverRoutes');
-const tripRoutes = require('./routes/tripsRoutes');
+const tripRoutes = require('./routes/trips.Routes');
 // const tripRequestRoutes = require('./routes/tripRequests'); 
+const messageRoutes = require('./routes/messageRoutes');
 const driver = require('./routes/driverRoutes');
 
 // إعداد السوكيت
@@ -44,6 +46,7 @@ app.use('/api/users', userRoutes);
 // app.use('/api/drivers', driverRoutes);
 app.use('/api/trips', tripRoutes);
 // app.use('/api/trip-requests', tripRequestRoutes); 
+app.use('/messages', messageRoutes);
 app.use('/api/drivers', driver);
 
 // Route for health check
