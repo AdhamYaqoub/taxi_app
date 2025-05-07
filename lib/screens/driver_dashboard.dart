@@ -12,7 +12,6 @@ class DriverDashboard extends StatefulWidget {
   const DriverDashboard({super.key});
 
   @override
-  // ignore: library_private_types_in_public_api
   _DriverDashboardState createState() => _DriverDashboardState();
 }
 
@@ -21,14 +20,19 @@ class _DriverDashboardState extends State<DriverDashboard> {
 
   final List<Widget> _pages = [
     const DriverHomePage(driverId: 7),
-    const DriverRequestsPage(
-      driverId: 7,
-    ),
+    const DriverRequestsPage(driverId: 7),
     const DriverTripsPage(driverId: 7),
     const EarningsPage(driverId: 7),
     const SupportPage(),
     const DriverSettingsPage(),
   ];
+  final List<int> _bottomNavBarPages = [
+    0,
+    1,
+    2,
+    3,
+    4,
+  ]; // استثناء صفحة الإعدادات
 
   @override
   Widget build(BuildContext context) {
@@ -46,16 +50,21 @@ class _DriverDashboardState extends State<DriverDashboard> {
                 local.translate('driver_dashboard'),
                 style: theme.textTheme.titleLarge?.copyWith(
                   color: theme.colorScheme.onPrimary,
+                  inherit: true,
                 ),
               ),
             ),
-      drawer: isWeb ? null : Drawer(child: _buildMobileSidebar(theme, local)),
-      body: Row(
-        children: [
-          if (isWeb) _buildDesktopSidebar(theme, local),
-          Expanded(child: _pages[_selectedIndex]),
-        ],
-      ),
+      drawer: isWeb ? null : _buildMobileSidebar(theme, local),
+      body: isWeb
+          ? Row(
+              children: [
+                _buildDesktopSidebar(theme, local),
+                Expanded(
+                  child: _pages[_selectedIndex],
+                ),
+              ],
+            )
+          : _pages[_selectedIndex],
       bottomNavigationBar: isWeb ? null : _buildBottomNavBar(theme, local),
     );
   }
@@ -87,64 +96,58 @@ class _DriverDashboardState extends State<DriverDashboard> {
   }
 
   Widget _buildDesktopSidebar(ThemeData theme, AppLocalizations local) {
-    return Container(
+    return SizedBox(
       width: 250,
-      decoration: BoxDecoration(
+      child: Material(
         color: theme.colorScheme.primary,
-        boxShadow: [
-          BoxShadow(
-            // ignore: deprecated_member_use
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          _buildSidebarHeader(theme),
-          Expanded(
-            child: ListView(
-              children: [
-                _buildSidebarItem(
-                  local.translate('home'),
-                  LucideIcons.home,
-                  0,
-                  theme,
-                ),
-                _buildSidebarItem(
-                  local.translate('trip_requests'),
-                  LucideIcons.list,
-                  1,
-                  theme,
-                ),
-                _buildSidebarItem(
-                  local.translate('my_trips'),
-                  LucideIcons.car,
-                  2,
-                  theme,
-                ),
-                _buildSidebarItem(
-                  local.translate('earnings'),
-                  LucideIcons.dollarSign,
-                  3,
-                  theme,
-                ),
-                _buildSidebarItem(
-                  local.translate('support'),
-                  LucideIcons.headphones,
-                  4,
-                  theme,
-                ),
-                _buildSidebarItem(
-                  local.translate('settings'),
-                  LucideIcons.settings,
-                  5,
-                  theme,
-                ),
-              ],
+        elevation: 4,
+        child: Column(
+          children: [
+            _buildSidebarHeader(theme),
+            Expanded(
+              child: ListView(
+                children: [
+                  _buildSidebarItem(
+                    local.translate('home'),
+                    LucideIcons.home,
+                    0,
+                    theme,
+                  ),
+                  _buildSidebarItem(
+                    local.translate('trip_requests'),
+                    LucideIcons.list,
+                    1,
+                    theme,
+                  ),
+                  _buildSidebarItem(
+                    local.translate('my_trips'),
+                    LucideIcons.car,
+                    2,
+                    theme,
+                  ),
+                  _buildSidebarItem(
+                    local.translate('earnings'),
+                    LucideIcons.dollarSign,
+                    3,
+                    theme,
+                  ),
+                  _buildSidebarItem(
+                    local.translate('support'),
+                    LucideIcons.headphones,
+                    4,
+                    theme,
+                  ),
+                  _buildSidebarItem(
+                    local.translate('settings'),
+                    LucideIcons.settings,
+                    5,
+                    theme,
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -165,11 +168,11 @@ class _DriverDashboardState extends State<DriverDashboard> {
             style: theme.textTheme.titleLarge?.copyWith(
               color: theme.colorScheme.onPrimary,
               fontWeight: FontWeight.bold,
+              inherit: true,
             ),
           ),
           const SizedBox(height: 10),
           Divider(
-            // ignore: deprecated_member_use
             color: theme.colorScheme.onPrimary.withOpacity(0.2),
             thickness: 1,
           ),
@@ -188,7 +191,6 @@ class _DriverDashboardState extends State<DriverDashboard> {
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
         color: _selectedIndex == index
-            // ignore: deprecated_member_use
             ? theme.colorScheme.secondary.withOpacity(0.2)
             : Colors.transparent,
         borderRadius: BorderRadius.circular(8),
@@ -198,7 +200,6 @@ class _DriverDashboardState extends State<DriverDashboard> {
           icon,
           color: _selectedIndex == index
               ? theme.colorScheme.secondary
-              // ignore: deprecated_member_use
               : theme.colorScheme.onPrimary.withOpacity(0.8),
         ),
         title: Text(
@@ -208,6 +209,7 @@ class _DriverDashboardState extends State<DriverDashboard> {
                 ? theme.colorScheme.secondary
                 : theme.colorScheme.onPrimary,
             fontWeight: _selectedIndex == index ? FontWeight.bold : null,
+            inherit: true,
           ),
         ),
         onTap: () => setState(() => _selectedIndex = index),
@@ -216,38 +218,45 @@ class _DriverDashboardState extends State<DriverDashboard> {
   }
 
   Widget _buildBottomNavBar(ThemeData theme, AppLocalizations local) {
+    // تحقق إذا كان الفهرس الحالي موجود في قائمة الصفحات الظاهرة في BottomNavigationBar
+    final currentBottomNavIndex = _bottomNavBarPages.contains(_selectedIndex)
+        ? _bottomNavBarPages.indexOf(_selectedIndex)
+        : 0;
+
     return BottomNavigationBar(
-      currentIndex: _selectedIndex,
-      onTap: (index) => setState(() => _selectedIndex = index),
+      currentIndex: currentBottomNavIndex,
+      onTap: (index) {
+        setState(() {
+          _selectedIndex = _bottomNavBarPages[index];
+        });
+      },
       type: BottomNavigationBarType.fixed,
       backgroundColor: theme.colorScheme.primary,
       selectedItemColor: theme.colorScheme.onPrimary,
-      // ignore: deprecated_member_use
       unselectedItemColor: theme.colorScheme.onPrimary.withOpacity(0.6),
-      selectedLabelStyle:
-          (theme.textTheme.labelSmall ?? const TextStyle()).copyWith(
+      selectedLabelStyle: theme.textTheme.labelSmall?.copyWith(
         fontWeight: FontWeight.bold,
+        inherit: true,
       ),
-
       items: [
         BottomNavigationBarItem(
-          icon: Icon(LucideIcons.home),
+          icon: const Icon(LucideIcons.home),
           label: local.translate('home'),
         ),
         BottomNavigationBarItem(
-          icon: Icon(LucideIcons.list),
+          icon: const Icon(LucideIcons.list),
           label: local.translate('trip_requests'),
         ),
         BottomNavigationBarItem(
-          icon: Icon(LucideIcons.car),
+          icon: const Icon(LucideIcons.car),
           label: local.translate('my_trips'),
         ),
         BottomNavigationBarItem(
-          icon: Icon(LucideIcons.dollarSign),
+          icon: const Icon(LucideIcons.dollarSign),
           label: local.translate('earnings'),
         ),
         BottomNavigationBarItem(
-          icon: Icon(LucideIcons.headphones),
+          icon: const Icon(LucideIcons.headphones),
           label: local.translate('support'),
         ),
       ],
