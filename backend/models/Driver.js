@@ -18,6 +18,7 @@ const driverSchema = new mongoose.Schema({
     type: String,
     required: true, // أو حسب متطلباتك
   },
+
   carDetails: {
     model: String,
     plateNumber: String,

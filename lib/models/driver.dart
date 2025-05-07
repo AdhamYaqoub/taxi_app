@@ -10,7 +10,8 @@ class Driver {
   final double rating;
   final int numberOfRatings;
   final bool isAvailable = true;
-  final String taxiOffice; // مكتب التاكسي إذا كان موجوداً
+  final String taxiOffice;
+  final String phone; // مكتب التاكسي إذا كان موجوداً
   // يمكنك إضافة حقول أخرى مثل taxiOffice، isAvailable الخ
 
   Driver(
@@ -22,7 +23,8 @@ class Driver {
       required this.carPlateNumber,
       required this.rating,
       required this.numberOfRatings,
-      required this.taxiOffice});
+      required this.taxiOffice,
+      required this.phone});
 
   // مثال على Factory Constructor لتحويل JSON إلى Driver object
   // ستحتاج لتعديله ليطابق شكل الـ JSON الفعلي من الـ API الخاص بك
@@ -47,6 +49,7 @@ class Driver {
       rating: (json['rating'] as num?)?.toDouble() ?? 0.0,
       numberOfRatings: (json['numberOfRatings'] as num?)?.toInt() ?? 0,
       taxiOffice: json['taxiOffice'] as String? ?? 'Unknown Office',
+      phone: userDetails?['phone'] ?? json['phone'] ?? 'N/A',
     );
   }
 }

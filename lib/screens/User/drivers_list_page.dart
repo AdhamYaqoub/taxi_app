@@ -190,6 +190,16 @@ class _DriversListPageState extends State<DriversListPage> {
                           overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 4),
+
+                        // الرقم بعد الاسم
+                        Text(
+                          driver.phone,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: Colors.grey[600],
+                          ),
+                        ),
+
+                        const SizedBox(height: 4),
                         _buildRatingStars(
                             context, driver.rating, driver.numberOfRatings),
                       ],

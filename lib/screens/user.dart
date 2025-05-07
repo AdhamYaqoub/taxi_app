@@ -35,9 +35,9 @@ class _UserDashboardState extends State<UserDashboard> {
     ClientTripsPage(userId: 12),
     const DriversListPage(),
     const PaymentPage(),
-    const OffersPage(),
     const SettingsPage(),
     const SupportPage(),
+    const OffersPage(),
   ];
 
   @override
@@ -82,9 +82,9 @@ class _UserDashboardState extends State<UserDashboard> {
                     label: AppLocalizations.of(context)
                         .translate('trips_history')),
                 BottomNavigationBarItem(
-                    icon: Icon(LucideIcons.history),
-                    label: AppLocalizations.of(context)
-                        .translate('trips_history')),
+                    icon: Icon(LucideIcons.list),
+                    label:
+                        AppLocalizations.of(context).translate('drivers_list')),
                 BottomNavigationBarItem(
                     icon: Icon(LucideIcons.creditCard),
                     label: AppLocalizations.of(context)
@@ -123,8 +123,8 @@ class _UserDashboardState extends State<UserDashboard> {
               1,
               theme),
           _buildSidebarItem(
-              AppLocalizations.of(context).translate('trips_history'),
-              LucideIcons.history,
+              AppLocalizations.of(context).translate('drivers_list'),
+              LucideIcons.list,
               2,
               theme),
           _buildSidebarItem(
