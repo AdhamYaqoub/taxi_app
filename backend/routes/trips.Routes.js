@@ -5,6 +5,9 @@ const tripController = require('../controllers/tripsController');
 // إنشاء رحلة جديدة من قبل المستخدم
 router.post('/', tripController.createTrip);
 
+//get all trips 
+router.get('/', tripController.getAllTrips);
+
 // قبول الرحلة من السائق
 router.post('/:tripId/accept', tripController.acceptTrip);
 
@@ -49,7 +52,7 @@ router.get('/pending', tripController.getPendingTrips);
 router.get('/nearby', tripController.getNearbyTrips);
 
 
-router.get('/', tripController.getPendingUserTrips);
+router.get('/PendingUserTrips', tripController.getPendingUserTrips);
 
 router.delete('/:id', tripController.cancelTrip);
 

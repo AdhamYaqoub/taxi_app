@@ -8,6 +8,7 @@ import 'User/payment_page.dart';
 import 'User/offers_page.dart';
 import 'User/settings_page.dart';
 import 'User/support_page.dart';
+
 void main() => runApp(MyApp());
 
 class MyApp extends StatelessWidget {
@@ -20,6 +21,7 @@ class MyApp extends StatelessWidget {
     );
   }
 }
+
 class UserDashboard extends StatefulWidget {
   const UserDashboard({super.key});
 
@@ -31,8 +33,8 @@ class _UserDashboardState extends State<UserDashboard> {
   int _selectedIndex = 0;
 
   final List<Widget> _pages = [
-    HomePage(userId: 12),
-    ClientTripsPage(userId: 12),
+    HomePage(userId: 13),
+    ClientTripsPage(userId: 13),
     const DriversListPage(),
     const PaymentPage(),
     const SettingsPage(),

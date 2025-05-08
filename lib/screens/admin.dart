@@ -25,7 +25,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
     const DashboardHome(),
     const DriversPage(),
     const UsersPage(),
-    const DriverTripsPage(driverId:1,),
+    const DriverTripsPage(),
     const PaymentsManagementPage(),
     const SecurityMonitoringPage(),
     const AnalyticsReportsPage(),

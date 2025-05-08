@@ -16,6 +16,7 @@ const tripRoutes = require('./routes/trips.Routes');
 // const tripRequestRoutes = require('./routes/tripRequests'); 
 const messageRoutes = require('./routes/messageRoutes');
 const driver = require('./routes/driverRoutes');
+const clientRoutes = require('./routes/clientRoutes');
 
 // إعداد السوكيت
 const { init } = require('./config/socket');
@@ -48,6 +49,7 @@ app.use('/api/trips', tripRoutes);
 // app.use('/api/trip-requests', tripRequestRoutes); 
 app.use('/messages', messageRoutes);
 app.use('/api/drivers', driver);
+app.use('/api/clients', clientRoutes);
 
 // Route for health check
 app.get('/api/health', (req, res) => {

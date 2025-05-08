@@ -16,6 +16,11 @@ router.get('/available', driverController.getAvailableDrivers);
 router.get('/:id', driverController.getDriverById);
 
 
+// في ملف routes/drivers.js
+router.put('/:id/availability',driverController.updateAvailability);
+
+// تحديث صورة السائق
+router.put('/:id/profile-image', driverController.updateDriverProfileImage);
 
 
 module.exports = router;
