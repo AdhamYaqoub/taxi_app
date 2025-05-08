@@ -1,75 +1,105 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:taxi_app/language/localization.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-
-import 'package:taxi_app/services/UserDetailPage.dart';
+import 'package:taxi_app/models/client.dart'; // تأكد من وجود هذا النموذج
+import 'package:taxi_app/services/clients_api.dart'; // تأكد من وجود هذا الملف
+import '../../services/UserDetailPage.dart';
 
 class UsersPage extends StatefulWidget {
   const UsersPage({super.key});
 
   @override
-  _UsersPageState createState() => _UsersPageState();
+  State<UsersPage> createState() => _UsersPageState();
 }
 
 class _UsersPageState extends State<UsersPage> {
-  List<Map<String, dynamic>> users = [];
+  List<Client> clients = [];
   bool isLoading = true;
+  String? errorMessage;
 
   @override
   void initState() {
     super.initState();
-    fetchUsers();
+    _loadUsers();
   }
 
-  // جلب بيانات المستخدمين من API
-  Future<void> fetchUsers() async {
+  Future<void> _loadUsers() async {
     try {
-      final response = await http.get(Uri.parse('http://localhost:5000/api/users'));
-
-      if (response.statusCode == 200) {
-        List<dynamic> data = json.decode(response.body);
-
-        setState(() {
-          // تصفية المستخدمين الذين لديهم "role" يساوي "User"
-          users = data
-              .where((user) => user["role"] == "User") // التصفية هنا
-              .map((user) => {
-                "name": user["fullName"] ?? 'اسم غير موجود',
-                "status": user["isAvailable"] ?? false,
-                "rides": user["earnings"] ?? 0,
-                "type": user["role"] ?? 'غير محدد',
-              })
-              .toList();
-          isLoading = false;
-        });
-      } else {
-        throw Exception('فشل في تحميل المستخدمين');
-      }
-    } catch (error) {
+      final clientsList = await ClientsApi.getAllClients();
+      setState(() {
+        clients = clientsList.map((client) {
+          return Client(
+            userId: client.userId,
+            tripsNumber: client.tripsNumber,
+            totalSpending: client.totalSpending,
+            isAvailable: client.isAvailable,
+            fullName: client.fullName,
+            phone: client.phone,
+            email: client.email,
+          );
+        }).toList();
+        isLoading = false;
+        errorMessage = null;
+      });
+    } catch (e) {
       setState(() {
         isLoading = false;
+        errorMessage = e.toString();
       });
-      print("Error: $error");
     }
   }
 
-  // تغيير حالة المستخدم
-  void toggleUserStatus(int index) {
-    setState(() {
-      users[index]['status'] = !users[index]['status'];
-    });
+  Future<void> _toggleUserStatus(Client client) async {
+    final newStatus = !client.isAvailable;
+
+    try {
+      // تحديث الحالة في الواجهة أولاً
+      setState(() {
+        client.isAvailable = newStatus;
+        // يمكنك إضافة أي تحديثات أخرى هنا إذا لزم الأمر
+      });
+
+      // إرسال التحديث إلى الخادم
+      await ClientsApi.updateClientAvailability(client.userId, newStatus);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(newStatus
+              ? 'تم تفعيل السائق ${client.fullName}'
+              : 'تم إيقاف السائق ${client.fullName}'),
+        ),
+      );
+    } catch (e) {
+      // في حالة الخطأ، نرجع الحالة كما كانت
+      setState(() {
+        client.isAvailable = !newStatus;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('فشل في تحديث حالة السائق: ${e.toString()}'),
+        ),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    var theme = Theme.of(context);
+    final theme = Theme.of(context);
+    final local = AppLocalizations.of(context);
+
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: Text(AppLocalizations.of(context).translate('users_management')),
+        title: Text(local.translate('users_management')),
         backgroundColor: theme.colorScheme.primary,
+        actions: [
+          IconButton(
+            icon: const Icon(LucideIcons.refreshCw),
+            onPressed: _loadUsers,
+            tooltip: local.translate('refresh'),
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -77,49 +107,126 @@ class _UsersPageState extends State<UsersPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              AppLocalizations.of(context).translate('users_list'),
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+              local.translate('users_list'),
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 16),
+            if (errorMessage != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: Text(
+                  errorMessage!,
+                  style: const TextStyle(color: Colors.red),
+                ),
+              ),
             Expanded(
               child: isLoading
-                  ? Center(child: CircularProgressIndicator())
-                  : users.isEmpty
-                      ? Center(child: Text('لا توجد بيانات للمستخدمين'))
-                      : ListView.builder(
-                          itemCount: users.length,
-                          itemBuilder: (context, index) {
-                            var user = users[index];
-                            return Card(
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
+                  ? const Center(child: CircularProgressIndicator())
+                  : clients.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                LucideIcons.userX,
+                                size: 48,
+                                color: Colors.grey,
                               ),
-                              elevation: 3,
-                              margin: const EdgeInsets.symmetric(vertical: 8),
-                              child: ListTile(
-                                leading: Icon(LucideIcons.user, color: Colors.black),
-                                title: Text(user["name"],
-                                    style: const TextStyle(fontWeight: FontWeight.bold)),
-                                subtitle: Text(
-                                    "${AppLocalizations.of(context).translate('user_type')}: ${user['type']} • ${AppLocalizations.of(context).translate('rides_count')}: ${user['rides']}"),
-                                trailing: Switch(
-                                  value: user['status'],
-                                  onChanged: (value) => toggleUserStatus(index),
-                                  activeColor: Colors.green,
-                                  inactiveThumbColor: Colors.red,
+                              const SizedBox(height: 16),
+                              Text(local.translate('no_users_found')),
+                              const SizedBox(height: 8),
+                              ElevatedButton(
+                                onPressed: _loadUsers,
+                                child: Text(local.translate('retry')),
+                              ),
+                            ],
+                          ),
+                        )
+                      : RefreshIndicator(
+                          onRefresh: _loadUsers,
+                          child: ListView.builder(
+                            itemCount: clients.length,
+                            itemBuilder: (context, index) {
+                              final client = clients[index];
+                              return Card(
+                                margin: const EdgeInsets.only(bottom: 12),
+                                elevation: 2,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
-                                onTap: () {
-                                  // الانتقال إلى صفحة تفاصيل المستخدم عند النقر
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => UserDetailPage(user: user),
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(12),
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            ClientDetailPageWeb(client: client),
+                                      ),
+                                    );
+                                  },
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(12),
+                                    child: Row(
+                                      children: [
+                                        CircleAvatar(
+                                          child: Icon(LucideIcons.user),
+                                        ),
+                                        const SizedBox(width: 16),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                client.fullName,
+                                                style: theme
+                                                    .textTheme.titleMedium
+                                                    ?.copyWith(
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 4),
+                                              Row(
+                                                children: [
+                                                  Icon(
+                                                    LucideIcons.hash,
+                                                    size: 16,
+                                                    color: Colors.amber,
+                                                  ),
+                                                  const SizedBox(width: 4),
+                                                  Text(
+                                                      '${client.tripsNumber} ${local.translate('trips')}'),
+                                                  const SizedBox(width: 16),
+                                                  Icon(
+                                                    LucideIcons.dollarSign,
+                                                    size: 16,
+                                                    color: Colors.blue,
+                                                  ),
+                                                  const SizedBox(width: 4),
+                                                  Text(
+                                                      '${client.totalSpending.toStringAsFixed(2)}}'),
+                                                ],
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        Switch(
+                                          value: client.isAvailable,
+                                          onChanged: (value) =>
+                                              _toggleUserStatus(client),
+                                          activeColor: Colors.green,
+                                          inactiveThumbColor: Colors.red,
+                                        ),
+                                      ],
                                     ),
-                                  );
-                                },
-                              ),
-                            );
-                          },
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
                         ),
             ),
           ],
@@ -128,4 +235,3 @@ class _UsersPageState extends State<UsersPage> {
     );
   }
 }
-

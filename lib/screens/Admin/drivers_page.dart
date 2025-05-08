@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:taxi_app/language/localization.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import '../../services/driver_detail_page.dart'; // صفحة التفاصيل الجديدة
+import 'package:taxi_app/models/driver.dart';
+import 'package:taxi_app/services/drivers_api.dart';
+import '../../services/driver_detail_page.dart';
 
 class DriversPage extends StatefulWidget {
   const DriversPage({super.key});
@@ -13,68 +13,100 @@ class DriversPage extends StatefulWidget {
 }
 
 class _DriversPageState extends State<DriversPage> {
-  List<Map<String, dynamic>> drivers = [];
+  List<Driver> drivers = [];
   bool isLoading = true;
+  String? errorMessage;
 
   @override
   void initState() {
     super.initState();
-    fetchDrivers();
+    _loadDrivers();
   }
 
-  // جلب بيانات السائقين من API
-  Future<void> fetchDrivers() async {
+  Future<void> _loadDrivers() async {
     try {
-      final response = await http.get(Uri.parse('http://localhost:5000/api/users')); // تأكد من عنوان API
-
-      if (response.statusCode == 200) {
-        List<dynamic> data = json.decode(response.body);
-
-        setState(() {
-          // تصفية السائقين الذين لديهم "role" يساوي "Driver"
-          drivers = data
-              .where((user) => user["role"] == "Driver") // التصفية هنا
-              .map((user) => {
-                    "name": user["fullName"] ?? 'اسم غير موجود',
-                    "status": user["isAvailable"] ?? false,
-                    "rating": user["rating"] ?? 0.0, // يمكنك تعديل هذا حسب المتاح
-                    "rides": user["rides"] ?? 0, // أو أي قيمة متاحة في الـ API
-                    "type": user["role"] ?? 'غير محدد',
-                    "id": user["id"], // تأكد من أن هناك معرف فريد لكل سائق
-                    "phone": user["phone"] ?? 'غير متاح',
-                    "email": user["email"] ?? 'غير متاح',
-                    "location": user["location"] ?? 'غير متاح',
-                    // أضف المزيد من البيانات حسب الحاجة
-                  })
-              .toList();
-          isLoading = false;
-        });
-      } else {
-        throw Exception('فشل في تحميل السائقين');
-      }
-    } catch (error) {
+      final driversList = await DriversApi.getAllDrivers();
+      setState(() {
+        drivers = driversList.map((driver) {
+          return Driver(
+            userId: driver.userId,
+            fullName: driver.fullName,
+            isAvailable: driver.isAvailable,
+            carModel: driver.carModel, // Provide default or fetched value
+            carColor: driver.carColor, // Provide default or fetched value
+            carPlateNumber:
+                driver.carPlateNumber, // Provide default or fetched value
+            rating: driver.rating, // Provide default or fetched value
+            numberOfRatings:
+                driver.numberOfRatings, // Provide default or fetched value
+            taxiOffice: driver.taxiOffice, // Provide default or fetched value
+            phone: driver.phone, // Provide default or fetched value
+            email: driver.email, // Provide default or fetched value
+            earnings: driver.earnings, // Provide default or fetched value
+          );
+        }).toList();
+        isLoading = false;
+        errorMessage = null;
+      });
+    } catch (e) {
       setState(() {
         isLoading = false;
+        errorMessage = e.toString();
       });
-      print("Error: $error");
     }
   }
 
-  // تغيير حالة السائق
-  void toggleDriverStatus(int index) {
-    setState(() {
-      drivers[index]['status'] = !drivers[index]['status'];
-    });
+  Future<void> _toggleDriverStatus(Driver driver) async {
+    final newStatus = !driver.isAvailable;
+
+    try {
+      // تحديث الحالة في الواجهة أولاً
+      setState(() {
+        driver.isAvailable = newStatus;
+        // يمكنك إضافة أي تحديثات أخرى هنا إذا لزم الأمر
+      });
+
+      // إرسال التحديث إلى الخادم
+      await DriversApi.updateDriverAvailability(driver.userId, newStatus);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(newStatus
+              ? 'تم تفعيل السائق ${driver.fullName}'
+              : 'تم إيقاف السائق ${driver.fullName}'),
+        ),
+      );
+    } catch (e) {
+      // في حالة الخطأ، نرجع الحالة كما كانت
+      setState(() {
+        driver.isAvailable = !newStatus;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('فشل في تحديث حالة السائق: ${e.toString()}'),
+        ),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    var theme = Theme.of(context);
+    final theme = Theme.of(context);
+    final local = AppLocalizations.of(context);
+
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: Text(AppLocalizations.of(context).translate('drivers_management')),
+        title: Text(local.translate('drivers_management')),
         backgroundColor: theme.colorScheme.primary,
+        actions: [
+          IconButton(
+            icon: const Icon(LucideIcons.refreshCw),
+            onPressed: _loadDrivers,
+            tooltip: local.translate('refresh'),
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -82,49 +114,126 @@ class _DriversPageState extends State<DriversPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              AppLocalizations.of(context).translate('drivers_list'),
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+              local.translate('drivers_list'),
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 16),
+            if (errorMessage != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: Text(
+                  errorMessage!,
+                  style: TextStyle(color: Colors.red),
+                ),
+              ),
             Expanded(
               child: isLoading
-                  ? Center(child: CircularProgressIndicator()) // عرض المؤشر أثناء التحميل
+                  ? const Center(child: CircularProgressIndicator())
                   : drivers.isEmpty
-                      ? Center(child: Text('لا توجد بيانات للسائقين'))
-                      : ListView.builder(
-                          itemCount: drivers.length,
-                          itemBuilder: (context, index) {
-                            var driver = drivers[index];
-                            return Card(
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                LucideIcons.userX,
+                                size: 48,
+                                color: Colors.grey,
                               ),
-                              elevation: 3,
-                              margin: const EdgeInsets.symmetric(vertical: 8),
-                              child: ListTile(
-                                leading: Icon(LucideIcons.user, color: Colors.black),
-                                title: Text(driver["name"],
-                                    style: const TextStyle(fontWeight: FontWeight.bold)),
-                                subtitle: Text(
-                                    "${AppLocalizations.of(context).translate('driver_type')}: ${driver['type']} • ${AppLocalizations.of(context).translate('rating')}: ${driver['rating']} ★"),
-                                trailing: Switch(
-                                  value: driver['status'],
-                                  onChanged: (value) => toggleDriverStatus(index),
-                                  activeColor: Colors.green,
-                                  inactiveThumbColor: Colors.red,
+                              const SizedBox(height: 16),
+                              Text(local.translate('no_drivers_found')),
+                              const SizedBox(height: 8),
+                              ElevatedButton(
+                                onPressed: _loadDrivers,
+                                child: Text(local.translate('retry')),
+                              ),
+                            ],
+                          ),
+                        )
+                      : RefreshIndicator(
+                          onRefresh: _loadDrivers,
+                          child: ListView.builder(
+                            itemCount: drivers.length,
+                            itemBuilder: (context, index) {
+                              final driver = drivers[index];
+                              return Card(
+                                margin: const EdgeInsets.only(bottom: 12),
+                                elevation: 2,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
-                                onTap: () {
-                                  // الانتقال إلى صفحة التفاصيل عند النقر
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => DriverDetailPageWeb(driver: driver),
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(12),
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            DriverDetailPageWeb(driver: driver),
+                                      ),
+                                    );
+                                  },
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(12),
+                                    child: Row(
+                                      children: [
+                                        CircleAvatar(
+                                          child: Icon(LucideIcons.user),
+                                        ),
+                                        const SizedBox(width: 16),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                driver.fullName,
+                                                style: theme
+                                                    .textTheme.titleMedium
+                                                    ?.copyWith(
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 4),
+                                              Row(
+                                                children: [
+                                                  Icon(
+                                                    LucideIcons.star,
+                                                    size: 16,
+                                                    color: Colors.amber,
+                                                  ),
+                                                  const SizedBox(width: 4),
+                                                  Text(driver.rating
+                                                      .toStringAsFixed(1)),
+                                                  const SizedBox(width: 16),
+                                                  Icon(
+                                                    LucideIcons.dollarSign,
+                                                    size: 16,
+                                                    color: Colors.blue,
+                                                  ),
+                                                  const SizedBox(width: 4),
+                                                  Text(
+                                                      '${driver.earnings.toStringAsFixed(2)} ${local.translate('trips')}'),
+                                                ],
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        Switch(
+                                          value: driver.isAvailable,
+                                          onChanged: (value) =>
+                                              _toggleDriverStatus(driver),
+                                          activeColor: Colors.green,
+                                          inactiveThumbColor: Colors.red,
+                                        ),
+                                      ],
                                     ),
-                                  );
-                                },
-                              ),
-                            );
-                          },
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
                         ),
             ),
           ],

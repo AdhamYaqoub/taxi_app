@@ -19,10 +19,10 @@ class _DriverDashboardState extends State<DriverDashboard> {
   int _selectedIndex = 0;
 
   final List<Widget> _pages = [
-    const DriverHomePage(driverId: 7),
-    const DriverRequestsPage(driverId: 7),
-    const DriverTripsPage(driverId: 7),
-    const EarningsPage(driverId: 7),
+    const DriverHomePage(driverId: 8),
+    const DriverRequestsPage(driverId: 8),
+    const DriverTripsPage(driverId: 8),
+    const EarningsPage(driverId: 8),
     const SupportPage(),
     const DriverSettingsPage(),
   ];

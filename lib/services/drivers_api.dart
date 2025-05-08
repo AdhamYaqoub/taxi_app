@@ -1,4 +1,3 @@
-// services/drivers_api.dart (ملف جديد أو إضافة لملف موجود)
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:taxi_app/models/driver.dart'; // استيراد النموذج
@@ -66,6 +65,42 @@ class DriversApi {
       }
     } catch (e) {
       throw Exception('خطأ في الشبكة: $e');
+    }
+  }
+
+  static Future<void> updateDriverAvailability(
+      int driverId, bool isAvailable) async {
+    try {
+      final response = await http.put(
+        Uri.parse('$_baseUrl/drivers/$driverId/availability'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'isAvailable': isAvailable}),
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception('Failed to update driver availability');
+      }
+    } catch (e) {
+      print('Error updating driver availability: $e');
+      throw Exception('Failed to update driver availability');
+    }
+  }
+
+  static Future<void> updateDriverProfileImage(
+      int driverId, String imageUrl) async {
+    try {
+      final response = await http.put(
+        Uri.parse('$_baseUrl/drivers/$driverId/profile-image'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'profileImageUrl': imageUrl}),
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception('Failed to update driver profile image');
+      }
+    } catch (e) {
+      print('Error updating driver profile image: $e');
+      throw Exception('Failed to update driver profile image');
     }
   }
 }

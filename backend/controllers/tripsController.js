@@ -1,5 +1,7 @@
 const Trip = require('../models/Trip');
 const Driver = require('../models/Driver');
+const Client = require('../models/client');
+const User = require('../models/User'); // افترض أن لديك نموذج User
 const RATE_PER_KM = 10;
 const MAX_ACCEPTED_TRIPS = 3;
 
@@ -33,6 +35,36 @@ exports.createTrip = async (req, res) => {
     res.status(201).json(newTrip);
   } catch (err) {
     res.status(500).json({ error: 'فشل إنشاء الرحلة', details: err.message });
+  }
+};
+
+exports.getAllTrips = async (req, res) => {
+  try {
+    const { status } = req.query;
+    
+    // تعريف كائن الاستعلام
+    const query = {};
+    
+    // إضافة فلتر الحالة إذا وجد
+    if (status) {
+      query.status = status;
+    }
+
+    // جلب الرحلات مع التصفية والترتيب
+    const trips = await Trip.find(query).sort({ createdAt: -1 });
+    
+    console.log('All trips:', trips); // Log the trips for debugging
+    res.status(200).json({
+      success: true,
+      count: trips.length,
+      data: trips
+    });
+  } catch (err) {
+    console.error('Error fetching trips:', err);
+    res.status(500).json({ 
+      success: false,
+      error: err.message 
+    });
   }
 };
 
@@ -163,12 +195,29 @@ exports.completeTrip = async (req, res) => {
     trip.endTime = new Date();
     trip.actualFare = fare;
 
+    // تحديث بيانات السائق
     if (trip.driverId) {
       const driver = await Driver.findOne({ driverUserId: trip.driverId });
       if (driver) {
-        // زيادة أرباح السائق
         driver.earnings += fare;
         await driver.save();
+      }
+    }
+
+    // تحديث بيانات العميل
+    if (trip.userId) {
+      const client = await Client.findOne({ clientUserId: trip.userId });
+      if (client) {
+        // زيادة عدد الرحلات
+        client.tripsnumber += 1;
+        
+        // زيادة إجمالي الإنفاق
+        client.totalSpending += fare;
+        
+        // إضافة الرحلة إلى التاريخ
+        client.tripHistory.push(trip._id);
+        
+        await client.save();
       }
     }
 

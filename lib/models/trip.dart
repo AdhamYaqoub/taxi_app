@@ -15,24 +15,29 @@ class Trip {
   final DateTime? endTime; // جعله اختياريًا
   final DateTime? acceptedAt; // Added field for accepted time
   final String paymentMethod;
+  final String? driverName;
+  final String? userName;
 
-  Trip(
-      {required this.tripId,
-      required this.userId,
-      this.driverId,
-      required this.startLocation,
-      required this.endLocation,
-      required this.distance,
-      required this.estimatedFare,
-      required this.paymentMethod, // Initialize paymentMethod
-      required this.actualFare,
-      required this.status,
-      required this.requestedAt,
-      required this.createdAt,
-      required this.updatedAt,
-      this.startTime,
-      this.endTime,
-      this.acceptedAt});
+  Trip({
+    required this.tripId,
+    required this.userId,
+    this.driverId,
+    required this.startLocation,
+    required this.endLocation,
+    required this.distance,
+    required this.estimatedFare,
+    required this.paymentMethod, // Initialize paymentMethod
+    required this.actualFare,
+    required this.status,
+    required this.requestedAt,
+    required this.createdAt,
+    required this.updatedAt,
+    this.startTime,
+    this.endTime,
+    this.acceptedAt,
+    this.driverName,
+    this.userName,
+  });
 
   factory Trip.fromJson(Map<String, dynamic> json) {
     return Trip(
@@ -55,6 +60,8 @@ class Trip {
           ? DateTime.parse(json['endTime'] as String)
           : null,
       paymentMethod: json['paymentMethod'] as String? ?? 'cash',
+      driverName: json['driverName'] as String? ?? 'Unknown',
+      userName: json['userName'] as String? ?? 'Unknown',
     );
   }
 

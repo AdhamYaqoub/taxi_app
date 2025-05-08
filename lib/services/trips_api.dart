@@ -379,7 +379,8 @@ class TripsApi {
 
   static Future<List<dynamic>> getPendingUserTrips(int userId) async {
     final response = await http.get(
-      Uri.parse('$_baseUrl/trips?userId=$userId&status=pending'),
+      Uri.parse(
+          '$_baseUrl/trips/PendingUserTrips?userId=$userId&status=pending'),
     );
 
     if (response.statusCode == 200) {
@@ -427,6 +428,36 @@ class TripsApi {
       throw Exception('Failed to update trip: ${response.body}');
     }
   }
+
+  static Future<List<Trip>> getAllTripsWithStatus({String? status}) async {
+    try {
+      String url = '$_baseUrl/trips';
+      if (status != null && status.isNotEmpty) {
+        url += '/?status=$status';
+      }
+
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+
+        // تحقق من الهيكل الذي يعيده الباك إند (مفتاح 'data')
+        if (responseData['data'] is List) {
+          return (responseData['data'] as List)
+              .map((json) => Trip.fromJson(json))
+              .toList();
+        } else {
+          throw Exception(
+              'تنسيق الاستجابة غير صالح: لا يوجد مفتاح "data" أو ليس مصفوفة');
+        }
+      } else {
+        throw Exception('فشل في جلب الرحلات: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('خطأ في الشبكة: $e');
+    }
+  }
 }
-
-
