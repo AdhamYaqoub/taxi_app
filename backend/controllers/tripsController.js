@@ -38,26 +38,47 @@ exports.createTrip = async (req, res) => {
   }
 };
 
+
 exports.getAllTrips = async (req, res) => {
   try {
     const { status } = req.query;
     
-    // تعريف كائن الاستعلام
     const query = {};
-    
-    // إضافة فلتر الحالة إذا وجد
     if (status) {
       query.status = status;
     }
 
-    // جلب الرحلات مع التصفية والترتيب
     const trips = await Trip.find(query).sort({ createdAt: -1 });
-    
-    console.log('All trips:', trips); // Log the trips for debugging
+
+    // استخراج كل userId و driverId الفريدة
+    const userIds = [...new Set(trips.map(t => t.userId))];
+    const driverIds = [...new Set(trips.map(t => t.driverId).filter(Boolean))];
+
+    // جلب المستخدمين والسائقين
+    const users = await User.find({ userId: { $in: userIds } });
+    const drivers = await User.find({ userId: { $in: driverIds } });
+
+    // عمل Map لسهولة الوصول
+    const userMap = new Map(users.map(u => [u.userId, u]));
+    const driverMap = new Map(drivers.map(d => [d.userId, d]));
+
+    const enrichedTrips = trips.map(trip => {
+      const user = userMap.get(trip.userId);
+      const driver = driverMap.get(trip.driverId);
+
+      return {
+        ...trip.toObject(),
+        userName: user?.fullName || 'Unknown',
+        userPhone: user?.phone || 'N/A',
+        driverName: driver?.fullName || 'Unknown',
+        driverPhone: driver?.phone || 'N/A'
+      };
+    });
+
     res.status(200).json({
       success: true,
-      count: trips.length,
-      data: trips
+      count: enrichedTrips.length,
+      data: enrichedTrips
     });
   } catch (err) {
     console.error('Error fetching trips:', err);
@@ -67,6 +88,7 @@ exports.getAllTrips = async (req, res) => {
     });
   }
 };
+
 
 // قبول الرحلة من قبل السائق
 // تعديل دالة قبول الرحلة لإضافة الحد الأقصى
