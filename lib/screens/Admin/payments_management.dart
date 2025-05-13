@@ -1,9 +1,50 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:taxi_app/language/localization.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
-class PaymentsManagementPage extends StatelessWidget {
+class PaymentsManagementPage extends StatefulWidget {
   const PaymentsManagementPage({super.key});
+
+  @override
+  State<PaymentsManagementPage> createState() => _PaymentsManagementPageState();
+}
+
+class _PaymentsManagementPageState extends State<PaymentsManagementPage> {
+  List<dynamic> _transactions = [];
+  bool _isLoading = true;
+  String _errorMessage = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchCompletedPayments();
+  }
+
+  Future<void> _fetchCompletedPayments() async {
+    try {
+      final response = await http.get(
+        Uri.parse('http://localhost:5000/api/payments/completed'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        setState(() {
+          _transactions = data['data'];
+          _isLoading = false;
+        });
+      } else {
+        throw Exception('Failed to load payments');
+      }
+    } catch (e) {
+      setState(() {
+        _errorMessage = e.toString();
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +64,11 @@ class PaymentsManagementPage extends StatelessWidget {
           children: [
             _buildSectionTitle(
                 AppLocalizations.of(context).translate('transaction_details')),
-            _buildTransactionList(),
+            _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _errorMessage.isNotEmpty
+                    ? Center(child: Text(_errorMessage))
+                    : _buildTransactionList(),
             const SizedBox(height: 20),
             _buildSectionTitle(
                 AppLocalizations.of(context).translate('pricing_and_offers')),
@@ -47,34 +92,78 @@ class PaymentsManagementPage extends StatelessWidget {
   Widget _buildTransactionList() {
     return Expanded(
       child: ListView.builder(
-        itemCount: 5,
+        itemCount: _transactions.length,
         itemBuilder: (context, index) {
+          final transaction = _transactions[index];
           return Card(
             elevation: 2,
             margin: const EdgeInsets.symmetric(vertical: 8),
             child: ListTile(
               leading: Icon(
-                index.isEven
+                transaction['status'] == 'completed'
                     ? LucideIcons.checkCircle
                     : LucideIcons.alertTriangle,
-                color: index.isEven ? Colors.green : Colors.red,
+                color: transaction['status'] == 'completed'
+                    ? Colors.green
+                    : Colors.red,
               ),
               title: Text(
-                  AppLocalizations.of(context).translate('transaction') +
-                      " #${index + 1}"),
-              subtitle: Text(index.isEven
-                  ? AppLocalizations.of(context)
-                      .translate('transaction_success')
-                  : AppLocalizations.of(context).translate('payment_failed')),
+                  '${AppLocalizations.of(context).translate('trip')} #${transaction['tripId']}'),
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                      '${AppLocalizations.of(context).translate('amount')}: \$${transaction['amount']}'),
+                  Text(
+                      '${AppLocalizations.of(context).translate('date')}: ${_formatDate(transaction['date'])}'),
+                ],
+              ),
               trailing: IconButton(
                 icon: const Icon(LucideIcons.eye),
                 onPressed: () {
-                  // وظيفة عرض تفاصيل المعاملة
+                  _showTransactionDetails(context, transaction);
                 },
               ),
             ),
           );
         },
+      ),
+    );
+  }
+
+  String _formatDate(String dateString) {
+    final date = DateTime.parse(dateString);
+    return '${date.day}/${date.month}/${date.year}';
+  }
+
+  void _showTransactionDetails(BuildContext context, dynamic transaction) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(
+            '${AppLocalizations.of(context).translate('trip')} #${transaction['tripId']}'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+                '${AppLocalizations.of(context).translate('user')}: ${transaction['user']}'),
+            Text(
+                '${AppLocalizations.of(context).translate('driver')}: ${transaction['driver']}'),
+            Text(
+                '${AppLocalizations.of(context).translate('amount')}: \$${transaction['amount']}'),
+            Text(
+                '${AppLocalizations.of(context).translate('payment_method')}: ${transaction['paymentMethod']}'),
+            Text(
+                '${AppLocalizations.of(context).translate('date')}: ${_formatDate(transaction['date'])}'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(AppLocalizations.of(context).translate('close')),
+          ),
+        ],
       ),
     );
   }
