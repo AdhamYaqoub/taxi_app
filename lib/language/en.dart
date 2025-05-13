@@ -280,4 +280,7 @@ const Map<String, String> en = {
   'update_failed': 'update failed',
   'no_pending_rides': 'No pending rides',
   "number_of_ratings": "Number of Ratings",
+  "average_rating": "Average Rating",
+  "user_name": "user name",
+  "driver_name": "driver name",
 };
