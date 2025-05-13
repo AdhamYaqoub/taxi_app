@@ -8,6 +8,7 @@ const tripSchema = new mongoose.Schema({
   userId: { type: Number, required: true }, // العميل
   driverId: { type: Number }, // السائق (يضاف عند القبول)
 
+
   // معلومات الرحلة الأساسية
   startLocation: {
     type: {

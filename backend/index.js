@@ -18,6 +18,7 @@ const messageRoutes = require('./routes/messageRoutes');
 const driver = require('./routes/driverRoutes');
 const clientRoutes = require('./routes/clientRoutes');
 const dashboardRoutes = require('./routes/dashboard');
+const paymentsRoutes = require('./routes/payments');
 
 // إعداد السوكيت
 const { init } = require('./config/socket');
@@ -52,6 +53,7 @@ app.use('/messages', messageRoutes);
 app.use('/api/drivers', driver);
 app.use('/api/clients', clientRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/payments', paymentsRoutes);
 
 
 // Route for health check
