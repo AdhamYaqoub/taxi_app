@@ -13,7 +13,11 @@ const clientSchema = new mongoose.Schema({
     required: true,
     index: true,
   },
-  
+    walletBalance: { // أضف هذا الحقل الجديد
+    type: Number,
+    default: 0,
+    min: 0
+  },
 
   tripHistory: [{ // تاريخ الرحلات (يمكن تفصيله أكثر)
     type: mongoose.Schema.Types.ObjectId,

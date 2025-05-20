@@ -2,6 +2,7 @@ const Trip = require('../models/Trip');
 const Driver = require('../models/Driver');
 const Client = require('../models/client');
 const User = require('../models/User'); // افترض أن لديك نموذج User
+const notificationController = require('./notificationController'); // تأكد من استيراد وحدة الإشعارات
 const RATE_PER_KM = 10;
 const MAX_ACCEPTED_TRIPS = 3;
 
@@ -10,9 +11,29 @@ const MAX_ACCEPTED_TRIPS = 3;
 exports.createTrip = async (req, res) => {
   try {
     const { userId, startLocation, endLocation, distance, startTime, paymentMethod } = req.body;
-
-    // تحويل الموقع من نص إلى إحداثيات (سيتطلب خدمة Geocoding)
     const estimatedFare = distance * RATE_PER_KM;
+
+    // إذا كانت طريقة الدفع من المحفظة، نتحقق من الرصيد فقط
+    if (paymentMethod === 'wallet') {
+      const client = await Client.findOne({ clientUserId: userId });
+      console.log('Client ID:', userId); // Log the client ID for debugging
+      console.log('Client:', client); // Log the client object for debugging
+      
+      if (!client) {
+        return res.status(404).json({ error: 'العميل غير موجود' });
+      }
+
+      console.log('Client wallet balance:', client.walletBalance);
+      console.log('Estimated fare:', estimatedFare);
+
+      if (client.walletBalance < estimatedFare) {
+        return res.status(400).json({ 
+          error: 'رصيد المحفظة غير كافي لإنشاء الرحلة',
+          requiredAmount: estimatedFare,
+          currentBalance: client.walletBalance
+        });
+      }
+    }
 
     const newTrip = new Trip({
       userId,
@@ -29,8 +50,10 @@ exports.createTrip = async (req, res) => {
       paymentMethod,
       distance,
       estimatedFare,
-      startTime: startTime ? new Date(startTime) : undefined
+      startTime: startTime ? new Date(startTime) : undefined,
+      paymentStatus: 'pending' // جميع الحالات تبدأ pending الآن
     });
+
     await newTrip.save();
     res.status(201).json(newTrip);
   } catch (err) {
@@ -110,6 +133,7 @@ exports.acceptTrip = async (req, res) => {
     }
 
     const trip = await Trip.findOne({ tripId });
+    const driver = await Driver.findOne({ driverUserId: driverId }).populate('user');
 
     if (!trip || trip.status !== 'pending') {
       return res.status(400).json({ 
@@ -119,8 +143,19 @@ exports.acceptTrip = async (req, res) => {
 
     trip.driverId = driverId;
     trip.status = 'accepted';
-    
-    await trip.save();
+
+await notificationController.createNotification({
+  recipient: trip.userId,
+  recipientType: 'Client',
+  title: 'تم قبول الرحلة',
+  message: `قام السائق ${driver.user.fullName} بقبول طلب رحلتك رقم ${trip.tripId}`,
+  type: 'trip_accepted',
+  data: {
+    tripId: trip.tripId
+  }
+});
+
+await trip.save();
     res.json(trip);
   } catch (err) {
     res.status(500).json({ 
@@ -136,22 +171,21 @@ exports.startTrip = async (req, res) => {
     const { tripId } = req.params;
 
     const trip = await Trip.findOne({ tripId });
+    const driver = await Driver.findOne({ driverUserId: trip.driverId }).populate('user');
 
     if (!trip || trip.status !== 'accepted') {
       return res.status(400).json({
         error: 'لا يمكن بدء الرحلة إلا إذا كانت مقبولة'
       });
     }
-    const now = new Date();
 
-    // تأكد من مقارنة التواريخ باستخدام timestamps (بالمللي ثانية)
+    const now = new Date();
     if (trip.startTime && now.getTime() < new Date(trip.startTime).getTime()) {
       return res.status(400).json({
         error: 'لا يمكن بدء الرحلة قبل موعدها المجدول'
       });
     }
 
-    // التحقق من وجود رحلة حالية للسائق
     const existingTrip = await Trip.findOne({
       driverId: trip.driverId,
       status: 'in_progress'
@@ -163,9 +197,21 @@ exports.startTrip = async (req, res) => {
       });
     }
 
-    // تحديث الحالة
     trip.status = 'in_progress';
     trip.startTime = new Date();
+
+    // إرسال إشعار للعميل ببدء الرحلة
+    await notificationController.createNotification({
+      recipient: trip.userId,
+      recipientType: 'Client',
+      title: 'تم بدء الرحلة',
+      message: `قام السائق ${driver.user.fullName} ببدء رحلتك رقم ${trip.tripId}`,
+      type: 'trip_started',
+      data: {
+        tripId: trip.tripId,
+        driverLocation: trip.startLocation // يمكن إضافة موقع السائق الحالي إذا كان متاحًا
+      }
+    });
 
     await trip.save();
     res.json(trip);
@@ -177,14 +223,14 @@ exports.startTrip = async (req, res) => {
   }
 };
 
-
 // رفض الرحلة من قبل السائق
 exports.rejectTrip = async (req, res) => {
   try {
     const { tripId } = req.params;
-    const { cancellationReason } = req.body;
+    const { cancellationReason, driverId } = req.body;
 
     const trip = await Trip.findOne({ tripId });
+    const driver = await Driver.findOne({ driverUserId: driverId }).populate('user');
 
     if (!trip || trip.status !== 'pending') {
       return res.status(400).json({ error: 'الرحلة غير متاحة للرفض' });
@@ -192,6 +238,19 @@ exports.rejectTrip = async (req, res) => {
 
     trip.status = 'rejected';
     trip.cancellationReason = cancellationReason || 'رفض من السائق';
+
+    // إرسال إشعار للعميل برفض الرحلة
+    await notificationController.createNotification({
+      recipient: trip.userId,
+      recipientType: 'Client',
+      title: 'تم رفض الرحلة',
+      message: `قام السائق ${driver.user.fullName} برفض طلب رحلتك رقم ${trip.tripId}`,
+      type: 'trip_rejected',
+      data: {
+        tripId: trip.tripId,
+        reason: cancellationReason
+      }
+    });
 
     await trip.save();
     res.json(trip);
@@ -207,12 +266,37 @@ exports.completeTrip = async (req, res) => {
   try {
     const { tripId } = req.params;
     const trip = await Trip.findOne({ tripId });
+    const driver = await Driver.findOne({ driverUserId: trip.driverId }).populate('user');
 
     if (!trip || trip.status !== 'in_progress') {
       return res.status(400).json({ error: 'لا يمكن إنهاء الرحلة في هذه الحالة' });
     }
 
     const fare = trip.distance * RATE_PER_KM;
+    
+    // إذا كانت طريقة الدفع بالمحفظة، نخصم المبلغ الآن
+    if (trip.paymentMethod === 'wallet') {
+      const client = await Client.findOne({ clientUserId: trip.userId });
+      
+      if (!client) {
+        return res.status(404).json({ error: 'العميل غير موجود' });
+      }
+
+      if (client.walletBalance < fare) {
+        return res.status(400).json({ 
+          error: 'رصيد المحفظة غير كافي لإتمام الرحلة',
+          requiredAmount: fare,
+          currentBalance: client.walletBalance
+        });
+      }
+
+      // الخصم الفعلي من المحفظة
+      client.walletBalance -= fare;
+      await client.save();
+      trip.paymentStatus = 'paid'; // تحديث حالة الدفع
+    }
+
+    // تحديث حالة الرحلة
     trip.status = 'completed';
     trip.endTime = new Date();
     trip.actualFare = fare;
@@ -230,18 +314,27 @@ exports.completeTrip = async (req, res) => {
     if (trip.userId) {
       const client = await Client.findOne({ clientUserId: trip.userId });
       if (client) {
-        // زيادة عدد الرحلات
         client.tripsnumber += 1;
-        
-        // زيادة إجمالي الإنفاق
         client.totalSpending += fare;
-        
-        // إضافة الرحلة إلى التاريخ
         client.tripHistory.push(trip._id);
-        
         await client.save();
       }
     }
+
+    // إرسال إشعار للعميل بإتمام الرحلة
+    await notificationController.createNotification({
+      recipient: trip.userId,
+      recipientType: 'Client',
+      title: 'تم إتمام الرحلة',
+      message: `تم إتمام رحلتك رقم ${trip.tripId} مع السائق ${driver.user.fullName}`,
+      type: 'trip_completed',
+      data: {
+        tripId: trip.tripId,
+        fare: fare,
+        paymentMethod: trip.paymentMethod,
+        paymentStatus: trip.paymentStatus
+      }
+    });
 
     await trip.save();
     res.json(trip);

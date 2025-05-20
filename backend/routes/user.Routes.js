@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 
 // استيراد التحكم (controller)
-const { createUser, loginUser, getUsers } = require('../controllers/userController');
+const { createUser, loginUser, getUsers, logoutUser } = require('../controllers/userController');
 
 // نقطة النهاية لإضافة مستخدم جديد
 router.post('/signup', createUser);
@@ -12,6 +12,8 @@ router.post('/signin', loginUser);
 
 // نقطة النهاية لاسترجاع جميع المستخدمين
 router.get('/', getUsers);  // هذه ستظل كما هي
+
+router.post('/logout', logoutUser);
 
 // نقطة النهاية لاسترجاع السائقين فقط
 router.get('/drivers', async (req, res) => {
