@@ -29,6 +29,17 @@ class _SignInScreenState extends State<SignInScreen> {
   Future<void> signIn(BuildContext context) async {
     setState(() => isLoading = true);
 
+  final String apiUrl = 'http://localhost:5000/api/users/signin';
+  final response = await http.post(
+    Uri.parse(apiUrl),
+    headers: {'Content-Type': 'application/json'},
+    body: jsonEncode({
+      'email': emailController.text.trim(),
+      'phone': emailController.text.trim(),
+      'password': passwordController.text.trim(),
+    }),
+  );
+
     final String apiUrl = 'http://localhost:5000/api/users/signin';
     final response = await http.post(
       Uri.parse(apiUrl),

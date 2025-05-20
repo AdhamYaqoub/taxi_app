@@ -3,6 +3,8 @@ import 'package:taxi_app/language/localization.dart';
 import 'package:taxi_app/models/driver.dart';
 import 'package:taxi_app/services/drivers_api.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../services/driver_detail_page.dart'; // صفحة التفاصيل الجديدة
+import 'chat.dart'; // إضافة استيراد صفحة الشات
 import '../../services/driver_detail_page.dart';
 
 class OfficeManagerPage extends StatefulWidget {
@@ -147,6 +149,109 @@ class _OfficeManagerPageState extends State<OfficeManagerPage> {
                   style: const TextStyle(color: Colors.red),
                 ),
               ),
+              const SizedBox(height: 10),
+              Expanded(
+                child: isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : filteredDrivers.isEmpty
+                        ? const Center(child: Text("لا يوجد سائقون"))
+                        : LayoutBuilder(
+                            builder: (context, constraints) {
+                              // إذا كانت الشاشة صغيرة، استخدم قائمة
+                              if (constraints.maxWidth < 600) {
+                                return ListView.builder(
+                                  itemCount: filteredDrivers.length,
+                                  itemBuilder: (context, index) {
+                                    var driver = filteredDrivers[index];
+                                    return Card(
+                                      margin: const EdgeInsets.symmetric(vertical: 8),
+                                      child: ListTile(
+                                        leading: const Icon(Icons.person),
+                                        title: Text(driver['name'].toString()),
+                                        subtitle: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text("📞 ${driver['phone']}"),
+                                            Text("🚗 رحلات: ${driver['rides']}"),
+                                            Text("💰 أرباح: ${driver['earnings']}"),
+                                          ],
+                                        ),
+                                        trailing: IconButton(
+                                          icon: const Icon(Icons.phone, color: Colors.green),
+                                          onPressed: () => _callDriver(driver['phone'].toString()),
+                                        ),
+                                        onTap: () {
+                                          // الانتقال إلى صفحة التفاصيل عند النقر
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) => DriverDetailPageWeb(driver: driver),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    );
+                                  },
+                                );
+                              } else {
+                                // إذا كانت الشاشة كبيرة، استخدم جدول
+                                return SingleChildScrollView(
+                                  scrollDirection: Axis.horizontal,
+                                  child: DataTable(
+                                    columns: const [
+                                      DataColumn(label: Text("الاسم")),
+                                      DataColumn(label: Text("الهاتف")),
+                                      DataColumn(label: Text("الحالة")),
+                                      DataColumn(label: Text("الرحلات")),
+                                      DataColumn(label: Text("تفاصيل")),
+                                      DataColumn(label: Text("اتصال")),
+                                      DataColumn(label: Text("شات")),
+                                    ],
+                                    rows: filteredDrivers.map((driver) {
+                                      return DataRow(
+                                        cells: [
+                                          DataCell(Text(driver['name'].toString())),
+                                          DataCell(Text(driver['phone'].toString())),
+                                          DataCell(Text(driver["status"] ? "نشط" : "غير متصل")),
+                                          DataCell(Text(driver['rides'].toString())),
+                                          DataCell(IconButton(
+                                            icon: const Icon(Icons.info, color: Colors.blue),
+                                            onPressed: () {
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (context) => DriverDetailPageWeb(driver: driver),
+                                                ),
+                                              );
+                                            },
+                                          )),
+                                          DataCell(IconButton(
+                                            icon: const Icon(Icons.phone, color: Colors.green),
+                                            onPressed: () => _callDriver(driver['phone'].toString()),
+                                          )),
+                                          DataCell(IconButton(
+                                            icon: const Icon(Icons.chat, color: Colors.blue),
+                                            onPressed: () {
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (context) => ChatScreen(
+                                                    userId: widget.officeId,
+                                                    userType: 'admin',
+                                                    selectedDriverId: driver['id'].toString(),
+                                                  ),
+                                                ),
+                                              );
+                                            },
+                                          )),
+                                        ],
+                                      );
+                                    }).toList(),
+                                  ),
+                                );
+                              }
+                            },
+
             Expanded(
               child: isLoading
                   ? const Center(child: CircularProgressIndicator())
