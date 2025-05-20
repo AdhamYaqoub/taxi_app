@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:taxi_app/language/localization.dart';
 import 'package:http/http.dart' as http;
@@ -30,7 +31,7 @@ class _DashboardHomeState extends State<DashboardHome> {
   Future<void> _fetchDashboardData() async {
     try {
       final response = await http.get(
-        Uri.parse('http://localhost:5000/api/dashboard'),
+        Uri.parse('${dotenv.env['BASE_URL']}/api/dashboard'),
         headers: {'Content-Type': 'application/json'},
       );
 

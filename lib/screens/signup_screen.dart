@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:taxi_app/screens/components/custom_button.dart';
 import 'package:taxi_app/screens/components/custom_text_field.dart';
 import 'package:country_picker/country_picker.dart';
@@ -34,7 +35,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   List<String> taxiOffices = ['Office 1', 'Office 2', 'Office 3'];
 Future<void> signUp() async {
-  final String url = 'http://localhost:5000/api/users/signup';
+  final String url = '${dotenv.env['BASE_URL']}/api/users/signup';
+    
   final response = await http.post(
     Uri.parse(url),
     headers: {'Content-Type': 'application/json'},
