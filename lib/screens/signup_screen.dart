@@ -34,16 +34,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   List<String> taxiOffices = ['Office 1', 'Office 2', 'Office 3'];
 Future<void> signUp() async {
-  if (selectedRole == 'Driver') {
-    bool isDriverValid = await isDriverInExcel(fullNameController.text);
-    if (!isDriverValid) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('السائق غير مسجل في قاعدة البيانات، يرجى إعادة المحاولة.')),
-      );
-      return;
-    }
-  }
-
   final String url = 'http://localhost:5000/api/users/signup';
   final response = await http.post(
     Uri.parse(url),

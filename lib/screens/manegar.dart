@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:url_launcher/url_launcher.dart';
 import '../../services/driver_detail_page.dart'; // صفحة التفاصيل الجديدة
+import 'chat.dart'; // إضافة استيراد صفحة الشات
 
 class OfficeManagerPage extends StatefulWidget {
   final String officeId;
@@ -181,6 +182,7 @@ class _OfficeManagerPageState extends State<OfficeManagerPage> {
                                       DataColumn(label: Text("الرحلات")),
                                       DataColumn(label: Text("تفاصيل")),
                                       DataColumn(label: Text("اتصال")),
+                                      DataColumn(label: Text("شات")),
                                     ],
                                     rows: filteredDrivers.map((driver) {
                                       return DataRow(
@@ -192,7 +194,6 @@ class _OfficeManagerPageState extends State<OfficeManagerPage> {
                                           DataCell(IconButton(
                                             icon: const Icon(Icons.info, color: Colors.blue),
                                             onPressed: () {
-                                              // الانتقال إلى صفحة التفاصيل عند النقر
                                               Navigator.push(
                                                 context,
                                                 MaterialPageRoute(
@@ -204,6 +205,21 @@ class _OfficeManagerPageState extends State<OfficeManagerPage> {
                                           DataCell(IconButton(
                                             icon: const Icon(Icons.phone, color: Colors.green),
                                             onPressed: () => _callDriver(driver['phone'].toString()),
+                                          )),
+                                          DataCell(IconButton(
+                                            icon: const Icon(Icons.chat, color: Colors.blue),
+                                            onPressed: () {
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (context) => ChatScreen(
+                                                    userId: widget.officeId,
+                                                    userType: 'admin',
+                                                    selectedDriverId: driver['id'].toString(),
+                                                  ),
+                                                ),
+                                              );
+                                            },
                                           )),
                                         ],
                                       );

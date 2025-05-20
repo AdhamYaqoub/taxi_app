@@ -35,6 +35,7 @@ Future<void> signIn(BuildContext context) async {
     headers: {'Content-Type': 'application/json'},
     body: jsonEncode({
       'email': emailController.text.trim(),
+      'phone': emailController.text.trim(),
       'password': passwordController.text.trim(),
     }),
   );

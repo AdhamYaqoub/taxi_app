@@ -7,6 +7,7 @@ import 'Driver/driver_trips.dart';
 import 'Driver/earnings.dart';
 import 'Driver/driver_settings.dart';
 import 'Driver/support.dart';
+import 'chat.dart';
 
 class DriverDashboard extends StatefulWidget {
   const DriverDashboard({super.key});
@@ -80,6 +81,27 @@ class _DriverDashboardState extends State<DriverDashboard> {
                 local.translate('support'), LucideIcons.headphones, 4, theme),
             _buildSidebarItem(
                 local.translate('settings'), LucideIcons.settings, 5, theme),
+            ListTile(
+              leading: Icon(Icons.chat, color: theme.colorScheme.onPrimary.withOpacity(0.8)),
+              title: Text(
+                'الدردشة',
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  color: theme.colorScheme.onPrimary,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ChatScreen(
+                      userId: '7', // هنا ضع معرف السائق الحقيقي إذا كان متغير
+                      userType: 'driver',
+                    ),
+                  ),
+                );
+              },
+            ),
           ],
         ),
       ),
@@ -140,6 +162,27 @@ class _DriverDashboardState extends State<DriverDashboard> {
                   LucideIcons.settings,
                   5,
                   theme,
+                ),
+                ListTile(
+                  leading: Icon(Icons.chat, color: theme.colorScheme.onPrimary.withOpacity(0.8)),
+                  title: Text(
+                    'الدردشة',
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      color: theme.colorScheme.onPrimary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ChatScreen(
+                          userId: '7', // هنا ضع معرف السائق الحقيقي إذا كان متغير
+                          userType: 'driver',
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ],
             ),
