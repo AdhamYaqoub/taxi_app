@@ -283,4 +283,5 @@ const Map<String, String> en = {
   "average_rating": "Average Rating",
   "user_name": "user name",
   "driver_name": "driver name",
+  'no_accepted_trips': 'No accepted trips',
 };

@@ -282,4 +282,5 @@ const Map<String, String> ar = {
   "average_rating": "متوسط التقييم",
   "user_name": "اسم المستخدم",
   "driver_name": "اسم السائق",
+  'no_accepted_trips': 'لا توجد رحلات موافق عليها',
 };

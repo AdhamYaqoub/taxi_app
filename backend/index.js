@@ -5,10 +5,9 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const http = require('http');
 
-// استيراد اتصال قاعدة البيانات
+
 const db = require('./config/db');
 
-// استيراد المسارات (routes)
 const userRoutes = require('./routes/user.Routes');
 // const userRoutes = require('./routes/userRoutes');
 // const driverRoutes = require('./routes/driverRoutes');
@@ -19,6 +18,7 @@ const driver = require('./routes/driverRoutes');
 const clientRoutes = require('./routes/clientRoutes');
 const dashboardRoutes = require('./routes/dashboard');
 const paymentsRoutes = require('./routes/payments');
+const notificationRoutes = require('./routes/notificationRoutes');
 
 // إعداد السوكيت
 const { init } = require('./config/socket');
@@ -54,6 +54,7 @@ app.use('/api/drivers', driver);
 app.use('/api/clients', clientRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/payments', paymentsRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 
 // Route for health check
