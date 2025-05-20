@@ -10,9 +10,8 @@ exports.getAllDrivers = async (req, res) => {
         select: 'fullName userId email phone' // اختر الحقول التي تريدها من نموذج User
       })
       // اختر الحقول التي تريدها من نموذج Driver
-      .select('user carDetails rating numberOfRatings profileImageUrl taxiOffice isAvailable')
+      .select('user carDetails rating numberOfRatings profileImageUrl taxiOffice isAvailable earnings')
       .lean(); // .lean() للحصول على كائنات JavaScript بسيطة أسرع
-
     res.status(200).json(allDrivers); // أرسل قائمة جميع السائقين
 
   } catch (error) {
@@ -80,3 +79,50 @@ exports.getDriverById = async (req, res) => {
     });
   }
 };
+
+// في ملف routes/drivers.js
+exports.updateAvailability = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { isAvailable } = req.body;
+
+    // البحث باستخدام findById أولاً للتحقق
+    // التحديث
+    const updatedDriver = await Driver.findOneAndUpdate(
+      {driverUserId: id},
+      { isAvailable },
+      { new: true }
+    );
+    if (!updatedDriver) {
+      return res.status(404).json({ message: 'Driver not found' });
+    }
+
+
+    res.status(200).json(updatedDriver);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.updateDriverProfileImage = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { profileImageUrl } = req.body;
+
+    const updatedDriver = await Driver.findOneAndUpdate(
+      { driverUserId: id },
+      { profileImageUrl },
+      { new: true }
+    );
+
+    if (!updatedDriver) {
+      return res.status(404).json({ message: 'Driver not found' });
+    }
+
+    res.status(200).json(updatedDriver);
+  } catch (error) {
+    console.error("Error updating driver profile image:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+

@@ -348,6 +348,7 @@ class _DriverRequestsPageState extends State<DriverRequestsPage> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start, // لضبط النص في حال لف
         children: [
           Icon(icon, size: 18, color: Colors.grey),
           const SizedBox(width: 8),
@@ -355,11 +356,15 @@ class _DriverRequestsPageState extends State<DriverRequestsPage> {
             "$label: ",
             style: const TextStyle(fontSize: 14),
           ),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+              overflow: TextOverflow.visible,
+              softWrap: true,
             ),
           ),
         ],

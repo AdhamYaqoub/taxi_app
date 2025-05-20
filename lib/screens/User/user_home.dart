@@ -7,8 +7,6 @@ import 'package:taxi_app/services/trips_api.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-
-
 class HomePage extends StatefulWidget {
   final int userId;
 

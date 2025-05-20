@@ -279,4 +279,8 @@ const Map<String, String> ar = {
   'update_failed': 'فشل في التحديث',
   'no_pending_rides': 'لا توجد رحلات معلقة',
   "number_of_ratings": "عدد التقييمات",
+  "average_rating": "متوسط التقييم",
+  "user_name": "اسم المستخدم",
+  "driver_name": "اسم السائق",
+  'no_accepted_trips': 'لا توجد رحلات موافق عليها',
 };

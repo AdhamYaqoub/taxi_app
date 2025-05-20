@@ -2,10 +2,12 @@ const mongoose = require('mongoose');
 const AutoIncrement = require('mongoose-sequence')(mongoose);
 
 const tripSchema = new mongoose.Schema({
+
   // معرّفات الأطراف
   tripId: { type: Number, unique: true },  // سيتم توليده تلقائياً
   userId: { type: Number, required: true }, // العميل
   driverId: { type: Number }, // السائق (يضاف عند القبول)
+
 
   // معلومات الرحلة الأساسية
   startLocation: {

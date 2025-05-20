@@ -2,24 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:taxi_app/language/localization.dart';
 import 'package:taxi_app/screens/User/drivers_list_page.dart';
+import 'package:taxi_app/screens/components/NotificationIcon.dart';
 import 'User/user_home.dart';
 import 'User/mytrip.dart';
 import 'User/payment_page.dart';
 import 'User/offers_page.dart';
 import 'User/settings_page.dart';
 import 'User/support_page.dart';
-void main() => runApp(MyApp());
+import 'package:flutter/foundation.dart' show kIsWeb;
 
-class MyApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Taxi App with Google Maps',
-      theme: ThemeData(primarySwatch: Colors.blue),
-      home: UserDashboard(),
-    );
-  }
-}
 class UserDashboard extends StatefulWidget {
   const UserDashboard({super.key});
 
@@ -31,14 +22,20 @@ class _UserDashboardState extends State<UserDashboard> {
   int _selectedIndex = 0;
 
   final List<Widget> _pages = [
-    HomePage(userId: 12),
-    ClientTripsPage(userId: 12),
+    HomePage(userId: 14),
+    ClientTripsPage(userId: 14),
     const DriversListPage(),
     const PaymentPage(),
-    const OffersPage(),
     const SettingsPage(),
     const SupportPage(),
+    const OffersPage(),
   ];
+
+  void _navigateToPage(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,13 +44,31 @@ class _UserDashboardState extends State<UserDashboard> {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: isWeb
-          ? null
-          : AppBar(
-              backgroundColor: theme.colorScheme.primary,
-              title: Text(
-                  AppLocalizations.of(context).translate('user_dashboard')),
+      appBar: AppBar(
+        backgroundColor: theme.colorScheme.primary,
+        title: Text(
+          AppLocalizations.of(context).translate('user_dashboard'),
+          style: TextStyle(
+            fontSize: kIsWeb ? 24 : 18, // أكبر شوي للويب
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        actions: [
+          if (kIsWeb) ...[
+            const NotificationIcon(),
+            const SizedBox(width: 16),
+            IconButton(
+              icon: const Icon(Icons.settings),
+              onPressed: () {
+                // فتح صفحة إعدادات خاصة بالويب مثلاً
+              },
             ),
+          ] else ...[
+            const NotificationIcon(),
+            const SizedBox(width: 8),
+          ],
+        ],
+      ),
       drawer: isWeb ? null : Drawer(child: _buildSidebarContent(theme)),
       body: Row(
         children: [
@@ -82,9 +97,9 @@ class _UserDashboardState extends State<UserDashboard> {
                     label: AppLocalizations.of(context)
                         .translate('trips_history')),
                 BottomNavigationBarItem(
-                    icon: Icon(LucideIcons.history),
-                    label: AppLocalizations.of(context)
-                        .translate('trips_history')),
+                    icon: Icon(LucideIcons.list),
+                    label:
+                        AppLocalizations.of(context).translate('drivers_list')),
                 BottomNavigationBarItem(
                     icon: Icon(LucideIcons.creditCard),
                     label: AppLocalizations.of(context)
@@ -123,8 +138,8 @@ class _UserDashboardState extends State<UserDashboard> {
               1,
               theme),
           _buildSidebarItem(
-              AppLocalizations.of(context).translate('trips_history'),
-              LucideIcons.history,
+              AppLocalizations.of(context).translate('drivers_list'),
+              LucideIcons.list,
               2,
               theme),
           _buildSidebarItem(
@@ -148,9 +163,7 @@ class _UserDashboardState extends State<UserDashboard> {
       title: Text(title, style: TextStyle(color: theme.colorScheme.onPrimary)),
       selected: _selectedIndex == index,
       onTap: () {
-        setState(() {
-          _selectedIndex = index;
-        });
+        _navigateToPage(index);
       },
     );
   }

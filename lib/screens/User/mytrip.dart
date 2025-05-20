@@ -14,8 +14,9 @@ class ClientTripsPage extends StatefulWidget {
 }
 
 class _ClientTripsPageState extends State<ClientTripsPage> {
-  late Future<List<Trip>> _completedTripsFuture;
+  late Future<List<Trip>> _acceptedTripsFuture;
   late Future<List<Trip>> _inProgressTripsFuture;
+  late Future<List<Trip>> _completedTripsFuture;
   bool _isLoading = true;
 
   @override
@@ -28,9 +29,9 @@ class _ClientTripsPageState extends State<ClientTripsPage> {
     setState(() {
       _isLoading = true;
 
-      _completedTripsFuture = TripsApi.getClientTripsWithStatus(
+      _acceptedTripsFuture = TripsApi.getClientTripsWithStatus(
         widget.userId,
-        status: 'completed',
+        status: 'accepted',
       );
 
       _inProgressTripsFuture = TripsApi.getClientTripsWithStatus(
@@ -38,9 +39,15 @@ class _ClientTripsPageState extends State<ClientTripsPage> {
         status: 'in_progress',
       );
 
+      _completedTripsFuture = TripsApi.getClientTripsWithStatus(
+        widget.userId,
+        status: 'completed',
+      );
+
       Future.wait([
-        _completedTripsFuture,
+        _acceptedTripsFuture,
         _inProgressTripsFuture,
+        _completedTripsFuture,
       ]).then((_) {
         setState(() => _isLoading = false);
       }).catchError((_) {
@@ -61,11 +68,7 @@ class _ClientTripsPageState extends State<ClientTripsPage> {
               title: Text(local.translate('my_trips')),
             ),
       body: RefreshIndicator(
-        onRefresh: () async {
-          _loadTrips();
-          // لا داعي للـ Future.delayed هنا عادةً، onRefresh ينتظر اكتمال الـ Future
-          // await Future.delayed(const Duration(seconds: 1));
-        },
+        onRefresh: () async => _loadTrips(),
         child: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : Padding(
@@ -73,23 +76,33 @@ class _ClientTripsPageState extends State<ClientTripsPage> {
                   horizontal: isDesktop ? 32 : 16,
                   vertical: 16,
                 ),
-                // *** أضف SingleChildScrollView هنا ***
                 child: SingleChildScrollView(
                   child: ConstrainedBox(
                     constraints: BoxConstraints(
-                      // قد لا تحتاج هذا الـ minHeight بعد الآن مع SingleChildScrollView
-                      // ولكن يمكن إبقاؤه لضمان عمل RefreshIndicator حتى لو كانت القائمة فارغة
                       minHeight: MediaQuery.of(context).size.height -
                           (isDesktop
                               ? 0
                               : kToolbarHeight +
                                   MediaQuery.of(context).padding.top +
-                                  32), // +32 للأخذ بالاعتبار الـ vertical padding
+                                  32),
                     ),
-                    // *** الـ Column الأصلي الآن داخل SingleChildScrollView ***
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // قسم الرحلات الموافق عليها
+                        _buildSectionHeader(
+                          context,
+                          title: local.translate('accepted_trips'),
+                          icon: LucideIcons.check,
+                        ),
+                        const SizedBox(height: 8),
+                        _buildTripsList(
+                          context,
+                          future: _acceptedTripsFuture,
+                          emptyMessage: local.translate('no_accepted_trips'),
+                        ),
+                        const SizedBox(height: 24),
+
                         // قسم الرحلات قيد التنفيذ
                         _buildSectionHeader(
                           context,
@@ -116,7 +129,6 @@ class _ClientTripsPageState extends State<ClientTripsPage> {
                           future: _completedTripsFuture,
                           emptyMessage: local.translate('no_completed_trips'),
                         ),
-                        // يمكنك إضافة SizedBox في الأسفل لإعطاء مساحة إضافية عند نهاية التمرير إذا أردت
                         const SizedBox(height: 16),
                       ],
                     ),
@@ -195,97 +207,106 @@ class _ClientTripsPageState extends State<ClientTripsPage> {
     final theme = Theme.of(context);
     final local = AppLocalizations.of(context);
     final isCompleted = trip.status == 'completed';
+    final isAccepted = trip.status == 'accepted';
     final isDesktop = MediaQuery.of(context).size.width > 768;
 
     return Card(
-        margin: EdgeInsets.only(bottom: isDesktop ? 16 : 12),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        elevation: 4,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(12),
-          onTap: () {
-            // يمكنك إضافة تفاصيل الرحلة هنا
-          },
-          child: Padding(
-            padding: EdgeInsets.all(isDesktop ? 20 : 16),
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                minWidth: double.infinity,
-              ),
-              child: Column(
-                // تأكد من استخدام العرض الكامل
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Flexible(
+      margin: EdgeInsets.only(bottom: isDesktop ? 16 : 12),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      elevation: 4,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () {
+          // يمكنك إضافة تفاصيل الرحلة هنا
+        },
+        child: Padding(
+          padding: EdgeInsets.all(isDesktop ? 20 : 16),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minWidth: double.infinity),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        "${local.translate('trip')} #${trip.tripId}",
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Flexible(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isCompleted
+                              ? Colors.green.withOpacity(0.2)
+                              : isAccepted
+                                  ? Colors.blue.withOpacity(0.2)
+                                  : Colors.orange.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
                         child: Text(
-                          "${local.translate('trip')} #${trip.tripId}",
-                          style: theme.textTheme.titleMedium?.copyWith(
+                          isCompleted
+                              ? local.translate('completed')
+                              : isAccepted
+                                  ? local.translate('accepted')
+                                  : local.translate('in_progress'),
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: isCompleted
+                                ? Colors.green
+                                : isAccepted
+                                    ? Colors.blue
+                                    : Colors.orange,
                             fontWeight: FontWeight.bold,
                           ),
-                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      Flexible(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: isCompleted
-                                ? Colors.green.withOpacity(0.2)
-                                : Colors.orange.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            isCompleted
-                                ? local.translate('completed')
-                                : local.translate('in_progress'),
-                            style: theme.textTheme.labelSmall?.copyWith(
-                              color: isCompleted ? Colors.green : Colors.orange,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  _buildTripDetailRow(
-                    icon: LucideIcons.mapPin,
-                    label: local.translate('from'),
-                    value: trip.startLocation.address,
-                  ),
-                  _buildTripDetailRow(
-                    icon: LucideIcons.mapPin,
-                    label: local.translate('to'),
-                    value: trip.endLocation.address,
-                  ),
-                  _buildTripDetailRow(
-                    icon: LucideIcons.clock,
-                    label: isCompleted
-                        ? local.translate('completed_on')
-                        : local.translate('started_on'),
-                    value: _formatDateTime(
-                      isCompleted ? trip.endTime : trip.startTime,
                     ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                _buildTripDetailRow(
+                  icon: LucideIcons.mapPin,
+                  label: local.translate('from'),
+                  value: trip.startLocation.address,
+                ),
+                _buildTripDetailRow(
+                  icon: LucideIcons.mapPin,
+                  label: local.translate('to'),
+                  value: trip.endLocation.address,
+                ),
+                _buildTripDetailRow(
+                  icon: LucideIcons.clock,
+                  label: isCompleted
+                      ? local.translate('completed_on')
+                      : isAccepted
+                          ? local.translate('accepted_on')
+                          : local.translate('started_on'),
+                  value: _formatDateTime(
+                    isCompleted ? trip.endTime : trip.startTime,
                   ),
-                  if (isCompleted)
-                    _buildTripDetailRow(
-                      icon: LucideIcons.dollarSign,
-                      label: local.translate('fare'),
-                      value: "\$${trip.actualFare.toStringAsFixed(2)}",
-                    ),
-                ],
-              ),
+                ),
+                if (isCompleted || isAccepted)
+                  _buildTripDetailRow(
+                    icon: LucideIcons.dollarSign,
+                    label: local.translate('fare'),
+                    value: "\$${trip.actualFare.toStringAsFixed(2)}",
+                  ),
+              ],
             ),
           ),
-        ));
+        ),
+      ),
+    );
   }
 
   Widget _buildErrorWidget(ThemeData theme, AppLocalizations local) {

@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:taxi_app/language/localization.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:taxi_app/models/driver.dart';
+import 'package:taxi_app/services/drivers_api.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../services/driver_detail_page.dart'; // صفحة التفاصيل الجديدة
 import 'chat.dart'; // إضافة استيراد صفحة الشات
+import '../../services/driver_detail_page.dart';
 
 class OfficeManagerPage extends StatefulWidget {
   final String officeId;
@@ -16,115 +17,137 @@ class OfficeManagerPage extends StatefulWidget {
 }
 
 class _OfficeManagerPageState extends State<OfficeManagerPage> {
-  List<Map<String, dynamic>> drivers = [];
+  List<Driver> drivers = [];
   String searchQuery = "";
   String selectedFilter = "الكل";
   bool isLoading = true;
+  String? errorMessage;
 
   @override
   void initState() {
     super.initState();
-    fetchDrivers();
+    _loadDrivers();
   }
 
-  // جلب بيانات السائقين من API
-  Future<void> fetchDrivers() async {
+  Future<void> _loadDrivers() async {
     try {
-      final response = await http.get(Uri.parse('http://localhost:5000/api/users')); // تأكد من عنوان API
-
-      if (response.statusCode == 200) {
-        List<dynamic> data = json.decode(response.body);
-
-        setState(() {
-          drivers = data
-              .where((user) => user["role"] == "Driver") // تصفية السائقين حسب الدور
-              .map((user) => {
-                    "name": user["fullName"] ?? 'اسم غير موجود',
-                    "status": user["isAvailable"] ?? false,
-                    "rating": user["rating"] ?? 0.0, // يمكنك تعديل هذا حسب المتاح
-                    "rides": user["rides"] ?? 0, // أو أي قيمة متاحة في الـ API
-                    "type": user["role"] ?? 'غير محدد',
-                    "id": user["userId"], // تأكد من أن هناك معرف فريد لكل سائق
-                    "phone": user["phone"] ?? 'غير متاح',
-                    "email": user["email"] ?? 'غير متاح',
-                    "location": user["location"] ?? 'غير متاح',
-                  })
-              .toList();
-          isLoading = false;
-        });
-      } else {
-        throw Exception('فشل في تحميل السائقين');
-      }
-    } catch (error) {
+      final driversList = await DriversApi.getAllDrivers();
+      setState(() {
+        drivers = driversList;
+        isLoading = false;
+        errorMessage = null;
+      });
+    } catch (e) {
       setState(() {
         isLoading = false;
+        errorMessage = e.toString();
       });
-      print("Error: $error");
     }
   }
 
-  // دالة للبحث والتصفية حسب الحالة
-  List<Map<String, dynamic>> getFilteredDrivers() {
+  Future<void> _toggleDriverStatus(Driver driver) async {
+    try {
+      // هنا يمكنك إضافة استدعاء API لتغيير حالة السائق إذا كان لديك endpoint
+      // مثال: await DriversApi.updateDriverStatus(driver.userId, !driver.isAvailable);
+
+      setState(() {
+        driver.isAvailable = !driver.isAvailable;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(driver.isAvailable
+              ? 'تم تفعيل السائق ${driver.fullName}'
+              : 'تم إيقاف السائق ${driver.fullName}'),
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('فشل في تحديث حالة السائق: $e')),
+      );
+    }
+  }
+
+  List<Driver> getFilteredDrivers() {
     return drivers.where((driver) {
-      bool matchesSearch = driver["name"].toString().contains(searchQuery) ||
-                           driver["phone"].toString().contains(searchQuery);
-      bool matchesFilter = selectedFilter == "الكل" || (driver["status"] ? "نشط" : "غير متصل") == selectedFilter;
+      bool matchesSearch =
+          driver.fullName.toLowerCase().contains(searchQuery.toLowerCase()) ||
+              driver.phone.contains(searchQuery);
+      bool matchesFilter = selectedFilter == "الكل" ||
+          (driver.isAvailable ? "نشط" : "غير متصل") == selectedFilter;
       return matchesSearch && matchesFilter;
     }).toList();
   }
 
-  // الاتصال بالسائق
-  void _callDriver(String phoneNumber) async {
+  Future<void> _callDriver(String phoneNumber) async {
     final Uri phoneUri = Uri(scheme: 'tel', path: phoneNumber);
     if (await canLaunchUrl(phoneUri)) {
       await launchUrl(phoneUri);
     } else {
-      print("❌ لا يمكن إجراء المكالمة");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('لا يمكن إجراء المكالمة')),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    var theme = Theme.of(context);
-    List<Map<String, dynamic>> filteredDrivers = getFilteredDrivers();
+    final theme = Theme.of(context);
+    final local = AppLocalizations.of(context);
+    final filteredDrivers = getFilteredDrivers();
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: Text(AppLocalizations.of(context).translate('drivers_management')),
+        title: Text(local.translate('drivers_management')),
         backgroundColor: theme.colorScheme.primary,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _loadDrivers,
+            tooltip: local.translate('refresh'),
+          ),
+        ],
       ),
-      body: Center(  // محاذاة كل المحتوى في الوسط
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,  // محاذاة العناصر في المنتصف
-            children: [
-              TextField(
-                decoration: const InputDecoration(
-                  labelText: "🔍 بحث عن سائق",
-                  prefixIcon: Icon(Icons.search),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    decoration: InputDecoration(
+                      labelText: local.translate('search_driver'),
+                      prefixIcon: const Icon(Icons.search),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    onChanged: (value) => setState(() => searchQuery = value),
+                  ),
                 ),
-                onChanged: (value) {
-                  setState(() {
-                    searchQuery = value;
-                  });
-                },
-              ),
-              const SizedBox(height: 10),
-              DropdownButton<String>(
-                value: selectedFilter,
-                items: ["الكل", "نشط", "غير متصل"].map((status) {
-                  return DropdownMenuItem<String>(
-                    value: status,
-                    child: Text(status),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  setState(() {
-                    selectedFilter = value!;
-                  });
-                },
+                const SizedBox(width: 10),
+                DropdownButton<String>(
+                  value: selectedFilter,
+                  items: ["الكل", "نشط", "غير متصل"].map((status) {
+                    return DropdownMenuItem<String>(
+                      value: status,
+                      child: Text(status),
+                    );
+                  }).toList(),
+                  onChanged: (value) => setState(() => selectedFilter = value!),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            if (errorMessage != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: Text(
+                  errorMessage!,
+                  style: const TextStyle(color: Colors.red),
+                ),
               ),
               const SizedBox(height: 10),
               Expanded(
@@ -228,11 +251,145 @@ class _OfficeManagerPageState extends State<OfficeManagerPage> {
                                 );
                               }
                             },
+
+            Expanded(
+              child: isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : filteredDrivers.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.directions_car, size: 50),
+                              const SizedBox(height: 16),
+                              Text(local.translate('no_drivers_found')),
+                            ],
                           ),
+                        )
+                      : LayoutBuilder(
+                          builder: (context, constraints) {
+                            if (constraints.maxWidth < 600) {
+                              return _buildMobileList(
+                                  filteredDrivers, theme, local);
+                            } else {
+                              return _buildDesktopTable(
+                                  filteredDrivers, theme, local);
+                            }
+                          },
+                        ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMobileList(
+      List<Driver> drivers, ThemeData theme, AppLocalizations local) {
+    return ListView.builder(
+      itemCount: drivers.length,
+      itemBuilder: (context, index) {
+        final driver = drivers[index];
+        return Card(
+          margin: const EdgeInsets.symmetric(vertical: 8),
+          child: ListTile(
+            leading: CircleAvatar(
+              child: Text(driver.fullName.substring(0, 1)),
+            ),
+            title: Text(driver.fullName),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text("${local.translate('phone')}: ${driver.phone}"),
+                Text(
+                    "${local.translate('status')}: ${driver.isAvailable ? local.translate('active') : local.translate('inactive')}"),
+              ],
+            ),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.phone, color: Colors.green),
+                  onPressed: () => _callDriver(driver.phone),
+                ),
+                Switch(
+                  value: driver.isAvailable,
+                  onChanged: (value) => _toggleDriverStatus(driver),
+                  activeColor: Colors.green,
+                ),
+              ],
+            ),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => DriverDetailPageWeb(driver: driver),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildDesktopTable(
+      List<Driver> drivers, ThemeData theme, AppLocalizations local) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: DataTable(
+        columns: [
+          DataColumn(label: Text(local.translate('name'))),
+          DataColumn(label: Text(local.translate('phone'))),
+          DataColumn(label: Text(local.translate('status'))),
+          DataColumn(label: Text(local.translate('details'))),
+          DataColumn(label: Text(local.translate('call'))),
+          DataColumn(label: Text(local.translate('status_change'))),
+        ],
+        rows: drivers.map((driver) {
+          return DataRow(
+            cells: [
+              DataCell(Text(driver.fullName)),
+              DataCell(Text(driver.phone)),
+              DataCell(
+                Chip(
+                  label: Text(
+                    driver.isAvailable
+                        ? local.translate('active')
+                        : local.translate('inactive'),
+                    style: TextStyle(
+                      color: driver.isAvailable ? Colors.white : Colors.black,
+                    ),
+                  ),
+                  backgroundColor:
+                      driver.isAvailable ? Colors.green : Colors.grey[300],
+                ),
+              ),
+              DataCell(
+                IconButton(
+                  icon: const Icon(Icons.info, color: Colors.blue),
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => DriverDetailPageWeb(driver: driver),
+                    ),
+                  ),
+                ),
+              ),
+              DataCell(
+                IconButton(
+                  icon: const Icon(Icons.phone, color: Colors.green),
+                  onPressed: () => _callDriver(driver.phone),
+                ),
+              ),
+              DataCell(
+                Switch(
+                  value: driver.isAvailable,
+                  onChanged: (value) => _toggleDriverStatus(driver),
+                  activeColor: Colors.green,
+                ),
               ),
             ],
-          ),
-        ),
+          );
+        }).toList(),
       ),
     );
   }

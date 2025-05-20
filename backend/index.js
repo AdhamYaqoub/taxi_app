@@ -5,10 +5,9 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const http = require('http');
 
-// استيراد اتصال قاعدة البيانات
+
 const db = require('./config/db');
 
-// استيراد المسارات (routes)
 const userRoutes = require('./routes/user.Routes');
 // const userRoutes = require('./routes/userRoutes');
 // const driverRoutes = require('./routes/driverRoutes');
@@ -16,6 +15,10 @@ const tripRoutes = require('./routes/trips.Routes');
 // const tripRequestRoutes = require('./routes/tripRequests'); 
 const messageRoutes = require('./routes/messageRoutes');
 const driver = require('./routes/driverRoutes');
+const clientRoutes = require('./routes/clientRoutes');
+const dashboardRoutes = require('./routes/dashboard');
+const paymentsRoutes = require('./routes/payments');
+const notificationRoutes = require('./routes/notificationRoutes');
 
 // إعداد السوكيت
 const { init } = require('./config/socket');
@@ -48,6 +51,11 @@ app.use('/api/trips', tripRoutes);
 // app.use('/api/trip-requests', tripRequestRoutes); 
 app.use('/messages', messageRoutes);
 app.use('/api/drivers', driver);
+app.use('/api/clients', clientRoutes);
+app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/payments', paymentsRoutes);
+app.use('/api/notifications', notificationRoutes);
+
 
 // Route for health check
 app.get('/api/health', (req, res) => {
