@@ -55,7 +55,6 @@ dependencies:
   google_ml_kit: ^0.19.0
   flutter_dotenv: ^5.2.1
   socket_io_client: ^2.0.3+1
-  socket_io_client: ^2.0.0
 
   
   # tflite_flutter: ^0.11.0
@@ -81,3 +80,4 @@ flutter:
     - assets/map.png
     - assets/osm_map.html
     - assets/taxi_drivers.xlsx
+    - .env

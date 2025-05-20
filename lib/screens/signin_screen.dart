@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:taxi_app/screens/admin.dart';
 import 'package:taxi_app/screens/homepage.dart';
@@ -29,7 +30,7 @@ class _SignInScreenState extends State<SignInScreen> {
   Future<void> signIn(BuildContext context) async {
     setState(() => isLoading = true);
 
-  final String apiUrl = 'http://localhost:5000/api/users/signin';
+    final String apiUrl = '${dotenv.env['BASE_URL']}/api/users/signin';
   final response = await http.post(
     Uri.parse(apiUrl),
     headers: {'Content-Type': 'application/json'},
@@ -40,15 +41,7 @@ class _SignInScreenState extends State<SignInScreen> {
     }),
   );
 
-    final String apiUrl = 'http://localhost:5000/api/users/signin';
-    final response = await http.post(
-      Uri.parse(apiUrl),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'email': emailController.text.trim(),
-        'password': passwordController.text.trim(),
-      }),
-    );
+    
 
     setState(() => isLoading = false);
 

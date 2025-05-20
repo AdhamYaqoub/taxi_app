@@ -1,9 +1,10 @@
 import 'dart:convert';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:taxi_app/models/client.dart'; // تأكد من وجود هذا النموذج
 
 class ClientsApi {
-  static const String _baseUrl = 'http://localhost:5000/api';
+     static final String _baseUrl = '${dotenv.env['BASE_URL']}/api';
 
   /// جلب جميع العملاء
   static Future<List<Client>> getAllClients() async {

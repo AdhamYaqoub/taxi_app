@@ -20,10 +20,10 @@ class _DriverDashboardState extends State<DriverDashboard> {
   int _selectedIndex = 0;
 
   final List<Widget> _pages = [
-    const DriverHomePage(driverId: 8),
-    const DriverRequestsPage(driverId: 8),
-    const DriverTripsPage(driverId: 8),
-    const EarningsPage(driverId: 8),
+    const DriverHomePage(driverId: 9),
+    const DriverRequestsPage(driverId: 9),
+    const DriverTripsPage(driverId: 9),
+    const EarningsPage(driverId: 9),
     const SupportPage(),
     const DriverSettingsPage(),
   ];
@@ -120,128 +120,86 @@ class _DriverDashboardState extends State<DriverDashboard> {
   Widget _buildDesktopSidebar(ThemeData theme, AppLocalizations local) {
     return SizedBox(
       width: 250,
-      child: Material(
-        color: theme.colorScheme.primary,
-        boxShadow: [
-          BoxShadow(
-            // ignore: deprecated_member_use
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          _buildSidebarHeader(theme),
-          Expanded(
-            child: ListView(
-              children: [
-                _buildSidebarItem(
-                  local.translate('home'),
-                  LucideIcons.home,
-                  0,
-                  theme,
-                ),
-                _buildSidebarItem(
-                  local.translate('trip_requests'),
-                  LucideIcons.list,
-                  1,
-                  theme,
-                ),
-                _buildSidebarItem(
-                  local.translate('my_trips'),
-                  LucideIcons.car,
-                  2,
-                  theme,
-                ),
-                _buildSidebarItem(
-                  local.translate('earnings'),
-                  LucideIcons.dollarSign,
-                  3,
-                  theme,
-                ),
-                _buildSidebarItem(
-                  local.translate('support'),
-                  LucideIcons.headphones,
-                  4,
-                  theme,
-                ),
-                _buildSidebarItem(
-                  local.translate('settings'),
-                  LucideIcons.settings,
-                  5,
-                  theme,
-                ),
-                ListTile(
-                  leading: Icon(Icons.chat, color: theme.colorScheme.onPrimary.withOpacity(0.8)),
-                  title: Text(
-                    'الدردشة',
-                    style: theme.textTheme.bodyLarge?.copyWith(
-                      color: theme.colorScheme.onPrimary,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ChatScreen(
-                          userId: '7', // هنا ضع معرف السائق الحقيقي إذا كان متغير
-                          userType: 'driver',
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ],
-
-        elevation: 4,
-        child: Column(
-          children: [
-            _buildSidebarHeader(theme),
-            Expanded(
-              child: ListView(
-                children: [
-                  _buildSidebarItem(
-                    local.translate('home'),
-                    LucideIcons.home,
-                    0,
-                    theme,
-                  ),
-                  _buildSidebarItem(
-                    local.translate('trip_requests'),
-                    LucideIcons.list,
-                    1,
-                    theme,
-                  ),
-                  _buildSidebarItem(
-                    local.translate('my_trips'),
-                    LucideIcons.car,
-                    2,
-                    theme,
-                  ),
-                  _buildSidebarItem(
-                    local.translate('earnings'),
-                    LucideIcons.dollarSign,
-                    3,
-                    theme,
-                  ),
-                  _buildSidebarItem(
-                    local.translate('support'),
-                    LucideIcons.headphones,
-                    4,
-                    theme,
-                  ),
-                  _buildSidebarItem(
-                    local.translate('settings'),
-                    LucideIcons.settings,
-                    5,
-                    theme,
-                  ),
-                ],
-              ),
+      child: Container(
+        decoration: BoxDecoration(
+          boxShadow: [
+            BoxShadow(
+              // ignore: deprecated_member_use
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 10,
             ),
           ],
+        ),
+        child: Material(
+          color: theme.colorScheme.primary,
+          child: Column(
+            children: [
+              _buildSidebarHeader(theme),
+              Expanded(
+                child: ListView(
+                  children: [
+                    _buildSidebarItem(
+                      local.translate('home'),
+                      LucideIcons.home,
+                      0,
+                      theme,
+                    ),
+                    _buildSidebarItem(
+                      local.translate('trip_requests'),
+                      LucideIcons.list,
+                      1,
+                      theme,
+                    ),
+                    _buildSidebarItem(
+                      local.translate('my_trips'),
+                      LucideIcons.car,
+                      2,
+                      theme,
+                    ),
+                    _buildSidebarItem(
+                      local.translate('earnings'),
+                      LucideIcons.dollarSign,
+                      3,
+                      theme,
+                    ),
+                    _buildSidebarItem(
+                      local.translate('support'),
+                      LucideIcons.headphones,
+                      4,
+                      theme,
+                    ),
+                    _buildSidebarItem(
+                      local.translate('settings'),
+                      LucideIcons.settings,
+                      5,
+                      theme,
+                    ),
+                    ListTile(
+                      leading: Icon(Icons.chat, color: theme.colorScheme.onPrimary.withOpacity(0.8)),
+                      title: Text(
+                        'الدردشة',
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          color: theme.colorScheme.onPrimary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ChatScreen(
+                              userId: '7', // هنا ضع معرف السائق الحقيقي إذا كان متغير
+                              userType: 'driver',
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
