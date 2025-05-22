@@ -6,6 +6,7 @@ import 'package:taxi_app/language/localization.dart';
 import 'package:taxi_app/providers/notification_provider.dart';
 import 'package:taxi_app/providers/theme_provider.dart';
 import 'package:taxi_app/providers/language_provider.dart';
+import 'package:taxi_app/screens/homepage.dart';
 import 'package:taxi_app/screens/splash_screen.dart';
 import 'package:taxi_app/theme/theme.dart'; // تأكد من إضافة هذا الملف
 
@@ -45,6 +46,9 @@ class MyApp extends StatelessWidget {
               GlobalCupertinoLocalizations.delegate,
             ],
             home: SplashScreen(),
+            routes: {
+    '/home': (context) => HomePage(), // ضيف هذه السطر
+  },
           );
         },
       ),

@@ -10,23 +10,33 @@ import 'Driver/support.dart';
 import 'chat.dart';
 
 class DriverDashboard extends StatefulWidget {
-  const DriverDashboard({super.key});
+  final int userId;
+
+  const DriverDashboard({super.key, required this.userId});
 
   @override
   _DriverDashboardState createState() => _DriverDashboardState();
 }
 
+
 class _DriverDashboardState extends State<DriverDashboard> {
   int _selectedIndex = 0;
+late List<Widget> _pages;
 
-  final List<Widget> _pages = [
-    const DriverHomePage(driverId: 9),
-    const DriverRequestsPage(driverId: 9),
-    const DriverTripsPage(driverId: 9),
-    const EarningsPage(driverId: 9),
+@override
+void initState() {
+  super.initState();
+
+  _pages = [
+    DriverHomePage(driverId: widget.userId),
+    DriverRequestsPage(driverId: widget.userId),
+    DriverTripsPage(driverId: widget.userId),
+    EarningsPage(driverId: widget.userId),
     const SupportPage(),
     const DriverSettingsPage(),
   ];
+}
+
   final List<int> _bottomNavBarPages = [
     0,
     1,
@@ -104,9 +114,9 @@ class _DriverDashboardState extends State<DriverDashboard> {
                   context,
                   MaterialPageRoute(
                     builder: (context) => ChatScreen(
-                      userId: '7', // هنا ضع معرف السائق الحقيقي إذا كان متغير
-                      userType: 'driver',
-                    ),
+            userId: widget.userId.toString(), // تحويل الرقم إلى نص
+          userType: 'driver',
+              ),
                   ),
                 );
               },
@@ -188,9 +198,9 @@ class _DriverDashboardState extends State<DriverDashboard> {
                           context,
                           MaterialPageRoute(
                             builder: (context) => ChatScreen(
-                              userId: '7', // هنا ضع معرف السائق الحقيقي إذا كان متغير
-                              userType: 'driver',
-                            ),
+                        userId: widget.userId.toString(), // تحويل الرقم إلى نص
+                        userType: 'driver',
+                         ),
                           ),
                         );
                       },

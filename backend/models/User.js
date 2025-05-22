@@ -25,9 +25,8 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['User', 'Driver', 'Admin','Manager'],
-    default: 'User',
     enum: ['User', 'Driver', 'Manager', 'Admin'],
+    default: 'User',
     required: true,
   },
   gender: {
@@ -35,26 +34,14 @@ const userSchema = new mongoose.Schema({
     enum: ['Male', 'Female'],
     required: true,
   },
-  // taxiOffice: {
-  //   type: String,
-  //   required: function() { return this.role === 'Driver'; }
-  // },
-  // carDetails: {
-  //   model: String,
-  //   plateNumber: String,
-  //   color: String,
-  // },
-  // earnings: {
-  //   type: Number,
-  //   default: 0,
-  // },
-  // isAvailable: {
-  //   type: Boolean,
-  //   default: true,
-  // }
-  
+  // حقل التوكن لتخزين JWT
+  token: {
+    type: String,
+    default: null,
+  },
 }, { timestamps: true });
 
+// إضافة عداد تلقائي لحقل userId
 userSchema.plugin(AutoIncrement, { inc_field: 'userId' });
 
 const User = mongoose.model('User', userSchema);

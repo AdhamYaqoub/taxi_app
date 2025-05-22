@@ -55,14 +55,15 @@ class _SignInScreenState extends State<SignInScreen> {
         if (user != null && user['role'] != null) {
           String role = user['role']; // احصل على الدور من البيانات
           if (role == "User") {
-            Navigator.pushReplacement(
-                context, MaterialPageRoute(builder: (_) => UserDashboard()));
+           Navigator.pushReplacement(
+         context,MaterialPageRoute(builder: (_) => UserDashboard(userId: user['userId'])),);
+
           } else if (role == "Driver") {
-            Navigator.pushReplacement(
-                context, MaterialPageRoute(builder: (_) => DriverDashboard()));
+             Navigator.pushReplacement(
+            context,MaterialPageRoute(builder: (_) => DriverDashboard(userId: user['userId'])),);
           } else if (role == "Admin") {
             Navigator.pushReplacement(
-                context, MaterialPageRoute(builder: (_) => AdminDashboard()));
+         context,MaterialPageRoute(builder: (_) => AdminDashboard(userId: user['_id'], token: 'token',)),);
           } else if (role == "Manager") {
             Navigator.pushReplacement(
                 context,
