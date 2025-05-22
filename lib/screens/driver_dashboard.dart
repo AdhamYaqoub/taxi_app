@@ -7,25 +7,36 @@ import 'Driver/driver_trips.dart';
 import 'Driver/earnings.dart';
 import 'Driver/driver_settings.dart';
 import 'Driver/support.dart';
+import 'chat.dart';
 
 class DriverDashboard extends StatefulWidget {
-  const DriverDashboard({super.key});
+  final int userId;
+
+  const DriverDashboard({super.key, required this.userId});
 
   @override
   _DriverDashboardState createState() => _DriverDashboardState();
 }
 
+
 class _DriverDashboardState extends State<DriverDashboard> {
   int _selectedIndex = 0;
+late List<Widget> _pages;
 
-  final List<Widget> _pages = [
-    const DriverHomePage(driverId: 8),
-    const DriverRequestsPage(driverId: 8),
-    const DriverTripsPage(driverId: 8),
-    const EarningsPage(driverId: 8),
+@override
+void initState() {
+  super.initState();
+
+  _pages = [
+    DriverHomePage(driverId: widget.userId),
+    DriverRequestsPage(driverId: widget.userId),
+    DriverTripsPage(driverId: widget.userId),
+    EarningsPage(driverId: widget.userId),
     const SupportPage(),
     const DriverSettingsPage(),
   ];
+}
+
   final List<int> _bottomNavBarPages = [
     0,
     1,
@@ -89,6 +100,27 @@ class _DriverDashboardState extends State<DriverDashboard> {
                 local.translate('support'), LucideIcons.headphones, 4, theme),
             _buildSidebarItem(
                 local.translate('settings'), LucideIcons.settings, 5, theme),
+            ListTile(
+              leading: Icon(Icons.chat, color: theme.colorScheme.onPrimary.withOpacity(0.8)),
+              title: Text(
+                'الدردشة',
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  color: theme.colorScheme.onPrimary,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ChatScreen(
+            userId: widget.userId.toString(), // تحويل الرقم إلى نص
+          userType: 'driver',
+              ),
+                  ),
+                );
+              },
+            ),
           ],
         ),
       ),
@@ -98,55 +130,86 @@ class _DriverDashboardState extends State<DriverDashboard> {
   Widget _buildDesktopSidebar(ThemeData theme, AppLocalizations local) {
     return SizedBox(
       width: 250,
-      child: Material(
-        color: theme.colorScheme.primary,
-        elevation: 4,
-        child: Column(
-          children: [
-            _buildSidebarHeader(theme),
-            Expanded(
-              child: ListView(
-                children: [
-                  _buildSidebarItem(
-                    local.translate('home'),
-                    LucideIcons.home,
-                    0,
-                    theme,
-                  ),
-                  _buildSidebarItem(
-                    local.translate('trip_requests'),
-                    LucideIcons.list,
-                    1,
-                    theme,
-                  ),
-                  _buildSidebarItem(
-                    local.translate('my_trips'),
-                    LucideIcons.car,
-                    2,
-                    theme,
-                  ),
-                  _buildSidebarItem(
-                    local.translate('earnings'),
-                    LucideIcons.dollarSign,
-                    3,
-                    theme,
-                  ),
-                  _buildSidebarItem(
-                    local.translate('support'),
-                    LucideIcons.headphones,
-                    4,
-                    theme,
-                  ),
-                  _buildSidebarItem(
-                    local.translate('settings'),
-                    LucideIcons.settings,
-                    5,
-                    theme,
-                  ),
-                ],
-              ),
+      child: Container(
+        decoration: BoxDecoration(
+          boxShadow: [
+            BoxShadow(
+              // ignore: deprecated_member_use
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 10,
             ),
           ],
+        ),
+        child: Material(
+          color: theme.colorScheme.primary,
+          child: Column(
+            children: [
+              _buildSidebarHeader(theme),
+              Expanded(
+                child: ListView(
+                  children: [
+                    _buildSidebarItem(
+                      local.translate('home'),
+                      LucideIcons.home,
+                      0,
+                      theme,
+                    ),
+                    _buildSidebarItem(
+                      local.translate('trip_requests'),
+                      LucideIcons.list,
+                      1,
+                      theme,
+                    ),
+                    _buildSidebarItem(
+                      local.translate('my_trips'),
+                      LucideIcons.car,
+                      2,
+                      theme,
+                    ),
+                    _buildSidebarItem(
+                      local.translate('earnings'),
+                      LucideIcons.dollarSign,
+                      3,
+                      theme,
+                    ),
+                    _buildSidebarItem(
+                      local.translate('support'),
+                      LucideIcons.headphones,
+                      4,
+                      theme,
+                    ),
+                    _buildSidebarItem(
+                      local.translate('settings'),
+                      LucideIcons.settings,
+                      5,
+                      theme,
+                    ),
+                    ListTile(
+                      leading: Icon(Icons.chat, color: theme.colorScheme.onPrimary.withOpacity(0.8)),
+                      title: Text(
+                        'الدردشة',
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          color: theme.colorScheme.onPrimary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ChatScreen(
+                        userId: widget.userId.toString(), // تحويل الرقم إلى نص
+                        userType: 'driver',
+                         ),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -5,7 +5,9 @@ import 'package:taxi_app/providers/notification_provider.dart';
 import 'package:taxi_app/screens/User/mytrip.dart';
 
 class NotificationIcon extends StatefulWidget {
-  const NotificationIcon({super.key});
+    final int userId;
+
+  const NotificationIcon({super.key, required this.userId});
 
   @override
   State<NotificationIcon> createState() => _NotificationIconState();
@@ -47,8 +49,8 @@ class _NotificationIconState extends State<NotificationIcon> {
 
   void _showNotifications(BuildContext context) async {
     final provider = Provider.of<NotificationProvider>(context, listen: false);
-    await provider.fetchAllNotifications(14); // استبدل 13 بالـ userId الحقيقي
 
+    await provider.fetchAllNotifications(widget.userId); // استبدل 13 بالـ userId الحقيقي
     // عرض الإشعارات في BottomSheet
     await showModalBottomSheet(
       context: context,
@@ -111,7 +113,8 @@ class _NotificationIconState extends State<NotificationIcon> {
                         Navigator.of(context).pushReplacement(
                           MaterialPageRoute(
                             builder: (context) => ClientTripsPage(
-                                userId: 14), // استبدل 13 بالـ userId الحقيقي
+
+                                userId:widget.userId), // استبدل 13 بالـ userId الحقيقي
                           ),
                         );
                       }

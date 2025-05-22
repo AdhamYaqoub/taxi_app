@@ -4,6 +4,7 @@ import 'package:taxi_app/models/driver.dart';
 import 'package:taxi_app/services/drivers_api.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../services/driver_detail_page.dart';
+import 'chat.dart';
 
 class OfficeManagerPage extends StatefulWidget {
   final String officeId;
@@ -45,13 +46,9 @@ class _OfficeManagerPageState extends State<OfficeManagerPage> {
 
   Future<void> _toggleDriverStatus(Driver driver) async {
     try {
-      // هنا يمكنك إضافة استدعاء API لتغيير حالة السائق إذا كان لديك endpoint
-      // مثال: await DriversApi.updateDriverStatus(driver.userId, !driver.isAvailable);
-
       setState(() {
         driver.isAvailable = !driver.isAvailable;
       });
-
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(driver.isAvailable
@@ -68,9 +65,10 @@ class _OfficeManagerPageState extends State<OfficeManagerPage> {
 
   List<Driver> getFilteredDrivers() {
     return drivers.where((driver) {
-      bool matchesSearch =
-          driver.fullName.toLowerCase().contains(searchQuery.toLowerCase()) ||
-              driver.phone.contains(searchQuery);
+      bool matchesSearch = driver.fullName
+              .toLowerCase()
+              .contains(searchQuery.toLowerCase()) ||
+          driver.phone.contains(searchQuery);
       bool matchesFilter = selectedFilter == "الكل" ||
           (driver.isAvailable ? "نشط" : "غير متصل") == selectedFilter;
       return matchesSearch && matchesFilter;
@@ -238,6 +236,7 @@ class _OfficeManagerPageState extends State<OfficeManagerPage> {
           DataColumn(label: Text(local.translate('details'))),
           DataColumn(label: Text(local.translate('call'))),
           DataColumn(label: Text(local.translate('status_change'))),
+          DataColumn(label: Text(local.translate('chat'))),
         ],
         rows: drivers.map((driver) {
           return DataRow(
@@ -280,6 +279,23 @@ class _OfficeManagerPageState extends State<OfficeManagerPage> {
                   value: driver.isAvailable,
                   onChanged: (value) => _toggleDriverStatus(driver),
                   activeColor: Colors.green,
+                ),
+              ),
+              DataCell(
+                IconButton(
+                  icon: const Icon(Icons.chat, color: Colors.blue),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ChatScreen(
+                          userId: widget.officeId,
+                          userType: 'admin',
+                          selectedDriverId: driver.userId.toString(),
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ),
             ],

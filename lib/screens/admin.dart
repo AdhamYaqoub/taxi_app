@@ -1,6 +1,10 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:http/http.dart' as http;
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:taxi_app/language/localization.dart';
+
 import 'Admin/dashboard_home.dart';
 import 'Admin/drivers_page.dart';
 import 'Admin/users_page.dart';
@@ -12,7 +16,10 @@ import 'Admin/analytics_reports.dart';
 import 'Admin/vip_corporate.dart';
 
 class AdminDashboard extends StatefulWidget {
-  const AdminDashboard({super.key});
+  final String userId;
+  final String token;
+
+  const AdminDashboard({super.key, required this.userId, required this.token});
 
   @override
   _AdminDashboardState createState() => _AdminDashboardState();
@@ -20,18 +27,56 @@ class AdminDashboard extends StatefulWidget {
 
 class _AdminDashboardState extends State<AdminDashboard> {
   int _selectedIndex = 0;
+  late List<Widget> _pages;
 
-  final List<Widget> _pages = [
-    const DashboardHome(),
-    const DriversPage(),
-    const UsersPage(),
-    const DriverTripsPage(),
-    const PaymentsManagementPage(),
-    const SecurityMonitoringPage(),
-    const AnalyticsReportsPage(),
-    const VipCorporatePage(),
-    const SettingsPage(),
-  ];
+  String? fullName;
+  bool isLoadingName = true;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchFullName();
+    _pages = [
+      const DashboardHome(),
+      const DriversPage(),
+      const UsersPage(),
+      const DriverTripsPage(),
+      const PaymentsManagementPage(),
+      const SecurityMonitoringPage(),
+      const AnalyticsReportsPage(),
+      const VipCorporatePage(),
+      SettingsPage(
+        userId: widget.userId,
+        token: widget.token,
+      ),
+    ];
+  }
+
+  Future<void> fetchFullName() async {
+    try {
+      final response = await http.get(
+        Uri.parse('${dotenv.env['BASE_URL']}/api/users/fullname/${widget.userId}'),
+        headers: {
+          'Authorization': 'Bearer ${widget.token}',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        setState(() {
+          fullName = data['fullName'];
+          isLoadingName = false;
+        });
+      } else {
+        throw Exception('Failed to load name');
+      }
+    } catch (e) {
+      print('Error fetching name: $e');
+      setState(() {
+        isLoadingName = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -44,8 +89,17 @@ class _AdminDashboardState extends State<AdminDashboard> {
           ? null
           : AppBar(
               backgroundColor: theme.colorScheme.primary,
-              title: Text(
-                  AppLocalizations.of(context).translate('admin_dashboard')),
+              title: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(AppLocalizations.of(context).translate('admin_dashboard')),
+                  if (!isLoadingName && fullName != null)
+                    Text(
+                      fullName!,
+                      style: const TextStyle(fontSize: 14, color: Colors.white70),
+                    ),
+                ],
+              ),
             ),
       drawer: isWeb ? null : Drawer(child: _buildSidebarContent(theme)),
       body: Row(
@@ -78,24 +132,19 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     label: AppLocalizations.of(context).translate('users')),
                 BottomNavigationBarItem(
                     icon: Icon(LucideIcons.car),
-                    label: AppLocalizations.of(context)
-                        .translate('trips_management')),
+                    label: AppLocalizations.of(context).translate('trips_management')),
                 BottomNavigationBarItem(
                     icon: Icon(LucideIcons.dollarSign),
-                    label: AppLocalizations.of(context)
-                        .translate('payments_management')),
+                    label: AppLocalizations.of(context).translate('payments_management')),
                 BottomNavigationBarItem(
                     icon: Icon(LucideIcons.shieldCheck),
-                    label: AppLocalizations.of(context)
-                        .translate('security_monitoring')),
+                    label: AppLocalizations.of(context).translate('security_monitoring')),
                 BottomNavigationBarItem(
                     icon: Icon(LucideIcons.barChart),
-                    label: AppLocalizations.of(context)
-                        .translate('analytics_reports')),
+                    label: AppLocalizations.of(context).translate('analytics_reports')),
                 BottomNavigationBarItem(
                     icon: Icon(LucideIcons.star),
-                    label: AppLocalizations.of(context)
-                        .translate('vip_corporate')),
+                    label: AppLocalizations.of(context).translate('vip_corporate')),
                 BottomNavigationBarItem(
                     icon: Icon(LucideIcons.settings),
                     label: AppLocalizations.of(context).translate('settings')),
@@ -118,6 +167,14 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                   color: theme.colorScheme.onPrimary)),
+          if (!isLoadingName && fullName != null)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: Text(
+                fullName!,
+                style: TextStyle(color: theme.colorScheme.onPrimary, fontSize: 14),
+              ),
+            ),
           Divider(color: theme.colorScheme.onPrimary),
           _buildSidebarItem(AppLocalizations.of(context).translate('home'),
               LucideIcons.layoutDashboard, 0, theme),

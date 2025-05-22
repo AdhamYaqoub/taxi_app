@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:taxi_app/language/localization.dart';
 import 'package:http/http.dart' as http;
@@ -25,10 +26,9 @@ class _PaymentsManagementPageState extends State<PaymentsManagementPage> {
   Future<void> _fetchCompletedPayments() async {
     try {
       final response = await http.get(
-        Uri.parse('http://localhost:5000/api/payments/completed'),
+        Uri.parse('${dotenv.env['BASE_URL']}/api/payments/completed'),
         headers: {'Content-Type': 'application/json'},
       );
-
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         setState(() {

@@ -7,6 +7,7 @@ import 'package:taxi_app/screens/driver_dashboard.dart';
 import 'package:taxi_app/screens/manegar.dart';
 import 'package:taxi_app/screens/maps_screen.dart';
 import 'package:taxi_app/screens/pyment.dart';
+import 'package:taxi_app/screens/rodes_telgrame.dart';
 import 'package:taxi_app/screens/setting.dart';
 import 'package:taxi_app/screens/smile.dart';
 import 'package:taxi_app/screens/user.dart';
@@ -64,7 +65,7 @@ class _HomePageState extends State<HomePage> {
     // استخدام الترجمة من AppLocalizations
     String homeText = AppLocalizations.of(context).translate('home');
     String historyText = AppLocalizations.of(context).translate('history');
-    String settingsText = AppLocalizations.of(context).translate('settings');
+    String settingsText = AppLocalizations.of(context).translate('Roads ');
     String adminText = AppLocalizations.of(context).translate('admin');
     String menuText = AppLocalizations.of(context).translate('menu');
     String driverText = AppLocalizations.of(context).translate('driver');
@@ -159,7 +160,7 @@ class _HomePageState extends State<HomePage> {
             onTap: () {
               Navigator.pop(context); // إغلاق القائمة
               Navigator.of(context).push(MaterialPageRoute(
-                  builder: (context) => const SettingsScreen()));
+                  builder: (context) => RoadStatusScreen()));
             },
           ),
           ListTile(
@@ -168,7 +169,7 @@ class _HomePageState extends State<HomePage> {
             onTap: () {
               Navigator.pop(context); // إغلاق القائمة
               Navigator.of(context).push(MaterialPageRoute(
-                  builder: (context) => const AdminDashboard()));
+                  builder: (context) => const AdminDashboard(userId: "682cecf547a67650a5b028a6", token: '',)));
             },
           ),
           ListTile(
@@ -177,7 +178,7 @@ class _HomePageState extends State<HomePage> {
             onTap: () {
               Navigator.pop(context); // إغلاق القائمة
               Navigator.of(context).push(MaterialPageRoute(
-                  builder: (context) => const DriverDashboard()));
+                  builder: (context) => const DriverDashboard(userId: 14,)));
             },
           ),
           ListTile(
@@ -186,7 +187,7 @@ class _HomePageState extends State<HomePage> {
             onTap: () {
               Navigator.pop(context); // إغلاق القائمة
               Navigator.of(context).push(MaterialPageRoute(
-                  builder: (context) => const UserDashboard()));
+                  builder: (context) => const UserDashboard(userId: 14)));
             },
           ),
           ListTile(
@@ -442,10 +443,10 @@ class _HomePageState extends State<HomePage> {
             },
           ),
           ListTile(
-            title: Text(AppLocalizations.of(context).translate('settings')),
+            title: Text(AppLocalizations.of(context).translate('Roads')),
             onTap: () {
               Navigator.of(context).push(
-                MaterialPageRoute(builder: (context) => SettingsScreen()),
+                MaterialPageRoute(builder: (context) => RoadStatusScreen()),
               );
             },
           ),
@@ -453,7 +454,7 @@ class _HomePageState extends State<HomePage> {
             title: Text(AppLocalizations.of(context).translate('admin')),
             onTap: () {
               Navigator.of(context).push(
-                MaterialPageRoute(builder: (context) => AdminDashboard()),
+                MaterialPageRoute(builder: (context) => AdminDashboard(userId: "682cecf547a67650a5b028a6", token: '',)),
               );
             },
           ),
@@ -461,16 +462,16 @@ class _HomePageState extends State<HomePage> {
             title: Text(AppLocalizations.of(context).translate('driver')),
             onTap: () {
               Navigator.of(context).push(
-                MaterialPageRoute(builder: (context) => DriverDashboard()),
-              );
+                MaterialPageRoute(builder: (context) => DriverDashboard(userId: 20)),
+             );
             },
           ),
           ListTile(
             title: Text(AppLocalizations.of(context).translate('user')),
             onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (context) => UserDashboard()),
-              );
+             Navigator.of(context).push(
+               MaterialPageRoute(builder: (context) => UserDashboard(userId: 14)),
+             );
             },
           ),
           ListTile(

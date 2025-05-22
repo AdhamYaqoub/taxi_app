@@ -5,58 +5,118 @@ import 'package:flutter_sound/flutter_sound.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'dart:io';
 import 'package:http/http.dart' as http;
+import 'package:socket_io_client/socket_io_client.dart' as IO;
+
+void main() => runApp(MyApp());
+
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Taxi App with Google Maps',
+      theme: ThemeData(primarySwatch: Colors.blue),
+      home: ChatScreen(userId: '', userType: '', selectedDriverId: null),
+    );
+  }
+}
 
 class ChatScreen extends StatefulWidget {
+  final String userId;
+  final String userType; // 'user', 'driver', or 'admin'
+  final String? selectedDriverId; // إضافة معرف السائق المحدد
+
+  ChatScreen({
+    required this.userId, 
+    required this.userType,
+    this.selectedDriverId,
+  });
+
   @override
   _ChatScreenState createState() => _ChatScreenState();
 }
 
 class _ChatScreenState extends State<ChatScreen> {
-  List<Map<String, dynamic>> drivers = [];
+  List<Map<String, dynamic>> contacts = [];
   List<Map<String, dynamic>> messages = [];
-  String? selectedDriver;
+  String? selectedContact;
   TextEditingController _controller = TextEditingController();
   final ImagePicker _picker = ImagePicker();
   final FlutterSoundRecorder _recorder = FlutterSoundRecorder();
   final FlutterSoundPlayer _player = FlutterSoundPlayer();
   bool _isRecording = false;
   String? _audioPath;
+  late IO.Socket socket;
 
   @override
   void initState() {
     super.initState();
-    _loadDrivers();
+    _initSocket();
+    _loadContacts();
     _initAudio();
+    
+    // إذا تم تحديد سائق، قم بتحديده تلقائياً
+    if (widget.selectedDriverId != null) {
+      selectedContact = widget.selectedDriverId;
+      _loadMessages();
+    }
   }
 
-  Future<void> _initAudio() async {
-    await Permission.microphone.request();
-    await _recorder.openRecorder();
-    await _player.openPlayer();
+  void _initSocket() {
+    socket = IO.io('http://localhost:5000', <String, dynamic>{
+      'transports': ['websocket'],
+      'autoConnect': false,
+    });
+
+    socket.connect();
+
+    // Join appropriate room based on user type
+    if (widget.userType == 'user') {
+      socket.emit('join_user', {'userId': widget.userId});
+    } else if (widget.userType == 'driver') {
+      socket.emit('join_driver', {'driverId': widget.userId});
+    } else if (widget.userType == 'admin') {
+      socket.emit('join_admin', {'adminId': widget.userId});
+    }
+
+    // Listen for new messages
+    socket.on('new_message', (data) {
+      setState(() {
+        messages.add({
+          'senderId': data['senderId'],
+          'senderType': data['senderType'],
+          'message': data['message'],
+          'timestamp': data['timestamp'],
+        });
+      });
+    });
   }
 
-  Future<void> _loadDrivers() async {
+  Future<void> _loadContacts() async {
     final response = await http.get(Uri.parse('http://localhost:5000/api/users'));
     if (response.statusCode == 200) {
       final List<dynamic> data = json.decode(response.body);
       setState(() {
-        drivers = data
-            .where((driver) => driver['role'] == 'Driver')
-            .map((driver) {
+        contacts = data
+            .where((contact) => contact['role'] != widget.userType)
+            .map((contact) {
           return {
-            'name': driver['fullName'],
-            'image': driver['image'] ?? '',
+            'id': contact['_id'],
+            'name': contact['fullName'],
+            'image': contact['image'] ?? '',
+            'role': contact['role'],
           };
         }).toList();
       });
     } else {
-      throw Exception('Failed to load drivers');
+      throw Exception('Failed to load contacts');
     }
   }
 
   Future<void> _loadMessages() async {
-    if (selectedDriver != null) {
-      final response = await http.get(Uri.parse('http://localhost:5000/messages?receiver=$selectedDriver'));
+    if (selectedContact != null) {
+      final response = await http.get(
+        Uri.parse('http://localhost:5000/messages?receiver=$selectedContact'),
+      );
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
         setState(() {
@@ -68,26 +128,56 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
-  Future<void> _sendMessage(String message, {String? imagePath, String? audioPath}) async {
+  void _sendMessage(String message, {String? imagePath, String? audioPath}) {
     if (message.isNotEmpty || imagePath != null || audioPath != null) {
-      final response = await http.post(
+      final selectedContactData = contacts.firstWhere(
+        (contact) => contact['id'] == selectedContact,
+      );
+
+      String eventName;
+      if (widget.userType == 'user') {
+        eventName = selectedContactData['role'] == 'Driver'
+            ? 'user_driver_message'
+            : 'user_admin_message';
+      } else if (widget.userType == 'driver') {
+        eventName = selectedContactData['role'] == 'User'
+            ? 'user_driver_message'
+            : 'driver_admin_message';
+      } else {
+        eventName = selectedContactData['role'] == 'User'
+            ? 'user_admin_message'
+            : 'driver_admin_message';
+      }
+
+      socket.emit(eventName, {
+        'senderId': widget.userId,
+        'receiverId': selectedContact,
+        'message': message,
+        'image': imagePath,
+        'audio': audioPath,
+      });
+
+      // Also save to database
+      http.post(
         Uri.parse('http://localhost:5000/messages'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
-          'sender': 'User',
-          'receiver': selectedDriver,
+          'sender': widget.userId,
+          'receiver': selectedContact,
           'message': message,
           'image': imagePath,
           'audio': audioPath,
         }),
       );
-      if (response.statusCode == 201) {
-        print('Message sent');
-        _loadMessages();  // تحديث الرسائل بعد الإرسال
-      } else {
-        print('Failed to send message');
-      }
+
+      _controller.clear();
     }
+  }
+
+  Future<void> _initAudio() async {
+    await Permission.microphone.request();
+    await _recorder.openRecorder();
+    await _player.openPlayer();
   }
 
   Future<void> _pickImage(ImageSource source) async {
@@ -148,7 +238,6 @@ class _ChatScreenState extends State<ChatScreen> {
             icon: Icon(Icons.send, color: Colors.yellow[700]),
             onPressed: () {
               _sendMessage(_controller.text);
-              _controller.clear();
             },
           ),
           IconButton(
@@ -160,24 +249,25 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  Widget _buildDriversList() {
+  Widget _buildContactsList() {
     return Container(
       width: 250,
       color: Colors.yellow[100],
       child: ListView(
         children: [
-          for (var driver in drivers)
+          for (var contact in contacts)
             ListTile(
               leading: CircleAvatar(
-                backgroundImage: driver['image'] != ''
-                    ? NetworkImage(driver['image'])
+                backgroundImage: contact['image'] != ''
+                    ? NetworkImage(contact['image'])
                     : AssetImage('assets/default_avatar.png') as ImageProvider,
               ),
-              title: Text(driver['name'], style: TextStyle(color: Colors.black)),
+              title: Text(contact['name'], style: TextStyle(color: Colors.black)),
+              subtitle: Text(contact['role'], style: TextStyle(color: Colors.grey)),
               onTap: () {
                 setState(() {
-                  selectedDriver = driver['name'];
-                  _loadMessages(); // تحميل الرسائل عند اختيار سائق
+                  selectedContact = contact['id'];
+                  _loadMessages();
                 });
               },
             ),
@@ -224,16 +314,28 @@ class _ChatScreenState extends State<ChatScreen> {
         title: Text("الدردشة"),
         backgroundColor: Colors.yellow[700],
       ),
-      body: Row(
-        children: [
-          _buildDriversList(),
-          Expanded(
-            child: selectedDriver == null
-                ? Center(child: Text("اختر سائقًا لبدء المحادثة", style: TextStyle(color: Colors.black)))
-                : _buildChatUI(),
-          ),
-        ],
-      ),
+      body: widget.selectedDriverId != null
+          // إذا تم تمرير سائق محدد، اعرض فقط الدردشة معه
+          ? _buildChatUI()
+          // إذا لم يتم تمرير سائق، اعرض القائمة الجانبية
+          : Row(
+              children: [
+                _buildContactsList(),
+                Expanded(
+                  child: selectedContact == null
+                      ? Center(child: Text("اختر جهة اتصال لبدء المحادثة", style: TextStyle(color: Colors.black)))
+                      : _buildChatUI(),
+                ),
+              ],
+            ),
     );
+  }
+
+  @override
+  void dispose() {
+    socket.disconnect();
+    _recorder.closeRecorder();
+    _player.closePlayer();
+    super.dispose();
   }
 }

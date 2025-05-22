@@ -140,7 +140,7 @@ class SupportPage extends StatelessWidget {
                 onTap: () {
                    Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => ChatScreen()),
+      MaterialPageRoute(builder: (context) => ChatScreen(userId: '', userType: '',)),
     );
                 },
               ),
