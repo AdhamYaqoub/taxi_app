@@ -49,8 +49,8 @@ class _NotificationIconState extends State<NotificationIcon> {
 
   void _showNotifications(BuildContext context) async {
     final provider = Provider.of<NotificationProvider>(context, listen: false);
-    await provider.fetchAllNotifications(widget.userId); // استبدل 13 بالـ userId الحقيقي
 
+    await provider.fetchAllNotifications(widget.userId); // استبدل 13 بالـ userId الحقيقي
     // عرض الإشعارات في BottomSheet
     await showModalBottomSheet(
       context: context,
@@ -113,6 +113,7 @@ class _NotificationIconState extends State<NotificationIcon> {
                         Navigator.of(context).pushReplacement(
                           MaterialPageRoute(
                             builder: (context) => ClientTripsPage(
+
                                 userId:widget.userId), // استبدل 13 بالـ userId الحقيقي
                           ),
                         );

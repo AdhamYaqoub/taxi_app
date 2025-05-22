@@ -18,6 +18,7 @@ class NotificationProvider with ChangeNotifier {
 
   Future<void> fetchUnreadNotifications() async {
     try {
+
       _notifications = await NotificationService.getUnreadNotifications( _userId!);
       print('Fetched Notifications: $_notifications');
       _unreadCount = _notifications.length;
