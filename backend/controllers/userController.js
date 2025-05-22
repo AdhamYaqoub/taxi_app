@@ -72,12 +72,14 @@ const createUser = async (req, res) => {
       }
     }
 
-    const token = jwt.sign(
-      { id: savedUser._id, role: savedUser.role },
-      process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRES_IN || '1d' }
-    );
+    // const token = jwt.sign(
+    //   { id: savedUser._id, role: savedUser.role },
+    //   process.env.JWT_SECRET,
+    //   { expiresIn: process.env.JWT_EXPIRES_IN || '1d' }
+    // );
 
+        // user.token = token;
+        // await user.save();
 
     const userResponse = { ...savedUser._doc };
     delete userResponse.password;
@@ -86,7 +88,7 @@ const createUser = async (req, res) => {
     res.status(201).json({
       message: 'User created successfully',
       user: userResponse,
-      token,
+      //token,
     });
 
   } catch (error) {
@@ -122,6 +124,8 @@ const loginUser = async (req, res) => {
       process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRES_IN || '1d' }
     );
+user.token = token;
+await user.save();
 
     const userResponse = { ...user._doc };
     delete userResponse.password;
@@ -133,10 +137,32 @@ const loginUser = async (req, res) => {
   }
 };
 
-const logoutUser = (req, res) => {
-  res.clearCookie('token'); // اسم الكوكي اللي فيه التوكن
-  res.status(200).json({ message: 'Logged out successfully' });
+// const logoutUser = (req, res) => {
+//   res.clearCookie('token'); // اسم الكوكي اللي فيه التوكن
+//   res.status(200).json({ message: 'Logged out successfully' });
+// };
+
+
+
+
+const logoutUser = async (req, res) => {
+  try {
+    const userId = req.body._Id; // استقبل userId من البودي
+    if (!userId) {
+      return res.status(400).json({ success: false, message: 'userId is required' });
+    }
+
+    await User.findByIdAndUpdate(userId, { token: null });
+
+    res.status(200).json({ success: true, message: 'تم تسجيل الخروج بنجاح.' });
+  } catch (error) {
+    console.error('خطأ في تسجيل الخروج:', error);
+    res.status(500).json({ success: false, message: 'فشل تسجيل الخروج.' });
+  }
 };
+
+
+module.exports = { logoutUser };
 
 
 // استرجاع جميع المستخدمين
@@ -157,4 +183,27 @@ const getUsers = async (req, res) => {
 //     throw new Error('Error fetching users');
 //   }
 // };
-module.exports = { createUser, loginUser, getUsers, logoutUser };
+
+// جلب الاسم الكامل للمستخدم بواسطة ID
+const getPrintFullName = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    if (!userId) {
+      return res.status(400).json({ message: 'User ID is required' });
+    }
+
+    const user = await User.findById(userId).select('fullName');
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.status(200).json({ fullName: user.fullName });
+
+  } catch (error) {
+    console.error("Error fetching full name:", error);
+    res.status(500).json({ message: 'Failed to get full name', error: error.message });
+  }
+};
+
+module.exports = { createUser, loginUser, getUsers, logoutUser,getPrintFullName };

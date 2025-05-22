@@ -12,7 +12,9 @@ import 'User/support_page.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 
 class UserDashboard extends StatefulWidget {
-  const UserDashboard({super.key});
+  final int userId;
+
+  const UserDashboard({super.key, required this.userId});
 
   @override
   _UserDashboardState createState() => _UserDashboardState();
@@ -21,15 +23,23 @@ class UserDashboard extends StatefulWidget {
 class _UserDashboardState extends State<UserDashboard> {
   int _selectedIndex = 0;
 
-  final List<Widget> _pages = [
-    HomePage(userId: 14),
-    ClientTripsPage(userId: 14),
+ late List<Widget> _pages;
+
+@override
+void initState() {
+  super.initState();
+  _pages = [
+    HomePage(userId: widget.userId),
+    ClientTripsPage(userId: widget.userId),
     const DriversListPage(),
     const PaymentPage(),
     const SettingsPage(),
     const SupportPage(),
     const OffersPage(),
   ];
+}
+
+
 
   void _navigateToPage(int index) {
     setState(() {
@@ -55,7 +65,7 @@ class _UserDashboardState extends State<UserDashboard> {
         ),
         actions: [
           if (kIsWeb) ...[
-            const NotificationIcon(),
+            NotificationIcon(userId: widget.userId),
             const SizedBox(width: 16),
             IconButton(
               icon: const Icon(Icons.settings),
@@ -64,7 +74,7 @@ class _UserDashboardState extends State<UserDashboard> {
               },
             ),
           ] else ...[
-            const NotificationIcon(),
+            NotificationIcon(userId:widget.userId),
             const SizedBox(width: 8),
           ],
         ],
