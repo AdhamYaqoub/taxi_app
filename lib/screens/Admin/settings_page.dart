@@ -10,27 +10,26 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:taxi_app/screens/homepage.dart';
 
 class AuthService {
- static Future<bool> logoutUser(String userId) async {
-  try {
-    final response = await http.put(
-      Uri.parse('${dotenv.env['BASE_URL']}/api/users/logout'),
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: '{"_Id": "$userId"}',
-    );
+  static Future<bool> logoutUser(int userId) async {
+    try {
+      final response = await http.put(
+        Uri.parse('${dotenv.env['BASE_URL']}/api/users/logout'),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: '{"Id": "$userId"}',
+      );
 
-    return response.statusCode == 200;
-  } catch (e) {
-    print('Logout error: $e');
-    return false;
+      return response.statusCode == 200;
+    } catch (e) {
+      print('Logout error: $e');
+      return false;
+    }
   }
 }
 
-}
-
 class SettingsPage extends StatefulWidget {
-  final String userId;
+  final int userId;
   final String token;
 
   const SettingsPage({super.key, required this.userId, required this.token});
@@ -58,18 +57,21 @@ class _SettingsPageState extends State<SettingsPage> {
       body: ListView(
         padding: const EdgeInsets.all(16.0),
         children: [
-          _buildSectionTitle(AppLocalizations.of(context).translate('app_settings'), theme),
+          _buildSectionTitle(
+              AppLocalizations.of(context).translate('app_settings'), theme),
           _buildSettingsItem(
             icon: LucideIcons.sliders,
             title: AppLocalizations.of(context).translate('manage_system'),
-            subtitle: AppLocalizations.of(context).translate('edit_service_and_zones'),
+            subtitle: AppLocalizations.of(context)
+                .translate('edit_service_and_zones'),
             onTap: () {},
             theme: theme,
           ),
           _buildSettingsItem(
             icon: LucideIcons.bell,
             title: AppLocalizations.of(context).translate('notifications'),
-            subtitle: AppLocalizations.of(context).translate('control_notifications'),
+            subtitle:
+                AppLocalizations.of(context).translate('control_notifications'),
             trailing: Switch(
               value: notificationsEnabled,
               onChanged: (value) {
@@ -84,7 +86,8 @@ class _SettingsPageState extends State<SettingsPage> {
           _buildSettingsItem(
             icon: LucideIcons.moon,
             title: AppLocalizations.of(context).translate('night_mode'),
-            subtitle: AppLocalizations.of(context).translate('toggle_dark_mode'),
+            subtitle:
+                AppLocalizations.of(context).translate('toggle_dark_mode'),
             trailing: Switch(
               value: isDarkMode,
               onChanged: (value) {
@@ -97,87 +100,101 @@ class _SettingsPageState extends State<SettingsPage> {
           _buildSettingsItem(
             icon: LucideIcons.globe,
             title: AppLocalizations.of(context).translate('change_language'),
-            subtitle: AppLocalizations.of(context).translate('switch_between_arabic_and_english'),
+            subtitle: AppLocalizations.of(context)
+                .translate('switch_between_arabic_and_english'),
             trailing: Switch(
               value: languageProvider.locale.languageCode == 'ar',
               onChanged: (value) {
-                languageProvider.setLocale(value ? const Locale('ar') : const Locale('en'));
+                languageProvider
+                    .setLocale(value ? const Locale('ar') : const Locale('en'));
               },
               activeColor: theme.colorScheme.secondary,
             ),
             theme: theme,
           ),
-          _buildSectionTitle(AppLocalizations.of(context).translate('Security_Privacy'), theme),
+          _buildSectionTitle(
+              AppLocalizations.of(context).translate('Security_Privacy'),
+              theme),
           _buildSettingsItem(
             icon: LucideIcons.shieldCheck,
-            title: AppLocalizations.of(context).translate('security_management'),
-            subtitle: AppLocalizations.of(context).translate('security_settings_and_account_protection'),
+            title:
+                AppLocalizations.of(context).translate('security_management'),
+            subtitle: AppLocalizations.of(context)
+                .translate('security_settings_and_account_protection'),
             onTap: () {},
             theme: theme,
           ),
           _buildSettingsItem(
             icon: LucideIcons.key,
             title: AppLocalizations.of(context).translate('change_password'),
-            subtitle: AppLocalizations.of(context).translate('reset_your_password'),
+            subtitle:
+                AppLocalizations.of(context).translate('reset_your_password'),
             onTap: () {},
             theme: theme,
           ),
-          _buildSectionTitle(AppLocalizations.of(context).translate('Updates_Support'), theme),
+          _buildSectionTitle(
+              AppLocalizations.of(context).translate('Updates_Support'), theme),
           _buildSettingsItem(
             icon: LucideIcons.refreshCcw,
             title: AppLocalizations.of(context).translate('check_for_updates'),
-            subtitle: AppLocalizations.of(context).translate('update_to_the_latest_version'),
+            subtitle: AppLocalizations.of(context)
+                .translate('update_to_the_latest_version'),
             onTap: () {},
             theme: theme,
           ),
           _buildSettingsItem(
             icon: LucideIcons.helpCircle,
             title: AppLocalizations.of(context).translate('technical_support'),
-            subtitle: AppLocalizations.of(context).translate('contact_support_team'),
+            subtitle:
+                AppLocalizations.of(context).translate('contact_support_team'),
             onTap: () {},
             theme: theme,
           ),
-
           const SizedBox(height: 20),
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
               backgroundColor: theme.colorScheme.error,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
             ),
-           onPressed: () async {
-  final confirm = await showDialog<bool>(
-    context: context,
-    builder: (ctx) => AlertDialog(
-      title: Text('Logout'),
-      content: Text('Are you sure you want to logout?'),
-      actions: [
-        TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text('Cancel')),
-        TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text('Confirm')),
-      ],
-    ),
-  );
+            onPressed: () async {
+              final confirm = await showDialog<bool>(
+                context: context,
+                builder: (ctx) => AlertDialog(
+                  title: Text('Logout'),
+                  content: Text('Are you sure you want to logout?'),
+                  actions: [
+                    TextButton(
+                        onPressed: () => Navigator.pop(ctx, false),
+                        child: Text('Cancel')),
+                    TextButton(
+                        onPressed: () => Navigator.pop(ctx, true),
+                        child: Text('Confirm')),
+                  ],
+                ),
+              );
 
-  if (confirm == true) {
-bool success = await AuthService.logoutUser(widget.userId);
-    print('Logout success: $success');
-    if (success) {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.clear();
+              if (confirm == true) {
+                bool success = await AuthService.logoutUser(widget.userId);
+                print('Logout success: $success');
+                if (success) {
+                  final prefs = await SharedPreferences.getInstance();
+                  await prefs.clear();
 
-      // جرب تنتقل يدويًا
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => HomePage()), // غيرها حسب صفحتك
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Logout failed, please try again')),
-      );
-    }
-  }
-},
-
+                  // جرب تنتقل يدويًا
+                  Navigator.of(context).pushReplacement(
+                    MaterialPageRoute(
+                        builder: (_) => HomePage()), // غيرها حسب صفحتك
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Logout failed, please try again')),
+                  );
+                }
+              }
+            },
             icon: const Icon(Icons.logout),
             label: Text(AppLocalizations.of(context).translate('logout')),
           ),

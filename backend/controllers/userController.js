@@ -3,6 +3,7 @@ const Driver = require('../models/Driver');
 const Client = require('../models/client');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+
 // إنشاء مستخدم جديد
 // إنشاء مستخدم جديد (مع إنشاء ملف سائق إذا كان الدور 'Driver')
 // controllers/userController.js (أو authController.js)
@@ -118,14 +119,16 @@ const loginUser = async (req, res) => {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    // ✅ توليد JWT
     const token = jwt.sign(
       { id: user._id, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRES_IN || '1d' }
     );
-user.token = token;
-await user.save();
+
+    // ✅ تحديث الحالة
+    user.token = token;
+    user.isLoggedIn = true;
+    await user.save();
 
     const userResponse = { ...user._doc };
     delete userResponse.password;
@@ -137,6 +140,7 @@ await user.save();
   }
 };
 
+
 // const logoutUser = (req, res) => {
 //   res.clearCookie('token'); // اسم الكوكي اللي فيه التوكن
 //   res.status(200).json({ message: 'Logged out successfully' });
@@ -147,14 +151,23 @@ await user.save();
 
 const logoutUser = async (req, res) => {
   try {
-    const userId = req.body._Id; // استقبل userId من البودي
+    const userId = req.body.Id; // استقبل userId من البودي
     if (!userId) {
       return res.status(400).json({ success: false, message: 'userId is required' });
     }
 
-    await User.findByIdAndUpdate(userId, { token: null });
+    const user = await User.findOneAndUpdate(
+      { userId: userId },
+      { token: null, isLoggedIn: false }, // ✅ تحديث isLoggedIn
+      { new: true }
+    );
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
 
     res.status(200).json({ success: true, message: 'تم تسجيل الخروج بنجاح.' });
+
   } catch (error) {
     console.error('خطأ في تسجيل الخروج:', error);
     res.status(500).json({ success: false, message: 'فشل تسجيل الخروج.' });
@@ -162,19 +175,20 @@ const logoutUser = async (req, res) => {
 };
 
 
+
 module.exports = { logoutUser };
 
 
 // استرجاع جميع المستخدمين
-const getUsers = async (req, res) => {
-  try {
-    const users = await User.find();
-    res.status(200).json(users);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Error fetching users', error });
-  }
-};
+// const getUsers = async (req, res) => {
+//   try {
+//     const users = await User.find();
+//     res.status(200).json(users);
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ message: 'Error fetching users', error });
+//   }
+// };
 // const getUsers = async (filter = {}) => {
 //   try {
 //     const users = await User.find(filter);  // تطبيق الفلتر إن وجد
@@ -193,7 +207,7 @@ const getPrintFullName = async (req, res) => {
       return res.status(400).json({ message: 'User ID is required' });
     }
 
-    const user = await User.findById(userId).select('fullName');
+    const user = await User.findOne({userId: userId}).select('fullName');
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
@@ -206,4 +220,46 @@ const getPrintFullName = async (req, res) => {
   }
 };
 
-module.exports = { createUser, loginUser, getUsers, logoutUser,getPrintFullName };
+const getUsers = async (req, res) => {
+  try {
+    const { loggedInOnly } = req.query;
+
+    let filter = {};
+    if (loggedInOnly === 'true') {
+      filter.isLoggedIn = true;
+    }
+
+    const users = await User.find(filter);
+    res.status(200).json(users);
+
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    res.status(500).json({ message: 'Error fetching users', error });
+  }
+};
+
+
+const getUserById = async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const user = await User.findOne({userId: userId}).select('role _id isLoggedIn');
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.json({
+      user: {
+        id: user._id,
+        role: user.role,
+        isLoggedIn: user.isLoggedIn
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+
+
+module.exports = { createUser, loginUser, getUsers, logoutUser,getPrintFullName, getUserById };

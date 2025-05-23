@@ -284,4 +284,8 @@ const Map<String, String> en = {
   "user_name": "user name",
   "driver_name": "driver name",
   'no_accepted_trips': 'No accepted trips',
+  'no_permission': 'You do not have permission to access this page',
+  'access_denied': 'Access Denied',
+  'logout_failed': 'Logout failed',
+  'logout_confirmation': 'Logout Confirmation',
 };

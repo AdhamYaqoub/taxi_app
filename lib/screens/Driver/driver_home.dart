@@ -30,8 +30,7 @@ class _DriverHomePageState extends State<DriverHomePage> {
     setState(() {
       _driverInfoFuture = DriversApi.getDriverById(widget.driverId);
       _recentTripsFuture = TripsApi.getRecentTrips(widget.driverId)
-          .then((trips) =>
-              trips.where((t) => t.status == 'completed').toList())
+          .then((trips) => trips.where((t) => t.status == 'completed').toList())
           .catchError((_) => <Trip>[]);
     });
   }
@@ -259,11 +258,11 @@ class _DriverHomePageState extends State<DriverHomePage> {
                       children: [
                         Text(
                             '${local.translate('from')}: ${trip.startLocation.address}'),
-                        Text('${local.translate('to')}: ${trip.endLocation.address}'),
+                        Text(
+                            '${local.translate('to')}: ${trip.endLocation.address}'),
                       ],
                     ),
-                    trailing: Text(
-                        '\$${trip.actualFare.toStringAsFixed(2)}',
+                    trailing: Text('\$${trip.actualFare.toStringAsFixed(2)}',
                         style: theme.textTheme.bodyLarge
                             ?.copyWith(fontWeight: FontWeight.bold)),
                   );

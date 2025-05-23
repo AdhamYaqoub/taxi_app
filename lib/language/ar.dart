@@ -283,4 +283,8 @@ const Map<String, String> ar = {
   "user_name": "اسم المستخدم",
   "driver_name": "اسم السائق",
   'no_accepted_trips': 'لا توجد رحلات موافق عليها',
+  'no_permission': 'لا تملك الإذن',
+  'access_denied': 'تم رفض الوصول',
+  'logout_failed': 'فشل تسجيل الخروج',
+  'logout_confirmation': 'تأكيد تسجيل الخروج',
 };

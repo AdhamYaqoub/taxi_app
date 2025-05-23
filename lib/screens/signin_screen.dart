@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:taxi_app/screens/admin.dart';
-import 'package:taxi_app/screens/homepage.dart';
 import 'package:taxi_app/screens/driver_dashboard.dart'; // صفحة السائق
 import 'package:taxi_app/screens/manegar.dart';
 import 'package:taxi_app/screens/signup_screen.dart';
@@ -31,17 +30,15 @@ class _SignInScreenState extends State<SignInScreen> {
     setState(() => isLoading = true);
 
     final String apiUrl = '${dotenv.env['BASE_URL']}/api/users/signin';
-  final response = await http.post(
-    Uri.parse(apiUrl),
-    headers: {'Content-Type': 'application/json'},
-    body: jsonEncode({
-      'email': emailController.text.trim(),
-      'phone': emailController.text.trim(),
-      'password': passwordController.text.trim(),
-    }),
-  );
-
-    
+    final response = await http.post(
+      Uri.parse(apiUrl),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'email': emailController.text.trim(),
+        'phone': emailController.text.trim(),
+        'password': passwordController.text.trim(),
+      }),
+    );
 
     setState(() => isLoading = false);
 
@@ -55,15 +52,32 @@ class _SignInScreenState extends State<SignInScreen> {
         if (user != null && user['role'] != null) {
           String role = user['role']; // احصل على الدور من البيانات
           if (role == "User") {
-           Navigator.pushReplacement(
-         context,MaterialPageRoute(builder: (_) => UserDashboard(userId: user['userId'])),);
-
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                  builder: (_) => UserDashboard(
+                        userId: user['userId'],
+                        token: '',
+                      )),
+            );
           } else if (role == "Driver") {
-             Navigator.pushReplacement(
-            context,MaterialPageRoute(builder: (_) => DriverDashboard(userId: user['userId'])),);
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                  builder: (_) => DriverDashboard(
+                        userId: user['userId'],
+                        token: '',
+                      )),
+            );
           } else if (role == "Admin") {
             Navigator.pushReplacement(
-         context,MaterialPageRoute(builder: (_) => AdminDashboard(userId: user['_id'], token: 'token',)),);
+              context,
+              MaterialPageRoute(
+                  builder: (_) => AdminDashboard(
+                        userId: user['userId'],
+                        token: 'token',
+                      )),
+            );
           } else if (role == "Manager") {
             Navigator.pushReplacement(
                 context,

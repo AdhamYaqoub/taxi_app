@@ -34,14 +34,16 @@ const userSchema = new mongoose.Schema({
     enum: ['Male', 'Female'],
     required: true,
   },
-  // حقل التوكن لتخزين JWT
   token: {
     type: String,
     default: null,
   },
+  isLoggedIn: {
+    type: Boolean,
+    default: false,
+  },
 }, { timestamps: true });
 
-// إضافة عداد تلقائي لحقل userId
 userSchema.plugin(AutoIncrement, { inc_field: 'userId' });
 
 const User = mongoose.model('User', userSchema);
