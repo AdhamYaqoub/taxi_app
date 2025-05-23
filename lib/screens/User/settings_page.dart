@@ -6,9 +6,35 @@ import 'package:taxi_app/providers/theme_provider.dart';
 import 'package:taxi_app/providers/language_provider.dart';
 import 'package:taxi_app/screens/User/setting/profile.dart';
 import 'package:taxi_app/screens/User/setting/change_password.dart';
+import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:taxi_app/screens/homepage.dart';
+
+class AuthService {
+  static Future<bool> logoutUser(int userId) async {
+    try {
+      final response = await http.put(
+        Uri.parse('${dotenv.env['BASE_URL']}/api/users/logout'),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: '{"Id": "$userId"}',
+      );
+
+      return response.statusCode == 200;
+    } catch (e) {
+      print('Logout error: $e');
+      return false;
+    }
+  }
+}
 
 class SettingsPage extends StatelessWidget {
-  const SettingsPage({super.key});
+  final int userId;
+  final String token;
+
+  const SettingsPage({super.key, required this.userId, required this.token});
 
   @override
   Widget build(BuildContext context) {
@@ -70,7 +96,7 @@ class SettingsPage extends StatelessWidget {
                       ),
                     );
                   },
-                ),     
+                ),
               ]),
               _buildSettingsSection(context, 'app_settings', [
                 _buildSettingsItem(
@@ -110,7 +136,44 @@ class SettingsPage extends StatelessWidget {
               ]),
               const SizedBox(height: 20),
               ElevatedButton.icon(
-                onPressed: () {},
+                onPressed: () async {
+                  final confirm = await showDialog<bool>(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      title: Text(local.translate('logout')),
+                      content: Text(local.translate('logout_confirmation')),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx, false),
+                          child: Text(local.translate('cancel')),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx, true),
+                          child: Text(local.translate('confirm')),
+                        ),
+                      ],
+                    ),
+                  );
+
+                  if (confirm == true) {
+                    bool success = await AuthService.logoutUser(userId);
+                    if (success) {
+                      final prefs = await SharedPreferences.getInstance();
+                      await prefs.clear();
+
+                      Navigator.of(context).pushAndRemoveUntil(
+                        MaterialPageRoute(builder: (_) => HomePage()),
+                        (route) => false,
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(local.translate('logout_failed')),
+                        ),
+                      );
+                    }
+                  }
+                },
                 icon: Icon(
                   LucideIcons.logOut,
                   color: theme.colorScheme.onError,
@@ -186,7 +249,7 @@ class SettingsPage extends StatelessWidget {
         AppLocalizations.of(context).translate(titleKey),
         style: theme.textTheme.bodyLarge,
       ),
-      trailing: trailing ?? 
+      trailing: trailing ??
           Icon(
             Icons.arrow_forward_ios,
             size: 16,

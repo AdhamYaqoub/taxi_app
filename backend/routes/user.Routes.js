@@ -3,7 +3,7 @@ const router = express.Router();
 const authMiddleware = require('../middleware/authMiddleware');
 
 // استيراد التحكم (controller)
-const { createUser, loginUser, getUsers, logoutUser,getPrintFullName } = require('../controllers/userController');
+const { createUser, loginUser, getUsers, logoutUser,getPrintFullName, getUserById } = require('../controllers/userController');
 
 // نقطة النهاية لإضافة مستخدم جديد
 router.post('/signup', createUser);
@@ -30,5 +30,12 @@ router.get('/drivers', async (req, res) => {
     res.status(500).json({ message: 'حدث خطأ أثناء جلب السائقين' });
   }
 });
+
+
+router.get('/:id', getUserById);
+
+
+
+
 
 module.exports = router;

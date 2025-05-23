@@ -1,4 +1,7 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:http/http.dart' as http;
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:taxi_app/language/localization.dart';
 import 'package:taxi_app/screens/Driver/driver_requests.dart';
@@ -11,42 +14,158 @@ import 'chat.dart';
 
 class DriverDashboard extends StatefulWidget {
   final int userId;
+  final String token;
 
-  const DriverDashboard({super.key, required this.userId});
+  const DriverDashboard({super.key, required this.userId, required this.token});
 
   @override
   _DriverDashboardState createState() => _DriverDashboardState();
 }
 
-
 class _DriverDashboardState extends State<DriverDashboard> {
   int _selectedIndex = 0;
-late List<Widget> _pages;
+  late List<Widget> _pages;
+  String? _fullName;
+  bool _isLoading = true;
+  bool _accessGranted = false;
 
-@override
-void initState() {
-  super.initState();
+  @override
+  void initState() {
+    super.initState();
+    _pages = _initializePages();
+    _verifyAndLoadData();
+  }
 
-  _pages = [
-    DriverHomePage(driverId: widget.userId),
-    DriverRequestsPage(driverId: widget.userId),
-    DriverTripsPage(driverId: widget.userId),
-    EarningsPage(driverId: widget.userId),
-    const SupportPage(),
-    const DriverSettingsPage(),
-  ];
-}
+  List<Widget> _initializePages() {
+    return [
+      DriverHomePage(driverId: widget.userId),
+      DriverRequestsPage(driverId: widget.userId),
+      DriverTripsPage(driverId: widget.userId),
+      EarningsPage(driverId: widget.userId),
+      SupportPage(),
+      DriverSettingsPage(
+        driverId: widget.userId,
+        onAvailabilityChanged: (bool value) {},
+      ),
+    ];
+  }
+
+  Future<void> _verifyAndLoadData() async {
+    try {
+      // التحقق من صلاحية السائق
+      final accessResponse = await http.get(
+        Uri.parse('${dotenv.env['BASE_URL']}/api/users/${widget.userId}'),
+        headers: {
+          'Authorization': 'Bearer ${widget.token}',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (!mounted) return;
+
+      if (accessResponse.statusCode != 200) {
+        _handleAccessDenied();
+        return;
+      }
+
+      final userData = jsonDecode(accessResponse.body);
+      if (userData['user']?['isLoggedIn'] != true) {
+        _handleAccessDenied();
+        return;
+      }
+
+      // جلب بيانات السائق إذا التحقق ناجح
+      await _loadDriverData();
+
+      setState(() {
+        _accessGranted = true;
+        _isLoading = false;
+      });
+    } catch (e) {
+      print('Error during verification: $e');
+      _handleAccessDenied();
+    }
+  }
+
+  Future<void> _loadDriverData() async {
+    try {
+      final response = await http.get(
+        Uri.parse(
+            '${dotenv.env['BASE_URL']}/api/users/fullname/${widget.userId}'),
+        headers: {'Authorization': 'Bearer ${widget.token}'},
+      );
+
+      if (response.statusCode == 200 && mounted) {
+        setState(() {
+          _fullName = jsonDecode(response.body)['fullName'];
+        });
+      }
+    } catch (e) {
+      print('Error loading driver data: $e');
+    }
+  }
+
+  void _handleAccessDenied() {
+    if (!mounted) return;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: Text(AppLocalizations.of(context).translate('access_denied')),
+        content: Text(AppLocalizations.of(context).translate('login_required')),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop(); // إغلاق الـ AlertDialog
+              Navigator.of(context)
+                  .popUntil((route) => route.isFirst); // العودة للشاشة الأولى
+            },
+            child: Text(AppLocalizations.of(context).translate('ok')),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLoadingScreen() {
+    return Scaffold(
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const CircularProgressIndicator(
+              strokeWidth: 4,
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              AppLocalizations.of(context).translate('verifying_access'),
+              style: const TextStyle(
+                fontSize: 18,
+                color: Colors.grey,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   final List<int> _bottomNavBarPages = [
     0,
     1,
     2,
     3,
-    4,
+    4
   ]; // استثناء صفحة الإعدادات
 
   @override
   Widget build(BuildContext context) {
+    if (!_accessGranted || _isLoading) {
+      return _buildLoadingScreen();
+    }
+
     final theme = Theme.of(context);
     final isWeb = MediaQuery.of(context).size.width > 800;
     final local = AppLocalizations.of(context);
@@ -54,7 +173,28 @@ void initState() {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: isWeb
-          ? null
+          ? AppBar(
+              backgroundColor: theme.colorScheme.primary,
+              title: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    local.translate('driver_dashboard'),
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      color: theme.colorScheme.onPrimary,
+                      inherit: true,
+                    ),
+                  ),
+                  if (_fullName != null)
+                    Text(
+                      _fullName!,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onPrimary.withOpacity(0.8),
+                      ),
+                    ),
+                ],
+              ),
+            )
           : AppBar(
               backgroundColor: theme.colorScheme.primary,
               title: Text(
@@ -101,7 +241,8 @@ void initState() {
             _buildSidebarItem(
                 local.translate('settings'), LucideIcons.settings, 5, theme),
             ListTile(
-              leading: Icon(Icons.chat, color: theme.colorScheme.onPrimary.withOpacity(0.8)),
+              leading: Icon(Icons.chat,
+                  color: theme.colorScheme.onPrimary.withOpacity(0.8)),
               title: Text(
                 'الدردشة',
                 style: theme.textTheme.bodyLarge?.copyWith(
@@ -114,9 +255,9 @@ void initState() {
                   context,
                   MaterialPageRoute(
                     builder: (context) => ChatScreen(
-            userId: widget.userId.toString(), // تحويل الرقم إلى نص
-          userType: 'driver',
-              ),
+                      userId: widget.userId.toString(),
+                      userType: 'driver',
+                    ),
                   ),
                 );
               },
@@ -134,7 +275,6 @@ void initState() {
         decoration: BoxDecoration(
           boxShadow: [
             BoxShadow(
-              // ignore: deprecated_member_use
               color: Colors.black.withOpacity(0.1),
               blurRadius: 10,
             ),
@@ -185,7 +325,8 @@ void initState() {
                       theme,
                     ),
                     ListTile(
-                      leading: Icon(Icons.chat, color: theme.colorScheme.onPrimary.withOpacity(0.8)),
+                      leading: Icon(Icons.chat,
+                          color: theme.colorScheme.onPrimary.withOpacity(0.8)),
                       title: Text(
                         'الدردشة',
                         style: theme.textTheme.bodyLarge?.copyWith(
@@ -198,9 +339,9 @@ void initState() {
                           context,
                           MaterialPageRoute(
                             builder: (context) => ChatScreen(
-                        userId: widget.userId.toString(), // تحويل الرقم إلى نص
-                        userType: 'driver',
-                         ),
+                              userId: widget.userId.toString(),
+                              userType: 'driver',
+                            ),
                           ),
                         );
                       },
@@ -234,6 +375,16 @@ void initState() {
               inherit: true,
             ),
           ),
+          if (_fullName != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 8.0),
+              child: Text(
+                _fullName!,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onPrimary.withOpacity(0.8),
+                ),
+              ),
+            ),
           const SizedBox(height: 10),
           Divider(
             color: theme.colorScheme.onPrimary.withOpacity(0.2),
@@ -281,7 +432,6 @@ void initState() {
   }
 
   Widget _buildBottomNavBar(ThemeData theme, AppLocalizations local) {
-    // تحقق إذا كان الفهرس الحالي موجود في قائمة الصفحات الظاهرة في BottomNavigationBar
     final currentBottomNavIndex = _bottomNavBarPages.contains(_selectedIndex)
         ? _bottomNavBarPages.indexOf(_selectedIndex)
         : 0;

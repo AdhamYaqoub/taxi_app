@@ -1,4 +1,7 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:http/http.dart' as http;
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:taxi_app/language/localization.dart';
 import 'package:taxi_app/screens/User/drivers_list_page.dart';
@@ -13,8 +16,9 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 
 class UserDashboard extends StatefulWidget {
   final int userId;
+  final String token;
 
-  const UserDashboard({super.key, required this.userId});
+  const UserDashboard({super.key, required this.userId, required this.token});
 
   @override
   _UserDashboardState createState() => _UserDashboardState();
@@ -22,24 +26,131 @@ class UserDashboard extends StatefulWidget {
 
 class _UserDashboardState extends State<UserDashboard> {
   int _selectedIndex = 0;
+  late List<Widget> _pages;
+  String? _fullName;
+  bool _isLoading = true;
+  bool _accessGranted = false;
 
- late List<Widget> _pages;
+  @override
+  void initState() {
+    super.initState();
+    _pages = _initializePages();
+    _verifyAndLoadData();
+  }
 
-@override
-void initState() {
-  super.initState();
-  _pages = [
-    HomePage(userId: widget.userId),
-    ClientTripsPage(userId: widget.userId),
-    const DriversListPage(),
-    const PaymentPage(),
-    const SettingsPage(),
-    const SupportPage(),
-    const OffersPage(),
-  ];
-}
+  List<Widget> _initializePages() {
+    return [
+      HomePage(userId: widget.userId),
+      ClientTripsPage(userId: widget.userId),
+      const DriversListPage(),
+      const PaymentPage(),
+      SettingsPage(userId: widget.userId, token: widget.token),
+      const SupportPage(),
+      const OffersPage(),
+    ];
+  }
 
+  Future<void> _verifyAndLoadData() async {
+    try {
+      // التحقق من صلاحية المستخدم
+      final accessResponse = await http.get(
+        Uri.parse('${dotenv.env['BASE_URL']}/api/users/${widget.userId}'),
+        headers: {
+          'Authorization': 'Bearer ${widget.token}',
+          'Content-Type': 'application/json',
+        },
+      );
 
+      if (!mounted) return;
+
+      if (accessResponse.statusCode != 200) {
+        _handleAccessDenied();
+        return;
+      }
+
+      final userData = jsonDecode(accessResponse.body);
+      if (userData['user']?['isLoggedIn'] != true) {
+        _handleAccessDenied();
+        return;
+      }
+
+      // جلب بيانات المستخدم إذا التحقق ناجح
+      await _loadUserData();
+
+      setState(() {
+        _accessGranted = true;
+        _isLoading = false;
+      });
+    } catch (e) {
+      print('Error during verification: $e');
+      _handleAccessDenied();
+    }
+  }
+
+  Future<void> _loadUserData() async {
+    try {
+      final response = await http.get(
+        Uri.parse(
+            '${dotenv.env['BASE_URL']}/api/users/fullname/${widget.userId}'),
+        headers: {'Authorization': 'Bearer ${widget.token}'},
+      );
+
+      if (response.statusCode == 200 && mounted) {
+        setState(() {
+          _fullName = jsonDecode(response.body)['fullName'];
+        });
+      }
+    } catch (e) {
+      print('Error loading user data: $e');
+    }
+  }
+
+  void _handleAccessDenied() {
+    if (!mounted) return;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: Text(AppLocalizations.of(context).translate('access_denied')),
+        content: Text(AppLocalizations.of(context).translate('no_permission')),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop(); // إغلاق الـ AlertDialog
+              Navigator.of(context).popUntil(
+                  (route) => route.isFirst); // العودة إلى الشاشة الأولى
+            },
+            child: Text(AppLocalizations.of(context).translate('ok')),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLoadingScreen() {
+    return Scaffold(
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const CircularProgressIndicator(
+              strokeWidth: 4,
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              AppLocalizations.of(context).translate('verifying_access'),
+              style: const TextStyle(
+                fontSize: 18,
+                color: Colors.grey,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   void _navigateToPage(int index) {
     setState(() {
@@ -49,6 +160,10 @@ void initState() {
 
   @override
   Widget build(BuildContext context) {
+    if (!_accessGranted || _isLoading) {
+      return _buildLoadingScreen();
+    }
+
     var theme = Theme.of(context);
     bool isWeb = MediaQuery.of(context).size.width > 800;
 
@@ -56,12 +171,17 @@ void initState() {
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: theme.colorScheme.primary,
-        title: Text(
-          AppLocalizations.of(context).translate('user_dashboard'),
-          style: TextStyle(
-            fontSize: kIsWeb ? 24 : 18, // أكبر شوي للويب
-            fontWeight: FontWeight.bold,
-          ),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              AppLocalizations.of(context).translate('user_dashboard'),
+              style: TextStyle(
+                fontSize: kIsWeb ? 24 : 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
         ),
         actions: [
           if (kIsWeb) ...[
@@ -69,12 +189,10 @@ void initState() {
             const SizedBox(width: 16),
             IconButton(
               icon: const Icon(Icons.settings),
-              onPressed: () {
-                // فتح صفحة إعدادات خاصة بالويب مثلاً
-              },
+              onPressed: () => _navigateToPage(4), // الانتقال لصفحة الإعدادات
             ),
           ] else ...[
-            NotificationIcon(userId:widget.userId),
+            NotificationIcon(userId: widget.userId),
             const SizedBox(width: 8),
           ],
         ],
@@ -90,11 +208,7 @@ void initState() {
           ? null
           : BottomNavigationBar(
               currentIndex: _selectedIndex,
-              onTap: (index) {
-                setState(() {
-                  _selectedIndex = index;
-                });
-              },
+              onTap: _navigateToPage,
               selectedItemColor: theme.colorScheme.onPrimary,
               unselectedItemColor: theme.colorScheme.onSurface.withOpacity(0.6),
               backgroundColor: theme.colorScheme.primary,
@@ -139,6 +253,17 @@ void initState() {
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                   color: theme.colorScheme.onPrimary)),
+          if (_fullName != null)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: Text(
+                _fullName!,
+                style: TextStyle(
+                  color: theme.colorScheme.onPrimary,
+                  fontSize: 14,
+                ),
+              ),
+            ),
           Divider(color: theme.colorScheme.onPrimary),
           _buildSidebarItem(AppLocalizations.of(context).translate('home'),
               LucideIcons.home, 0, theme),
@@ -172,9 +297,7 @@ void initState() {
       leading: Icon(icon, color: theme.colorScheme.onPrimary),
       title: Text(title, style: TextStyle(color: theme.colorScheme.onPrimary)),
       selected: _selectedIndex == index,
-      onTap: () {
-        _navigateToPage(index);
-      },
+      onTap: () => _navigateToPage(index),
     );
   }
 }
