@@ -1,5 +1,6 @@
 
 const Driver = require('../models/Driver');
+const User = require('../models/User');
 
 exports.getAllDrivers = async (req, res) => {
   try {
@@ -125,4 +126,46 @@ exports.updateDriverProfileImage = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+
+exports.updateDriverProfile = async (req, res) => {
+  try {
+    const { driverId } = req.params;
+    const {
+      fullName,
+      email,
+      phone,
+      taxiOffice,
+      model,
+      plateNumber,
+      color,
+      profileImageUrl,
+    } = req.body;
+
+    const driver = await Driver.findOne({ driverUserId: driverId });
+    if (!driver) return res.status(404).json({ error: 'Driver not found' });
+
+    const user = await User.findOne({ userId: driverId });
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    driver.taxiOffice = taxiOffice;
+    driver.carDetails.model = model;
+    driver.carDetails.plateNumber = plateNumber;
+    driver.carDetails.color = color;
+    driver.profileImageUrl = profileImageUrl;
+    await driver.save();
+
+    user.fullName = fullName;
+    user.email = email;
+    user.phone = phone;
+    await user.save();
+
+    res.json({ message: 'Profile updated successfully' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+
 

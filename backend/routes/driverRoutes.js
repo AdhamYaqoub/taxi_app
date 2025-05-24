@@ -22,5 +22,7 @@ router.put('/:id/availability',driverController.updateAvailability);
 // تحديث صورة السائق
 router.put('/:id/profile-image', driverController.updateDriverProfileImage);
 
+router.put('/driver/:driverId', driverController.updateDriverProfile);
+
 
 module.exports = router;
