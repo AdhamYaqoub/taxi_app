@@ -7,6 +7,7 @@ import 'package:taxi_app/providers/language_provider.dart';
 import 'package:http/http.dart' as http; // Added for http requests
 import 'package:flutter_dotenv/flutter_dotenv.dart'; // Added for environment variables
 import 'package:shared_preferences/shared_preferences.dart'; // Added for shared preferences
+import 'package:taxi_app/screens/Driver/edit_driver_profile_page.dart';
 import 'package:taxi_app/screens/homepage.dart'; // Added for navigation to HomePage
 
 class AuthService {
@@ -85,13 +86,18 @@ class _DriverSettingsPageState extends State<DriverSettingsPage> {
               // Account Settings Section
               _buildSettingsSection(context, 'account_settings', [
                 _buildSettingsItem(
-                  context,
+                   context,
                   'edit_profile',
-                  LucideIcons.user,
-                  () {
-                    // TODO: Implement navigation to driver edit profile
-                  },
-                ),
+               LucideIcons.user,
+              () {
+                  Navigator.of(context).push(
+                        MaterialPageRoute(
+                      builder: (_) => EditDriverProfilePage(driverId: widget.driverId),
+                 ),
+               );
+            },
+          ),
+
                 _buildSettingsItem(
                   context,
                   'notifications',
