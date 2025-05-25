@@ -327,12 +327,24 @@ class TripsApi {
     }
   }
 
-  static Future<void> acceptTrip(String tripId, int driverId) async {
+  static Future<void> acceptTrip(
+    String tripId,
+    int driverId,
+    double latitude,
+    double longitude,
+  ) async {
     final response = await http.post(
       Uri.parse('$_baseUrl/trips/$tripId/accept'),
-      body: jsonEncode({'driverId': driverId}),
+      body: jsonEncode({
+        'driverId': driverId,
+        'driverLocation': {
+          'lat': latitude,
+          'lng': longitude,
+        },
+      }),
       headers: {'Content-Type': 'application/json'},
     );
+
     if (response.statusCode != 200) {
       throw Exception('فشل في قبول الرحلة');
     }
