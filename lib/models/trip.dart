@@ -62,6 +62,9 @@ class Trip {
       paymentMethod: json['paymentMethod'] as String? ?? 'cash',
       driverName: json['driverName'] as String? ?? 'Unknown',
       userName: json['userName'] as String? ?? 'Unknown',
+      acceptedAt: json['acceptedAt'] != null
+          ? DateTime.parse(json['acceptedAt'] as String)
+          : null, // 👈 هذا السطر ناقص حالياً
     );
   }
 

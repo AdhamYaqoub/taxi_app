@@ -3,6 +3,10 @@ const Driver = require('../models/Driver');
 const Client = require('../models/client');
 const User = require('../models/User'); // افترض أن لديك نموذج User
 const notificationController = require('./notificationController'); // تأكد من استيراد وحدة الإشعارات
+const { scheduleTripStartCheck } = require('../services/tripScheduler'); // تأكد من استيراد وحدة جدولة الرحلات
+const { updateDriverRating } = require('../services/ratingService'); // تأكد من استيراد وحدة تحديث تقييم السائق
+const { calculateDistance } = require('../utils/geoUtils');
+
 const RATE_PER_KM = 10;
 const MAX_ACCEPTED_TRIPS = 3;
 
@@ -118,9 +122,13 @@ exports.getAllTrips = async (req, res) => {
 exports.acceptTrip = async (req, res) => {
   try {
     const { tripId } = req.params;
-    const { driverId } = req.body;
+    const { driverId, driverLocation } = req.body;
+    const { lat: driverLat, lng: driverLng } = driverLocation || {};
 
-    // التحقق من عدد الرحلات المقبولة بالفعل
+    if (driverLat === undefined || driverLng === undefined) {
+      return res.status(400).json({ error: 'إحداثيات السائق غير متوفرة' });
+    }
+
     const acceptedTripsCount = await Trip.countDocuments({ 
       driverId, 
       status: { $in: ['accepted', 'in_progress'] }
@@ -133,31 +141,36 @@ exports.acceptTrip = async (req, res) => {
     }
 
     const trip = await Trip.findOne({ tripId });
-    const driver = await Driver.findOne({ driverUserId: driverId }).populate('user');
-
     if (!trip || trip.status !== 'pending') {
-      return res.status(400).json({ 
-        error: 'الرحلة غير متاحة للقبول' 
-      });
+      return res.status(400).json({ error: 'الرحلة غير متاحة للقبول' });
     }
 
+    const driver = await Driver.findOne({ driverUserId: driverId }).populate('user');
+
+    const [clientLng, clientLat] = trip.startLocation.coordinates;
+    const clientLocation = { lat: clientLat, lng: clientLng };
+    const driverLoc = { lat: driverLat, lng: driverLng };
+
+    // تحديث حالة الرحلة
     trip.driverId = driverId;
     trip.status = 'accepted';
+    trip.acceptedAt = new Date();
 
-await notificationController.createNotification({
-  recipient: trip.userId,
-  recipientType: 'Client',
-  title: 'تم قبول الرحلة',
-  message: `قام السائق ${driver.user.fullName} بقبول طلب رحلتك رقم ${trip.tripId}`,
-  type: 'trip_accepted',
-  data: {
-    tripId: trip.tripId
-  }
-});
+    await scheduleTripStartCheck(tripId, driverId, driverLoc, clientLocation);
 
-await trip.save();
+    await notificationController.createNotification({
+      recipient: trip.userId,
+      recipientType: 'Client',
+      title: 'تم قبول الرحلة',
+      message: `قام السائق ${driver.user.fullName} بقبول طلب رحلتك رقم ${trip.tripId}`,
+      type: 'trip_accepted',
+      data: { tripId: trip.tripId }
+    });
+
+    await trip.save();
     res.json(trip);
   } catch (err) {
+    console.error('[ACCEPT_TRIP_ERROR]', err); // لتسهيل التتبع
     res.status(500).json({ 
       error: 'فشل قبول الرحلة', 
       details: err.message 
@@ -180,27 +193,29 @@ exports.startTrip = async (req, res) => {
     }
 
     const now = new Date();
-    if (trip.startTime && now.getTime() < new Date(trip.startTime).getTime()) {
-      return res.status(400).json({
-        error: 'لا يمكن بدء الرحلة قبل موعدها المجدول'
-      });
+    const acceptedTime = new Date(trip.acceptedAt);
+    const responseTime = (now - acceptedTime) / (1000 * 60); // المدة بالدقائق
+    
+    // حساب تأثير وقت الاستجابة على التقييم
+    let responseImpact = 0;
+    if (responseTime < 5) {
+      responseImpact = 2; // بدء سريع
+    } else if (responseTime > 15) {
+      responseImpact = -1; // بدء متأخر
     }
-
-    const existingTrip = await Trip.findOne({
-      driverId: trip.driverId,
-      status: 'in_progress'
-    });
-
-    if (existingTrip) {
-      return res.status(400).json({
-        error: 'لا يمكنك بدء رحلة جديدة قبل إنهاء الرحلة الحالية'
-      });
+    
+    // تحديث تقييم السائق بناءً على سرعة الاستجابة
+    if (responseImpact !== 0) {
+      await updateDriverRating(
+        trip.driverId, 
+        responseImpact, 
+        responseImpact > 0 ? 'quick_response' : 'late_start'
+      );
     }
 
     trip.status = 'in_progress';
-    trip.startTime = new Date();
+    trip.startTime = now;
 
-    // إرسال إشعار للعميل ببدء الرحلة
     await notificationController.createNotification({
       recipient: trip.userId,
       recipientType: 'Client',
@@ -209,7 +224,7 @@ exports.startTrip = async (req, res) => {
       type: 'trip_started',
       data: {
         tripId: trip.tripId,
-        driverLocation: trip.startLocation // يمكن إضافة موقع السائق الحالي إذا كان متاحًا
+        driverLocation: trip.startLocation
       }
     });
 
@@ -290,38 +305,53 @@ exports.completeTrip = async (req, res) => {
         });
       }
 
-      // الخصم الفعلي من المحفظة
       client.walletBalance -= fare;
       await client.save();
-      trip.paymentStatus = 'paid'; // تحديث حالة الدفع
+      trip.paymentStatus = 'paid';
     }
+
+    // حساب وقت الرحلة
+    const startTime = new Date(trip.startTime);
+    const endTime = new Date();
+    const tripDuration = (endTime - startTime) / (1000 * 60); // المدة بالدقائق
+    
+    // حساب تأثير إتمام الرحلة على التقييم
+    let completionImpact = 5; // القيمة الأساسية لإتمام الرحلة
+    
+    // مكافأة الرحلات السريعة
+    const expectedDuration = trip.distance * 3; // 3 دقائق لكل كم (تقديري)
+    if (tripDuration < expectedDuration * 0.8) {
+      completionImpact += 2; // مكافأة إضافية للرحلات السريعة
+    }
+    
+    // تحديث تقييم السائق
+    await updateDriverRating(
+      trip.driverId, 
+      completionImpact, 
+      'trip_completed'
+    );
 
     // تحديث حالة الرحلة
     trip.status = 'completed';
-    trip.endTime = new Date();
+    trip.endTime = endTime;
     trip.actualFare = fare;
 
     // تحديث بيانات السائق
-    if (trip.driverId) {
-      const driver = await Driver.findOne({ driverUserId: trip.driverId });
-      if (driver) {
-        driver.earnings += fare;
-        await driver.save();
-      }
+    if (driver) {
+      driver.earnings += fare;
+      driver.completedTrips += 1;
+      await driver.save();
     }
 
     // تحديث بيانات العميل
-    if (trip.userId) {
-      const client = await Client.findOne({ clientUserId: trip.userId });
-      if (client) {
-        client.tripsnumber += 1;
-        client.totalSpending += fare;
-        client.tripHistory.push(trip._id);
-        await client.save();
-      }
+    const client = await Client.findOne({ clientUserId: trip.userId });
+    if (client) {
+      client.tripsnumber += 1;
+      client.totalSpending += fare;
+      client.tripHistory.push(trip._id);
+      await client.save();
     }
 
-    // إرسال إشعار للعميل بإتمام الرحلة
     await notificationController.createNotification({
       recipient: trip.userId,
       recipientType: 'Client',
@@ -486,17 +516,17 @@ exports.updateTripStatus = async (req, res) => {
 };
 
 // دالة مساعدة لحساب المسافة بين نقطتين
-function calculateDistance(lat1, lon1, lat2, lon2) {
-  const R = 6371; // نصف قطر الأرض بالكيلومترات
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLon = (lon2 - lon1) * Math.PI / 180;
-  const a = 
-    Math.sin(dLat/2) * Math.sin(dLat/2) +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
-    Math.sin(dLon/2) * Math.sin(dLon/2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-  return R * c;
-}
+// function calculateDistance(lat1, lon1, lat2, lon2) {
+//   const R = 6371; // نصف قطر الأرض بالكيلومترات
+//   const dLat = (lat2 - lat1) * Math.PI / 180;
+//   const dLon = (lon2 - lon1) * Math.PI / 180;
+//   const a = 
+//     Math.sin(dLat/2) * Math.sin(dLat/2) +
+//     Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+//     Math.sin(dLon/2) * Math.sin(dLon/2);
+//   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+//   return R * c;
+// }
 
 
 // الحصول على الرحلات القريبة من موقع السائق

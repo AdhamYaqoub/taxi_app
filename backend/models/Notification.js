@@ -38,7 +38,8 @@ const notificationSchema = new mongoose.Schema({
     enum: [
       'trip_request', 'trip_accepted', 'trip_rejected', 
       'trip_started', 'trip_completed', 'payment_received',
-      'promotion', 'system', 'driver_assigned', 'arrival_notice'
+      'promotion', 'system', 'driver_assigned', 'arrival_notice',
+      'trip_auto_canceled'
     ]
   },
   

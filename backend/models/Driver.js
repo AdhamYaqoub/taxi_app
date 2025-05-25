@@ -29,11 +29,11 @@ const driverSchema = new mongoose.Schema({
     default: true,
     index: true,
   },
-  rating: {
+ rating: {
     type: Number,
-    default: 0,
+    default: 80,
     min: 0,
-    max: 5,
+    max: 100 
   },
   numberOfRatings: {
       type: Number,

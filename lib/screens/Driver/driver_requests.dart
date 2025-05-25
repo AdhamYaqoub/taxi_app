@@ -108,7 +108,12 @@ class _DriverRequestsPageState extends State<DriverRequestsPage> {
   Future<void> _handleAcceptTrip(int tripId) async {
     try {
       setState(() => _isLoading = true);
-      await TripsApi.acceptTrip(tripId.toString(), widget.driverId);
+      await TripsApi.acceptTrip(
+        tripId.toString(),
+        widget.driverId,
+        _currentPosition?.latitude ?? 0.0,
+        _currentPosition?.longitude ?? 0.0,
+      );
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('تم قبول الرحلة بنجاح')),
       );
