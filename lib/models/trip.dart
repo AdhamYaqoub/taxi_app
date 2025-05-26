@@ -17,6 +17,7 @@ class Trip {
   final String paymentMethod;
   final String? driverName;
   final String? userName;
+  final DateTime? timeoutDuration; // 👈 الحقل الجديد
 
   Trip({
     required this.tripId,
@@ -37,34 +38,58 @@ class Trip {
     this.acceptedAt,
     this.driverName,
     this.userName,
+    this.timeoutDuration, // 👈 إضافة الحقل هنا
   });
 
   factory Trip.fromJson(Map<String, dynamic> json) {
     return Trip(
-      tripId: json['tripId'] as int? ?? 0,
-      userId: json['userId'] as int? ?? 0,
-      driverId: json['driverId'] as int?,
-      startLocation: Location.fromJson(json['startLocation']),
-      endLocation: Location.fromJson(json['endLocation']),
-      distance: (json['distance'] as num?)?.toDouble() ?? 0.0,
-      estimatedFare: (json['estimatedFare'] as num?)?.toDouble() ?? 0.0,
-      actualFare: (json['actualFare'] as num?)?.toDouble() ?? 0.0,
-      status: json['status'] as String? ?? 'pending',
-      requestedAt: DateTime.parse(json['requestedAt'] as String? ?? ''),
-      createdAt: DateTime.parse(json['createdAt'] as String? ?? ''),
-      updatedAt: DateTime.parse(json['updatedAt'] as String? ?? ''),
+      tripId: json['tripId'] is int
+          ? json['tripId']
+          : int.tryParse(json['tripId']?.toString() ?? '0') ?? 0,
+      userId: json['userId'] is int
+          ? json['userId']
+          : int.tryParse(json['userId']?.toString() ?? '0') ?? 0,
+      driverId: json['driverId'] is int
+          ? json['driverId']
+          : int.tryParse(json['driverId']?.toString() ?? ''),
+      startLocation: Location.fromJson(
+          json['startLocation'] is Map ? json['startLocation'] : {}),
+      endLocation: Location.fromJson(
+          json['endLocation'] is Map ? json['endLocation'] : {}),
+      distance: (json['distance'] is num
+              ? json['distance'].toDouble()
+              : double.tryParse(json['distance']?.toString() ?? '0')) ??
+          0.0,
+      estimatedFare: (json['estimatedFare'] is num
+              ? json['estimatedFare'].toDouble()
+              : double.tryParse(json['estimatedFare']?.toString() ?? '0')) ??
+          0.0,
+      actualFare: (json['actualFare'] is num
+              ? json['actualFare'].toDouble()
+              : double.tryParse(json['actualFare']?.toString() ?? '0')) ??
+          0.0,
+      status: json['status']?.toString() ?? 'pending',
+      requestedAt: DateTime.tryParse(json['requestedAt']?.toString() ?? '') ??
+          DateTime.now(),
+      createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? '') ??
+          DateTime.now(),
+      updatedAt: DateTime.tryParse(json['updatedAt']?.toString() ?? '') ??
+          DateTime.now(),
       startTime: json['startTime'] != null
-          ? DateTime.parse(json['startTime'] as String)
+          ? DateTime.tryParse(json['startTime']?.toString() ?? '')
           : null,
       endTime: json['endTime'] != null
-          ? DateTime.parse(json['endTime'] as String)
+          ? DateTime.tryParse(json['endTime']?.toString() ?? '')
           : null,
-      paymentMethod: json['paymentMethod'] as String? ?? 'cash',
-      driverName: json['driverName'] as String? ?? 'Unknown',
-      userName: json['userName'] as String? ?? 'Unknown',
+      timeoutDuration: json['timeoutDuration'] != null
+          ? DateTime.tryParse(json['timeoutDuration']?.toString() ?? '')
+          : null, // 👈 معالجة الحقل الجديد
+      paymentMethod: json['paymentMethod']?.toString() ?? 'cash',
+      driverName: json['driverName']?.toString(),
+      userName: json['userName']?.toString(),
       acceptedAt: json['acceptedAt'] != null
-          ? DateTime.parse(json['acceptedAt'] as String)
-          : null, // 👈 هذا السطر ناقص حالياً
+          ? DateTime.tryParse(json['acceptedAt']?.toString() ?? '')
+          : null,
     );
   }
 

@@ -6,6 +6,7 @@ import 'package:taxi_app/screens/admin.dart';
 import 'package:taxi_app/screens/driver_dashboard.dart';
 import 'package:taxi_app/screens/manegar.dart';
 import 'package:taxi_app/screens/maps_screen.dart';
+import 'package:taxi_app/screens/public_offices_map.dart';
 import 'package:taxi_app/screens/pyment.dart';
 import 'package:taxi_app/screens/rodes_telgrame.dart';
 import 'package:taxi_app/screens/setting.dart';
@@ -221,6 +222,18 @@ class _HomePageState extends State<HomePage> {
                   builder: (context) => const OfficeManagerPage(
                         officeId: '',
                       )));
+            },
+          ),
+          ListTile(
+            leading: Icon(Icons.local_taxi, color: theme.colorScheme.onSurface),
+            title: Text('مكاتب التكاسي', style: theme.textTheme.bodyLarge),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => const PublicTaxiOfficesMap()),
+              );
             },
           ),
         ],
@@ -511,6 +524,14 @@ class _HomePageState extends State<HomePage> {
                     builder: (context) => OfficeManagerPage(
                           officeId: '',
                         )),
+              );
+            },
+          ),
+          ListTile(
+            title: Text(AppLocalizations.of(context).translate('taxi_offices')),
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (context) => PublicTaxiOfficesMap()),
               );
             },
           ),

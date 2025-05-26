@@ -1,54 +1,124 @@
-// models/Driver.js
 const mongoose = require('mongoose');
 
 const driverSchema = new mongoose.Schema({
-  user: { // <-- حقل العلاقة الأساسي (يستخدم _id/ObjectId)
+  user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true,
     unique: true,
     index: true,
   },
-  driverUserId: { // <-- الحقل الجديد لتخزين userId الرقمي للمستخدم
+  driverUserId: {
     type: Number,
-    required: true, // اجعله مطلوبًا لضمان وجوده دائمًا
-    index: true,    // من الجيد فهرسته إذا كنت ستبحث بناءً عليه أحيانًا
+    required: true,
+    index: true,
   },
-  taxiOffice: {
-    type: String,
-    required: true, // أو حسب متطلباتك
+  
+  // الربط مع مكتب التكاسي
+  office: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'TaxiOffice',
+    required: true,
+    index: true
   },
-
+  
   carDetails: {
-    model: String,
-    plateNumber: String,
-    color: String,
+    model: {
+      type: String,
+      required: true,
+      trim: true
+    },
+    plateNumber: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
+      uppercase: true
+    },
+    color: {
+      type: String,
+      trim: true
+    },
+    year: {
+      type: Number,
+      min: 1990,
+      max: new Date().getFullYear()
+    }
   },
+  
   isAvailable: {
     type: Boolean,
     default: true,
     index: true,
   },
- rating: {
+  
+  rating: {
     type: Number,
     default: 80,
     min: 0,
     max: 100 
   },
+  
   numberOfRatings: {
-      type: Number,
-      default: 0,
+    type: Number,
+    default: 0,
+    min: 0
   },
+  
   profileImageUrl: {
     type: String,
     trim: true,
     default: null,
+    validate: {
+      validator: function(v) {
+        return v === null || /^(http|https):\/\/[^ "]+$/.test(v);
+      },
+      message: props => `${props.value} ليس رابط صورة صالحاً!`
+    }
   },
-    earnings: {
+  
+  earnings: {
     type: Number,
     default: 0,
+    min: 0
   },
-}, { timestamps: true });
+  
+  // معلومات إضافية
+  licenseNumber: {
+    type: String,
+    trim: true,
+    required: true,
+    unique: true
+  },
+  
+  licenseExpiry: {
+    type: Date,
+    required: true
+  },
+  
+  joinedAt: {
+    type: Date,
+    default: Date.now
+  }
+}, { 
+  timestamps: true,
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true }
+});
+
+// Middleware لتحديث عدد السائقين عند الحذف
+driverSchema.post('save', async function(doc) {
+  await updateDriversCount(doc.office);
+});
+
+driverSchema.post('remove', async function(doc) {
+  await updateDriversCount(doc.office);
+});
+
+async function updateDriversCount(officeId) {
+  const count = await mongoose.model('Driver').countDocuments({ office: officeId });
+  await mongoose.model('TaxiOffice').findByIdAndUpdate(officeId, { driversCount: count });
+}
 
 const Driver = mongoose.model('Driver', driverSchema);
 

@@ -46,9 +46,10 @@ const scheduleTripStartCheck = async (tripId, driverId, driverLocation, clientLo
         if (trip.status === 'accepted') {
           console.log(`[DEBUG] إعادة تعيين الرحلة ${tripId} إلى pending`);
           
-          trip.status = 'pending';
+         trip.status = 'pending';
           trip.driverId = null;
           trip.acceptedAt = null;
+          trip.timeoutDuration = 0;
           await trip.save();
           
           await updateDriverRating(driverId, -5, 'failure_to_start_trip');

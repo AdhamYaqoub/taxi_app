@@ -150,13 +150,30 @@ exports.acceptTrip = async (req, res) => {
     const [clientLng, clientLat] = trip.startLocation.coordinates;
     const clientLocation = { lat: clientLat, lng: clientLng };
     const driverLoc = { lat: driverLat, lng: driverLng };
+    const distance = calculateDistance(
+      driverLocation.lat,
+      driverLocation.lng,
+      clientLocation.lat,
+      clientLocation.lng
+    );
+    const minutesPerKm = 2;
+    let requiredTime = distance * minutesPerKm;
+    const checkTime = new Date(Date.now() + requiredTime * 60 * 1000);
+
+    console.log(`[DEBUG] المسافة المحسوبة: ${distance.toFixed(2)} كم`);
+        console.log(`[DEBUG]  التحقق في: ${checkTime.toLocaleString()}`);
+
 
     // تحديث حالة الرحلة
     trip.driverId = driverId;
     trip.status = 'accepted';
+    trip.timeoutDuration = checkTime.toLocaleString(); // حفظ الوقت المطلوب للرحلة
     trip.acceptedAt = new Date();
 
     await scheduleTripStartCheck(tripId, driverId, driverLoc, clientLocation);
+
+    
+
 
     await notificationController.createNotification({
       recipient: trip.userId,

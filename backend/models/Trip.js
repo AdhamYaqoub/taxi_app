@@ -66,7 +66,7 @@ const tripSchema = new mongoose.Schema({
   cancellationReason: { type: String },
   acceptedAt: { type: Date }, // وقت قبول الرحلة
   driverRatingImpact: { type: Number, default: 0 }, // تأثير الرحلة على تقييم السائق
-  timeoutDuration: { type: Number, default: 15 } // المدة بالدقائق قبل إلغاء القبول تلقائياً
+  timeoutDuration: { type: Date } // المدة بالدقائق قبل إلغاء القبول تلقائياً
 }, { 
   timestamps: true // يضيف created_at و updated_at تلقائياً
 });
