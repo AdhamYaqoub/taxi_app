@@ -4,6 +4,7 @@ const dotenv = require('dotenv');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const http = require('http');
+const adminRoutes = require('./routes/adminRoutes');
 
 
 const db = require('./config/db');
@@ -19,6 +20,7 @@ const clientRoutes = require('./routes/clientRoutes');
 const dashboardRoutes = require('./routes/dashboard');
 const paymentsRoutes = require('./routes/payments');
 const notificationRoutes = require('./routes/notificationRoutes');
+const taxiOfficeMapRoutes = require('./routes/taxiOfficeMapRoutes');
 
 // إعداد السوكيت
 const { init } = require('./config/socket');
@@ -55,6 +57,10 @@ app.use('/api/clients', clientRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/payments', paymentsRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/map', taxiOfficeMapRoutes);
+
+
 
 
 // Route for health check

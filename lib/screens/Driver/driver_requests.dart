@@ -292,6 +292,13 @@ class _DriverRequestsPageState extends State<DriverRequestsPage> {
                                   ? trip.requestedAt
                                   : trip.acceptedAt),
                             ),
+                            if (trip.timeoutDuration != null &&
+                                _currentTab != 'pending')
+                              _buildTripDetailRow(
+                                icon: LucideIcons.clock,
+                                label: local.translate('estimated_start_time'),
+                                value: _formatTime(trip.timeoutDuration!),
+                              ),
                             _buildTripDetailRow(
                                 icon: LucideIcons.user,
                                 label: local.translate('payment_method'),
@@ -380,5 +387,10 @@ class _DriverRequestsPageState extends State<DriverRequestsPage> {
   String _formatDateTime(DateTime? dateTime) {
     if (dateTime == null) return '--';
     return '${dateTime.day}/${dateTime.month}/${dateTime.year} ${dateTime.hour}:${dateTime.minute.toString().padLeft(2, '0')}';
+  }
+
+  String _formatTime(DateTime dateTime) {
+    final localTime = dateTime.toLocal();
+    return '${localTime.hour.toString().padLeft(2, '0')}:${localTime.minute.toString().padLeft(2, '0')}';
   }
 }

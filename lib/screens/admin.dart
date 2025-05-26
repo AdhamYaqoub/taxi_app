@@ -10,6 +10,7 @@ import 'package:taxi_app/screens/Admin/drivers_page.dart';
 import 'package:taxi_app/screens/Admin/payments_management.dart';
 import 'package:taxi_app/screens/Admin/security_monitoring.dart';
 import 'package:taxi_app/screens/Admin/settings_page.dart';
+import 'package:taxi_app/screens/Admin/taxi_offices_page.dart';
 import 'package:taxi_app/screens/Admin/trips_management.dart';
 import 'package:taxi_app/screens/Admin/users_page.dart';
 import 'package:taxi_app/screens/Admin/vip_corporate.dart';
@@ -52,6 +53,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
         userId: widget.userId,
         token: widget.token,
       ),
+      TaxiOfficesPage(
+        token: '',
+      ), // تأكد من استيراد الصفحة الصحيحة
     ];
   }
 
@@ -206,40 +210,49 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
   Widget _buildDesktopSidebar(ThemeData theme) {
     return Container(
-      width: 250,
+      width: 220, // تقليل العرض قليلاً
       color: theme.colorScheme.primary,
       child: _buildSidebarContent(theme),
     );
   }
 
   Widget _buildSidebarContent(ThemeData theme) {
-    return Column(
-      children: [
-        const SizedBox(height: 20),
-        Icon(LucideIcons.car, size: 60, color: theme.colorScheme.onPrimary),
-        const SizedBox(height: 10),
-        Text(
-          "TaxiGo Admin",
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: theme.colorScheme.onPrimary,
-          ),
+    return SingleChildScrollView(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          minHeight: MediaQuery.of(context).size.height,
         ),
-        if (_fullName != null)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8.0),
-            child: Text(
-              _fullName!,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 16),
+            Icon(LucideIcons.car, size: 50, color: theme.colorScheme.onPrimary),
+            const SizedBox(height: 8),
+            Text(
+              "TaxiGo Admin",
               style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
                 color: theme.colorScheme.onPrimary,
-                fontSize: 14,
               ),
             ),
-          ),
-        Divider(color: theme.colorScheme.onPrimary),
-        ..._buildSidebarItems(theme),
-      ],
+            if (_fullName != null)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4.0),
+                child: Text(
+                  _fullName!,
+                  style: TextStyle(
+                    color: theme.colorScheme.onPrimary,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+            const Divider(color: Colors.white54),
+            ..._buildSidebarItems(theme),
+            const SizedBox(height: 16), // مسافة إضافية في الأسفل
+          ],
+        ),
+      ),
     );
   }
 
@@ -263,16 +276,28 @@ class _AdminDashboardState extends State<AdminDashboard> {
           local.translate('vip_corporate'), LucideIcons.star, 7, theme),
       _buildSidebarItem(
           local.translate('settings'), LucideIcons.settings, 8, theme),
+      _buildSidebarItem(
+          local.translate('taxi_offices'), LucideIcons.building, 9, theme),
     ];
   }
 
   Widget _buildSidebarItem(
       String title, IconData icon, int index, ThemeData theme) {
-    return ListTile(
-      leading: Icon(icon, color: theme.colorScheme.onPrimary),
-      title: Text(title, style: TextStyle(color: theme.colorScheme.onPrimary)),
-      selected: _selectedIndex == index,
-      onTap: () => setState(() => _selectedIndex = index),
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 4), // تقليل المسافة الرأسية
+      child: ListTile(
+        dense: true, // يجعل الـ ListTile أكثر إحكاما
+        leading: Icon(icon, size: 20, color: theme.colorScheme.onPrimary),
+        title: Text(
+          title,
+          style: TextStyle(
+            color: theme.colorScheme.onPrimary,
+            fontSize: 14, // تقليل حجم الخط
+          ),
+        ),
+        selected: _selectedIndex == index,
+        onTap: () => setState(() => _selectedIndex = index),
+      ),
     );
   }
 
@@ -297,6 +322,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
             LucideIcons.barChart, local.translate('analytics_reports')),
         _buildNavItem(LucideIcons.star, local.translate('vip_corporate')),
         _buildNavItem(LucideIcons.settings, local.translate('settings')),
+        _buildNavItem(LucideIcons.building, local.translate('taxi_offices')),
       ],
     );
   }

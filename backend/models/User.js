@@ -18,10 +18,18 @@ const userSchema = new mongoose.Schema({
     required: true,
     unique: true,
     trim: true,
+    lowercase: true,
+    validate: {
+      validator: function(v) {
+        return /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(v);
+      },
+      message: props => `${props.value} ليس بريداً إلكترونياً صالحاً!`
+    }
   },
   password: {
     type: String,
     required: true,
+    minlength: 6
   },
   role: {
     type: String,
@@ -31,7 +39,7 @@ const userSchema = new mongoose.Schema({
   },
   gender: {
     type: String,
-    enum: ['Male', 'Female'],
+    enum: ['Male', 'Female', 'Other'],
     required: true,
   },
   token: {
@@ -42,10 +50,18 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
-}, { timestamps: true });
+  // إضافة معرف المستخدم التلقائي
+  userId: {
+    type: Number,
+    unique: true
+  }
+}, { 
+  timestamps: true,
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true }
+});
 
 userSchema.plugin(AutoIncrement, { inc_field: 'userId' });
 
 const User = mongoose.model('User', userSchema);
-
 module.exports = User;
