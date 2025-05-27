@@ -65,10 +65,9 @@ class _OfficeManagerPageState extends State<OfficeManagerPage> {
 
   List<Driver> getFilteredDrivers() {
     return drivers.where((driver) {
-      bool matchesSearch = driver.fullName
-              .toLowerCase()
-              .contains(searchQuery.toLowerCase()) ||
-          driver.phone.contains(searchQuery);
+      bool matchesSearch =
+          driver.fullName.toLowerCase().contains(searchQuery.toLowerCase()) ||
+              driver.phone.contains(searchQuery);
       bool matchesFilter = selectedFilter == "الكل" ||
           (driver.isAvailable ? "نشط" : "غير متصل") == selectedFilter;
       return matchesSearch && matchesFilter;
@@ -291,7 +290,7 @@ class _OfficeManagerPageState extends State<OfficeManagerPage> {
                         builder: (context) => ChatScreen(
                           userId: widget.officeId,
                           userType: 'admin',
-                          selectedDriverId: driver.userId.toString(),
+                          selectedDriverId: driver.driverUserId.toString(),
                         ),
                       ),
                     );

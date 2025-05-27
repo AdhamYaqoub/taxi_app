@@ -1,8 +1,11 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:image_picker/image_picker.dart';
+import 'dart:typed_data';
+import 'package:http_parser/http_parser.dart';
+import 'package:taxi_app/models/driver.dart';
 
 class EditDriverProfilePage extends StatefulWidget {
   final int driverId;
@@ -14,78 +17,23 @@ class EditDriverProfilePage extends StatefulWidget {
 
 class _EditDriverProfilePageState extends State<EditDriverProfilePage> {
   final _formKey = GlobalKey<FormState>();
+  Uint8List? _selectedImageBytes;
+  final ImagePicker _picker = ImagePicker();
 
+  // عناصر التحكم في النموذج
   final TextEditingController fullNameController = TextEditingController();
-  final TextEditingController emailController = TextEditingController();
   final TextEditingController phoneController = TextEditingController();
-  final TextEditingController taxiOfficeController = TextEditingController();
-  final TextEditingController modelController = TextEditingController();
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController carModelController = TextEditingController();
+  final TextEditingController carColorController = TextEditingController();
   final TextEditingController plateNumberController = TextEditingController();
-  final TextEditingController colorController = TextEditingController();
-  final TextEditingController profileImageUrlController = TextEditingController();
+  final TextEditingController licenseNumberController = TextEditingController();
+  final TextEditingController licenseExpiryController = TextEditingController();
 
   bool isLoading = true;
+  bool isUploading = false;
 
- void loadDriverData() async {
-  final response = await http.get(
-    Uri.parse('${dotenv.env['BASE_URL']}/api/drivers/${widget.driverId}'),
-  );
-
-  if (response.statusCode == 200) {
-    final jsonData = json.decode(response.body);
-
-    setState(() {
-      fullNameController.text = jsonData['user']['fullName'] ?? '';
-      phoneController.text = jsonData['user']['phone'] ?? '';
-      emailController.text = jsonData['user']['email'] ?? '';
-      taxiOfficeController.text = jsonData['taxiOffice'] ?? '';
-      modelController.text = jsonData['carDetails']['model'] ?? '';
-      plateNumberController.text = jsonData['carDetails']['plateNumber'] ?? '';
-      colorController.text = jsonData['carDetails']['color'] ?? '';
-   
-
-      isLoading = false;
-    });
-  } else {
-    setState(() {
-      isLoading = false;
-    });
-    print('Failed to load driver data. Status: ${response.statusCode}');
-  }
-}
-
-
-  Future<void> saveProfile() async {
-  if (_formKey.currentState!.validate()) {
-    final updatedData = {
-      "fullName": fullNameController.text,
-      "email": emailController.text,
-      "phone": phoneController.text,
-      "taxiOffice": taxiOfficeController.text,
-      "model": modelController.text,
-      "plateNumber": plateNumberController.text,
-      "color": colorController.text,
-      "profileImageUrl": profileImageUrlController.text,
-    };
-
-    final response = await http.put(
-      Uri.parse('${dotenv.env['BASE_URL']}/api/drivers/driver/${widget.driverId}'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(updatedData),
-    );
-
-    if (response.statusCode == 200) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("تم حفظ التعديلات بنجاح!")),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("فشل حفظ التعديلات: ${response.reasonPhrase}")),
-      );
-    }
-  }
-}
-
+  String? _currentProfileImageUrl; // <--- متغير لتخزين رابط الصورة الحالي
 
   @override
   void initState() {
@@ -93,124 +41,309 @@ class _EditDriverProfilePageState extends State<EditDriverProfilePage> {
     loadDriverData();
   }
 
-  Widget buildTextField(TextEditingController controller, String label) {
+  Future<void> loadDriverData() async {
+    setState(() => isLoading = true); // أضفت هذه لضمان عرض المؤشر عند كل تحميل
+    try {
+      final response = await http.get(
+        Uri.parse('${dotenv.env['BASE_URL']}/api/drivers/${widget.driverId}'),
+      );
+      print('Response status: ${response.statusCode}'); // عدلت الطباعة
+      print('Response body: ${response.body}'); // للتحقق من البيانات الواردة
+
+      if (response.statusCode == 200) {
+        final driverData = json.decode(response.body);
+        final driver = Driver.fromJson(driverData); // استخدم driverData هنا
+        setState(() {
+          fullNameController.text = driver.fullName;
+          phoneController.text = driver.phone;
+          emailController.text = driver.email;
+          carModelController.text = driver.carModel;
+          carColorController.text = driver.carColor;
+          plateNumberController.text = driver.carPlateNumber;
+          licenseNumberController.text = driver.licenseNumber;
+          licenseExpiryController.text =
+              driver.licenseExpiry.toString().substring(0, 10);
+          _currentProfileImageUrl =
+              driver.profileImageUrl; // <--- تخزين رابط الصورة
+          isLoading = false;
+        });
+      } else {
+        // محاولة تحليل رسالة الخطأ من الباكند إذا كانت موجودة
+        String errorMessage = 'Failed to load driver data';
+        try {
+          final errorBody = json.decode(response.body);
+          if (errorBody['message'] != null) {
+            errorMessage = errorBody['message'];
+          }
+        } catch (_) {
+          // فشل في تحليل رسالة الخطأ، استخدم الرسالة الافتراضية
+        }
+        throw Exception('$errorMessage (Status: ${response.statusCode})');
+      }
+    } catch (e) {
+      setState(() => isLoading = false);
+      if (mounted) {
+        // تحقق من أن الويدجت ما زال في شجرة الويدجتس
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('خطأ في تحميل البيانات: ${e.toString()}')),
+        );
+      }
+      print('Error loading driver data: $e'); // للتحقق من الخطأ في الكونسول
+    }
+  }
+
+  Future<void> pickImage() async {
+    try {
+      final pickedFile = await _picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 85,
+      );
+
+      if (pickedFile != null) {
+        final bytes = await pickedFile.readAsBytes();
+        setState(() => _selectedImageBytes = bytes);
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('خطأ في اختيار الصورة: ${e.toString()}')),
+      );
+    }
+  }
+
+  Future<String?> uploadImage() async {
+    if (_selectedImageBytes == null) return null;
+
+    try {
+      final uri = Uri.parse(
+        '${dotenv.env['BASE_URL']}/api/drivers/${widget.driverId}/profile-image',
+      );
+
+      final request = http.MultipartRequest('PUT', uri);
+      request.files.add(http.MultipartFile.fromBytes(
+        'image',
+        _selectedImageBytes!,
+        filename:
+            'driver_${widget.driverId}_${DateTime.now().millisecondsSinceEpoch}.jpg',
+        contentType: MediaType('image', 'jpeg'),
+      ));
+
+      final response = await request.send();
+      if (response.statusCode == 200) {
+        final responseBody = await response.stream.bytesToString();
+        return jsonDecode(responseBody)['imageUrl'];
+      }
+      return null;
+    } catch (e) {
+      debugPrint('Error uploading image: $e');
+      return null;
+    }
+  }
+
+  Future<void> saveProfile() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => isUploading = true);
+
+    try {
+      // رفع الصورة أولاً إذا تم اختيارها
+      String? newImageUrl = await uploadImage();
+
+      // تحديث بيانات السائق
+      final updatedData = {
+        "fullName": fullNameController.text,
+        "phone": phoneController.text,
+        "email": emailController.text,
+        "carModel": carModelController.text,
+        "carColor": carColorController.text,
+        "carPlateNumber": plateNumberController.text,
+        "licenseNumber": licenseNumberController.text,
+        "licenseExpiry": licenseExpiryController.text,
+        if (newImageUrl != null) "profileImageUrl": newImageUrl,
+      };
+
+      final response = await http.put(
+        Uri.parse('${dotenv.env['BASE_URL']}/api/drivers/${widget.driverId}'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(updatedData),
+      );
+
+      if (response.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("تم تحديث البيانات بنجاح")),
+        );
+        Navigator.pop(context, true); // العودة مع تحديث البيانات
+      } else {
+        throw Exception('Failed to update profile: ${response.reasonPhrase}');
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("فشل في الحفظ: ${e.toString()}")),
+      );
+    } finally {
+      setState(() => isUploading = false);
+    }
+  }
+
+  Widget _buildProfileImage() {
+    final theme = Theme.of(context); // تصحيح اسم المتغير
+    ImageProvider? backgroundImage;
+
+    if (_selectedImageBytes != null) {
+      backgroundImage = MemoryImage(_selectedImageBytes!);
+    } else if (_currentProfileImageUrl != null &&
+        _currentProfileImageUrl!.isNotEmpty) {
+      // تأكد أن _currentProfileImageUrl هو URL كامل وصحيح
+      print("Displaying network image: $_currentProfileImageUrl"); // للتحقق
+      backgroundImage = NetworkImage(_currentProfileImageUrl!);
+    }
+
+    return Stack(
+      alignment: Alignment.bottomRight,
+      children: [
+        CircleAvatar(
+          radius: 60,
+          backgroundColor:
+              theme.colorScheme.primary.withOpacity(0.7), // لون احتياطي
+          backgroundImage: backgroundImage,
+          onBackgroundImageError: backgroundImage
+                  is NetworkImage // معالجة خطأ تحميل الصورة من الشبكة
+              ? (exception, stackTrace) {
+                  print("Error loading network image: $exception");
+                  // يمكنك عرض أيقونة بديلة هنا إذا فشل تحميل الصورة
+                  // setState(() { _currentProfileImageUrl = null; }); // لإجبار عرض الأيقونة
+                }
+              : null,
+          child: (backgroundImage == null)
+              ? Icon(Icons.person, size: 60, color: Colors.white)
+              : null,
+        ),
+        FloatingActionButton.small(
+          onPressed: pickImage,
+          backgroundColor: theme.primaryColor,
+          child: const Icon(Icons.camera_alt, color: Colors.white),
+          heroTag: null, // لمنع تعارض Hero tags إذا كان هناك أكثر من FAB
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    bool isRequired = true,
+  }) {
+    final theam = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: TextFormField(
         controller: controller,
         decoration: InputDecoration(
           labelText: label,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          prefixIcon: Icon(icon, color: theam.primaryColor),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide(color: theam.primaryColor),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide(color: theam.primaryColor),
+          ),
         ),
-        validator: (value) => (value == null || value.isEmpty) ? 'هذا الحقل مطلوب' : null,
+        validator: isRequired
+            ? (value) => value!.isEmpty ? 'هذا الحقل مطلوب' : null
+            : null,
+      ),
+    );
+  }
+
+  Widget _buildSaveButton() {
+    final theam = Theme.of(context);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 20),
+      child: ElevatedButton(
+        onPressed: isUploading ? null : saveProfile,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: theam.primaryColor,
+          minimumSize: const Size(double.infinity, 50),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+        ),
+        child: isUploading
+            ? const CircularProgressIndicator(color: Colors.white)
+            : const Text('حفظ التغييرات', style: TextStyle(fontSize: 18)),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final bool isWeb = kIsWeb;
+    final theam = Theme.of(context);
+
     return Scaffold(
-      appBar: AppBar(title: const Text("تعديل بيانات السائق")),
+      appBar: AppBar(
+        title: const Text('تعديل الملف الشخصي'),
+        centerTitle: true,
+        backgroundColor: theam.primaryColor,
+      ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
-          : Center(
-              child: Container(
-                constraints: const BoxConstraints(maxWidth: 1200),
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-                child: Form(
-                  key: _formKey,
-                  child: isWeb
-                      ? Wrap(
-                          spacing: 20,
-                          runSpacing: 20,
-                          children: [
-                            SizedBox(
-                              width: 550,
-                              child: buildCard("بيانات المستخدم", [
-                                buildTextField(fullNameController, "الاسم الكامل"),
-                                buildTextField(emailController, "البريد الإلكتروني"),
-                                buildTextField(phoneController, "رقم الجوال"),
-                              ]),
-                            ),
-                            SizedBox(
-                              width: 550,
-                              child: buildCard("بيانات السائق والسيارة", [
-                                buildTextField(taxiOfficeController, "مكتب التاكسي"),
-                                buildTextField(modelController, "موديل السيارة"),
-                                buildTextField(plateNumberController, "رقم اللوحة"),
-                                buildTextField(colorController, "لون السيارة"),
-                                buildTextField(profileImageUrlController, "رابط صورة الملف"),
-                              ]),
-                            ),
-                            SizedBox(
-                              width: 1120,
-                              child: Align(
-                                alignment: Alignment.centerRight,
-                                child: ElevatedButton.icon(
-                                  onPressed: saveProfile,
-                                  style: ElevatedButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                    backgroundColor: Colors.green[700],
-                                  ),
-                                  icon: const Icon(Icons.save),
-                                  label: const Text("حفظ التعديلات", style: TextStyle(fontSize: 16)),
-                                ),
-                              ),
-                            ),
-                          ],
-                        )
-                      : ListView(
-                          children: [
-                            buildCard("بيانات المستخدم", [
-                              buildTextField(fullNameController, "الاسم الكامل"),
-                              buildTextField(emailController, "البريد الإلكتروني"),
-                              buildTextField(phoneController, "رقم الجوال"),
-                            ]),
-                            buildCard("بيانات السائق والسيارة", [
-                              buildTextField(taxiOfficeController, "مكتب التاكسي"),
-                              buildTextField(modelController, "موديل السيارة"),
-                              buildTextField(plateNumberController, "رقم اللوحة"),
-                              buildTextField(colorController, "لون السيارة"),
-                              buildTextField(profileImageUrlController, "رابط صورة الملف"),
-                            ]),
-                            const SizedBox(height: 20),
-                            Align(
-                              alignment: Alignment.centerRight,
-                              child: ElevatedButton.icon(
-                                onPressed: saveProfile,
-                                icon: const Icon(Icons.save),
-                                label: const Text("حفظ التعديلات"),
-                              ),
-                            ),
-                          ],
-                        ),
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    _buildProfileImage(),
+                    const SizedBox(height: 30),
+                    _buildTextField(
+                      controller: fullNameController,
+                      label: 'الاسم الكامل',
+                      icon: Icons.person,
+                    ),
+                    _buildTextField(
+                      controller: phoneController,
+                      label: 'رقم الجوال',
+                      icon: Icons.phone,
+                    ),
+                    _buildTextField(
+                      controller: emailController,
+                      label: 'البريد الإلكتروني',
+                      icon: Icons.email,
+                    ),
+                    _buildTextField(
+                      controller: carModelController,
+                      label: 'موديل السيارة',
+                      icon: Icons.directions_car,
+                    ),
+                    _buildTextField(
+                      controller: carColorController,
+                      label: 'لون السيارة',
+                      icon: Icons.color_lens,
+                    ),
+                    _buildTextField(
+                      controller: plateNumberController,
+                      label: 'رقم اللوحة',
+                      icon: Icons.confirmation_number,
+                    ),
+                    _buildTextField(
+                      controller: licenseNumberController,
+                      label: 'رقم الرخصة',
+                      icon: Icons.card_membership,
+                    ),
+                    _buildTextField(
+                      controller: licenseExpiryController,
+                      label: 'انتهاء الرخصة (YYYY-MM-DD)',
+                      icon: Icons.calendar_today,
+                    ),
+                    _buildSaveButton(),
+                  ],
                 ),
               ),
             ),
-    );
-  }
-
-  Widget buildCard(String title, List<Widget> fields) {
-    return Card(
-      elevation: 10,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      color: Colors.white,
-      child: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title,
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.blue),
-            ),
-            const SizedBox(height: 16),
-            ...fields,
-          ],
-        ),
-      ),
     );
   }
 }

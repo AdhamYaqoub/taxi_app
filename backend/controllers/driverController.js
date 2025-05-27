@@ -1,6 +1,8 @@
 
 const Driver = require('../models/Driver');
 const User = require('../models/User');
+const cloudinary = require('../utils/cloudinary');
+
 
 exports.getAllDrivers = async (req, res) => {
   try {
@@ -52,7 +54,7 @@ exports.getDriverById = async (req, res) => {
         path: 'user',
         select: 'fullName userId email phone profilePhoto'
       })
-      .select('user carDetails rating taxiOffice isAvailable currentLocation')
+      .select('user carDetails rating taxiOffice isAvailable currentLocation licenseNumber profileImageUrl')
       .lean();
 
     if (!driver) {
@@ -105,25 +107,71 @@ exports.updateAvailability = async (req, res) => {
   }
 };
 
-exports.updateDriverProfileImage = async (req, res) => {
+// controllers/driverController.js
+exports.uploadDriverImage = async (req, res) => {
   try {
     const { id } = req.params;
-    const { profileImageUrl } = req.body;
 
-    const updatedDriver = await Driver.findOneAndUpdate(
-      { driverUserId: id },
-      { profileImageUrl },
-      { new: true }
-    );
-
-    if (!updatedDriver) {
-      return res.status(404).json({ message: 'Driver not found' });
+    // التحقق من صحة الـ ID
+    // if (!mongoose.Types.ObjectId.isValid(id)) {
+    //   return res.status(400).json({
+    //     success: false,
+    //     message: 'معرف السائق غير صالح'
+    //   });
+    // }
+    console.log('تم استلام طلب رفع صورة السائق:', id);
+    console.log('req.file: ', req.file);
+    // التحقق من وجود ملف مرفوع
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'لم يتم اختيار أي صورة للرفع'
+      });
+    }
+    
+        console.log('req.file: ', req.file);
+// البحث عن السائق وتحديث الصورة
+    const driver = await Driver.findOne({ driverUserId: id });
+    
+    if (!driver) {
+      return res.status(404).json({
+        success: false,
+        message: 'السائق غير موجود'
+      });
     }
 
-    res.status(200).json(updatedDriver);
+    // حذف الصورة القديمة إذا كانت موجودة
+    if (driver.profileImageUrl) {
+      const publicId = driver.profileImageUrl
+        .split('/')
+        .pop()
+        .split('.')[0];
+      
+      await cloudinary.uploader.destroy(`Taxi-Go/drivers/${publicId}`);
+    }
+
+    // تحديث بيانات السائق
+    driver.profileImageUrl = req.file.path; // يحتوي على رابط Cloudinary
+    await driver.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'تم تحديث صورة السائق بنجاح',
+      imageUrl: req.file.path,
+      driver: {
+        id: driver._id,
+        name: driver.fullName,
+        image: driver.profileImageUrl
+      }
+    });
+
   } catch (error) {
-    console.error("Error updating driver profile image:", error);
-    res.status(500).json({ message: error.message });
+    console.error('حدث خطأ أثناء تحديث الصورة:', error);
+    res.status(500).json({
+      success: false,
+      message: 'فشل تحديث الصورة',
+      error: error.message
+    });
   }
 };
 
@@ -131,41 +179,68 @@ exports.updateDriverProfileImage = async (req, res) => {
 exports.updateDriverProfile = async (req, res) => {
   try {
     const { driverId } = req.params;
+    console.log('تم استلام طلب تحديث ملف السائق:', driverId);
     const {
       fullName,
       email,
       phone,
-      taxiOffice,
-      model,
-      plateNumber,
-      color,
+      carModel,
+      carColor,
+      carPlateNumber,
+      licenseNumber,
+      licenseExpiry,
       profileImageUrl,
     } = req.body;
 
+    // البحث عن السائق والتأكد من وجوده
     const driver = await Driver.findOne({ driverUserId: driverId });
-    if (!driver) return res.status(404).json({ error: 'Driver not found' });
+    if (!driver) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'السائق غير موجود' 
+      });
+    }
 
-    const user = await User.findOne({ userId: driverId });
-    if (!user) return res.status(404).json({ error: 'User not found' });
+    // تحديث بيانات السائق (بدون taxiOfficeId)
+    driver.fullName = fullName || driver.fullName;
+    driver.email = email || driver.email;
+    driver.phone = phone || driver.phone;
+    driver.carModel = carModel || driver.carModel;
+    driver.carColor = carColor || driver.carColor;
+    driver.carPlateNumber = carPlateNumber || driver.carPlateNumber;
+    driver.licenseNumber = licenseNumber || driver.licenseNumber;
+    driver.licenseExpiry = licenseExpiry ? new Date(licenseExpiry) : driver.licenseExpiry;
+    
+    if (profileImageUrl) {
+      driver.profileImageUrl = profileImageUrl;
+    }
+    console.log('تم تحديث بيانات السائق:', driver);
 
-    driver.taxiOffice = taxiOffice;
-    driver.carDetails.model = model;
-    driver.carDetails.plateNumber = plateNumber;
-    driver.carDetails.color = color;
-    driver.profileImageUrl = profileImageUrl;
     await driver.save();
 
-    user.fullName = fullName;
-    user.email = email;
-    user.phone = phone;
-    await user.save();
+    res.status(200).json({
+      success: true,
+      message: 'تم تحديث الملف الشخصي بنجاح',
+      driver: {
+        id: driver._id,
+        fullName: driver.fullName,
+        phone: driver.phone,
+        email: driver.email,
+        carModel: driver.carModel,
+        carColor: driver.carColor,
+        carPlateNumber: driver.carPlateNumber,
+        licenseNumber: driver.licenseNumber,
+        licenseExpiry: driver.licenseExpiry,
+        profileImageUrl: driver.profileImageUrl
+      }
+    });
 
-    res.json({ message: 'Profile updated successfully' });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Server error' });
+    console.error('حدث خطأ أثناء تحديث الملف الشخصي:', err);
+    res.status(500).json({ 
+      success: false,
+      message: 'خطأ في السيرفر',
+      error: err.message 
+    });
   }
 };
-
-
-

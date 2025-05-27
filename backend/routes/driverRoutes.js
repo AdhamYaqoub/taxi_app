@@ -1,6 +1,8 @@
 // routes/driverRoutes.js
 const express = require('express');
 const driverController = require('../controllers/driverController');
+const upload = require('../middleware/multerCloudinary');
+
 // قد تحتاج إلى middleware للتحقق من المصادقة في مسارات أخرى
 // const { protect, isUser } = require('../middleware/authMiddleware');
 
@@ -20,9 +22,24 @@ router.get('/:id', driverController.getDriverById);
 router.put('/:id/availability',driverController.updateAvailability);
 
 // تحديث صورة السائق
-router.put('/:id/profile-image', driverController.updateDriverProfileImage);
+router.put(
+  '/:id/profile-image',
+  (req, res, next) => {
+    upload.single('image')(req, res, function (err) {
+      if (err) {
+        console.error('Multer error:', err);
+        return res.status(400).json({ 
+          success: false,
+          message: err.message 
+        });
+      }
+      next();
+    });
+  },
+  driverController.uploadDriverImage
+);
 
-router.put('/driver/:driverId', driverController.updateDriverProfile);
+router.put('/:driverId', driverController.updateDriverProfile);
 
 
 module.exports = router;
