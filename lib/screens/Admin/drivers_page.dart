@@ -29,7 +29,8 @@ class _DriversPageState extends State<DriversPage> {
       setState(() {
         drivers = driversList.map((driver) {
           return Driver(
-            userId: driver.userId,
+            id: driver.id, // MongoDB ID أو driverId
+            driverUserId: driver.driverUserId,
             fullName: driver.fullName,
             isAvailable: driver.isAvailable,
             carModel: driver.carModel, // Provide default or fetched value
@@ -39,10 +40,14 @@ class _DriversPageState extends State<DriversPage> {
             rating: driver.rating, // Provide default or fetched value
             numberOfRatings:
                 driver.numberOfRatings, // Provide default or fetched value
-            taxiOffice: driver.taxiOffice, // Provide default or fetched value
             phone: driver.phone, // Provide default or fetched value
             email: driver.email, // Provide default or fetched value
-            earnings: driver.earnings, // Provide default or fetched value
+            earnings: driver.earnings,
+            taxiOfficeId: driver.taxiOfficeId,
+            licenseNumber: driver.licenseNumber,
+            licenseExpiry: driver.licenseExpiry,
+            joinedAt: driver.joinedAt,
+            // Provide default or fetched value
           );
         }).toList();
         isLoading = false;
@@ -67,7 +72,7 @@ class _DriversPageState extends State<DriversPage> {
       });
 
       // إرسال التحديث إلى الخادم
-      await DriversApi.updateDriverAvailability(driver.userId, newStatus);
+      await DriversApi.updateDriverAvailability(driver.driverUserId, newStatus);
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

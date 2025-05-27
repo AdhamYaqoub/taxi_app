@@ -58,6 +58,7 @@ dependencies:
   shared_preferences: ^2.5.3
   cloud_firestore: ^5.6.8
   flutter_typeahead: ^4.4.1  # للبحث التلقائي عن المواقع
+  universal_html: ^2.2.4
 
 
   

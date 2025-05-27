@@ -65,16 +65,9 @@ const driverSchema = new mongoose.Schema({
     min: 0
   },
   
-  profileImageUrl: {
+ profileImageUrl: {
     type: String,
-    trim: true,
-    default: null,
-    validate: {
-      validator: function(v) {
-        return v === null || /^(http|https):\/\/[^ "]+$/.test(v);
-      },
-      message: props => `${props.value} ليس رابط صورة صالحاً!`
-    }
+    default: 'https://res.cloudinary.com/.../default-avatar.png'
   },
   
   earnings: {
@@ -86,9 +79,7 @@ const driverSchema = new mongoose.Schema({
   // معلومات إضافية
   licenseNumber: {
     type: String,
-    trim: true,
     required: true,
-    unique: true
   },
   
   licenseExpiry: {

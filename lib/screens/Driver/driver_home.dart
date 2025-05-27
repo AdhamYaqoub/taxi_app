@@ -149,7 +149,7 @@ class _DriverHomePageState extends State<DriverHomePage> {
                         ),
                       ),
                       Text(
-                        driver.taxiOffice,
+                        driver.taxiOfficeId,
                         style: theme.textTheme.bodyMedium,
                       ),
                     ],

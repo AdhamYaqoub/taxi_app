@@ -87,18 +87,18 @@ class _DriverSettingsPageState extends State<DriverSettingsPage> {
               // Account Settings Section
               _buildSettingsSection(context, 'account_settings', [
                 _buildSettingsItem(
-                   context,
+                  context,
                   'edit_profile',
-               LucideIcons.user,
-              () {
-                  Navigator.of(context).push(
-                        MaterialPageRoute(
-                      builder: (_) => EditDriverProfilePage(driverId: widget.driverId),
-                 ),
-               );
-            },
-          ),
-
+                  LucideIcons.user,
+                  () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) =>
+                            EditDriverProfilePage(driverId: widget.driverId),
+                      ),
+                    );
+                  },
+                ),
                 _buildSettingsItem(
                   context,
                   'notifications',
