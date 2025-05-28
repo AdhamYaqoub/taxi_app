@@ -5,7 +5,7 @@ import 'package:taxi_app/models/driver.dart'; // استيراد النموذج
 
 class DriversApi {
   // استبدل هذا بالـ URL الفعلي للـ API الخاص بك
-   static final String _baseUrl = '${dotenv.env['BASE_URL']}/api';
+  static final String _baseUrl = '${dotenv.env['BASE_URL']}/api';
 
   static Future<List<Driver>> getAllDrivers() async {
     try {
@@ -72,6 +72,7 @@ class DriversApi {
   static Future<void> updateDriverAvailability(
       int driverId, bool isAvailable) async {
     try {
+      print('Updating availability for driver $driverId: $isAvailable');
       final response = await http.put(
         Uri.parse('$_baseUrl/drivers/$driverId/availability'),
         headers: {'Content-Type': 'application/json'},

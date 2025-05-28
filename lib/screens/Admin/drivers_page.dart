@@ -73,7 +73,7 @@ class _DriversPageState extends State<DriversPage> {
 
       // إرسال التحديث إلى الخادم
       await DriversApi.updateDriverAvailability(driver.driverUserId, newStatus);
-
+      print('Driver ${driver.driverUserId} status updated to $newStatus');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(newStatus

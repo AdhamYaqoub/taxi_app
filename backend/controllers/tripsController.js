@@ -523,7 +523,11 @@ exports.updateTripStatus = async (req, res) => {
   try {
     const trips = await Trip.find({ 
       status: 'pending',
-      driverId: { $exists: false } // التأكد من عدم وجود سائق معين
+        $or: [
+    { driverId: { $exists: false } },
+    { driverId: null }
+  ]
+      
     })
     res.json(trips);
   } catch (error) {
@@ -551,53 +555,62 @@ exports.getNearbyTrips = async (req, res) => {
   try {
     const { latitude, longitude } = req.query;
     console.log('Latitude:', latitude, 'Longitude:', longitude);
-    const maxDistance = req.query.maxDistance || 90; // المسافة القصوى بالكيلومترات (5 كم افتراضياً)
 
     if (!latitude || !longitude) {
       return res.status(400).json({ error: 'يجب توفير خط الطول والعرض' });
     }
 
-    // جلب جميع الرحلات المعلقة
+    // مستويات المسافات التدريجية (بالكيلومترات)
+    const distanceLevels = [5, 15, 30, 100];
+    let foundTrips = [];
+    let currentDistance = 0;
+
+    // جلب جميع الرحلات المعلقة مرة واحدة فقط
     const pendingTrips = await Trip.find({ 
       status: 'pending',
-      driverId: { $exists: false }
+       $or: [
+    { driverId: { $exists: false } },
+    { driverId: null }
+  ]// فقط الرحلات غير المخصصة لسائق
     });
 
-    // تصفية الرحلات بناءً على المسافة
-    const nearbyTrips = pendingTrips.filter(trip => {
-      if (!trip.startLocation || !trip.startLocation.coordinates) return false;
-      
-      const [tripLon, tripLat] = trip.startLocation.coordinates;
-      const distance = calculateDistance(
-        parseFloat(latitude),
-        parseFloat(longitude),
-        tripLat,
-        tripLon
-      );
-      
-      return distance <= maxDistance;
-    });
+    // البحث التدريجي ضمن مستويات المسافة
+    for (const distance of distanceLevels) {
+      currentDistance = distance;
+      foundTrips = pendingTrips.filter(trip => {
+        if (!trip.startLocation || !trip.startLocation.coordinates) return false;
+        
+        const [tripLon, tripLat] = trip.startLocation.coordinates;
+        return calculateDistance(
+          parseFloat(latitude),
+          parseFloat(longitude),
+          tripLat,
+          tripLon
+        ) <= distance;
+      });
 
-    // إذا لم توجد رحلات قريبة، نعيد جميع الرحلات مع توسيع نطاق البحث
-    if (nearbyTrips.length === 0) {
-      const allPendingTrips = await Trip.find({
-        status: 'pending',
-        driverId: { $exists: false }
-      }).limit(10); // تحديد عدد الرحلات المراد عرضها
-      console.log('No nearby trips found, showing all pending trips:', allPendingTrips.length);
+      // إذا وجدنا رحلات في هذا المستوى، نتوقف عن البحث
+      if (foundTrips.length > 0) break;
+    }
+
+    // إذا لم نجد أي رحلات في جميع المستويات
+    if (foundTrips.length === 0) {
+      console.log('No trips found in any distance level');
       return res.json({
-        message: 'لا توجد رحلات قريبة، تم عرض رحلات من مناطق أخرى',
-        trips: allPendingTrips
+        message: 'لا توجد رحلات متاحة حالياً',
+        trips: []
       });
     }
 
-    console.log('Nearby trips found:', nearbyTrips.length);
+    console.log(`Found ${foundTrips.length} trips within ${currentDistance} km`);
 
     res.json({
-      message: `تم العثور على ${nearbyTrips.length} رحلة ضمن ${maxDistance} كم`,
-      trips: nearbyTrips
+      message: `تم العثور على ${foundTrips.length} رحلة ضمن ${currentDistance} كم`,
+      trips: foundTrips,
+      searchDistance: currentDistance
     });
   } catch (err) {
+    console.error('Error fetching nearby trips:', err);
     res.status(500).json({ 
       error: 'فشل جلب الرحلات القريبة', 
       details: err.message 
