@@ -32,6 +32,7 @@ class _DriversPageState extends State<DriversPage> {
             id: driver.id, // MongoDB ID أو driverId
             driverUserId: driver.driverUserId,
             fullName: driver.fullName,
+            profileImageUrl: driver.profileImageUrl,
             isAvailable: driver.isAvailable,
             carModel: driver.carModel, // Provide default or fetched value
             carColor: driver.carColor, // Provide default or fetched value
@@ -47,6 +48,7 @@ class _DriversPageState extends State<DriversPage> {
             licenseNumber: driver.licenseNumber,
             licenseExpiry: driver.licenseExpiry,
             joinedAt: driver.joinedAt,
+
             // Provide default or fetched value
           );
         }).toList();
@@ -73,7 +75,6 @@ class _DriversPageState extends State<DriversPage> {
 
       // إرسال التحديث إلى الخادم
       await DriversApi.updateDriverAvailability(driver.driverUserId, newStatus);
-      print('Driver ${driver.driverUserId} status updated to $newStatus');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(newStatus

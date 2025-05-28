@@ -31,6 +31,7 @@ class _UsersPageState extends State<UsersPage> {
           return Client(
             userId: client.userId,
             tripsNumber: client.tripsNumber,
+            profileImageUrl: client.profileImageUrl,
             totalSpending: client.totalSpending,
             isAvailable: client.isAvailable,
             fullName: client.fullName,
