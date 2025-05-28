@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:typed_data';
 import 'package:http_parser/http_parser.dart';
 import 'package:taxi_app/models/driver.dart';
+import 'package:taxi_app/language/localization.dart'; // <--- إضافة استيراد الترجمة
 
 class EditDriverProfilePage extends StatefulWidget {
   final int driverId;
@@ -32,12 +33,13 @@ class _EditDriverProfilePageState extends State<EditDriverProfilePage> {
 
   bool isLoading = true;
   bool isUploading = false;
-
-  String? _currentProfileImageUrl; // <--- متغير لتخزين رابط الصورة الحالي
+  String? _currentProfileImageUrl;
 
   @override
   void initState() {
     super.initState();
+    // لا يمكن استدعاء AppLocalizations.of(context) هنا مباشرة
+    // سيتم الحصول عليها داخل الدوال عند الحاجة أو في build
     loadDriverData();
   }
 
@@ -47,8 +49,6 @@ class _EditDriverProfilePageState extends State<EditDriverProfilePage> {
       final response = await http.get(
         Uri.parse('${dotenv.env['BASE_URL']}/api/drivers/${widget.driverId}'),
       );
-      print('Response status: ${response.statusCode}'); // عدلت الطباعة
-      print('Response body: ${response.body}'); // للتحقق من البيانات الواردة
 
       if (response.statusCode == 200) {
         final driverData = json.decode(response.body);
@@ -184,166 +184,279 @@ class _EditDriverProfilePageState extends State<EditDriverProfilePage> {
     }
   }
 
-  Widget _buildProfileImage() {
-    final theme = Theme.of(context); // تصحيح اسم المتغير
-    ImageProvider? backgroundImage;
+  Widget _buildProfileImage(BuildContext context) {
+    final theme = Theme.of(context);
+    final local = AppLocalizations.of(context);
+    ImageProvider? imageProvider;
 
     if (_selectedImageBytes != null) {
-      backgroundImage = MemoryImage(_selectedImageBytes!);
+      imageProvider = MemoryImage(_selectedImageBytes!);
     } else if (_currentProfileImageUrl != null &&
         _currentProfileImageUrl!.isNotEmpty) {
-      // تأكد أن _currentProfileImageUrl هو URL كامل وصحيح
-      print("Displaying network image: $_currentProfileImageUrl"); // للتحقق
-      backgroundImage = NetworkImage(_currentProfileImageUrl!);
+      imageProvider = NetworkImage(_currentProfileImageUrl!);
     }
 
-    return Stack(
-      alignment: Alignment.bottomRight,
-      children: [
-        CircleAvatar(
-          radius: 60,
-          backgroundColor:
-              theme.colorScheme.primary.withOpacity(0.7), // لون احتياطي
-          backgroundImage: backgroundImage,
-          onBackgroundImageError: backgroundImage
-                  is NetworkImage // معالجة خطأ تحميل الصورة من الشبكة
-              ? (exception, stackTrace) {
-                  print("Error loading network image: $exception");
-                  // يمكنك عرض أيقونة بديلة هنا إذا فشل تحميل الصورة
-                  // setState(() { _currentProfileImageUrl = null; }); // لإجبار عرض الأيقونة
-                }
-              : null,
-          child: (backgroundImage == null)
-              ? Icon(Icons.person, size: 60, color: Colors.white)
-              : null,
-        ),
-        FloatingActionButton.small(
-          onPressed: pickImage,
-          backgroundColor: theme.primaryColor,
-          child: const Icon(Icons.camera_alt, color: Colors.white),
-          heroTag: null, // لمنع تعارض Hero tags إذا كان هناك أكثر من FAB
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String label,
-    required IconData icon,
-    bool isRequired = true,
-  }) {
-    final theam = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: TextFormField(
-        controller: controller,
-        decoration: InputDecoration(
-          labelText: label,
-          prefixIcon: Icon(icon, color: theam.primaryColor),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide(color: theam.primaryColor),
+    return Center(
+      child: Stack(
+        alignment: Alignment.bottomRight,
+        children: [
+          Container(
+            width: 120,
+            height: 120,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: theme.colorScheme.primary.withOpacity(0.3),
+                width: 3,
+              ),
+            ),
+            child: CircleAvatar(
+              radius: 55,
+              backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
+              backgroundImage: imageProvider,
+              onBackgroundImageError: imageProvider is NetworkImage
+                  ? (exception, stackTrace) {
+                      print(
+                          "Error loading network image for driver: $exception");
+                    }
+                  : null,
+              child: imageProvider == null
+                  ? Icon(Icons.person,
+                      size: 50, color: theme.colorScheme.primary)
+                  : null,
+            ),
           ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide(color: theam.primaryColor),
+          Positioned(
+            right: 0,
+            bottom: 0,
+            child: Container(
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary,
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white, width: 2),
+              ),
+              child: IconButton(
+                icon:
+                    const Icon(Icons.camera_alt, size: 20, color: Colors.white),
+                onPressed: pickImage,
+                tooltip: local.translate('tooltip_pick_image'),
+              ),
+            ),
           ),
-        ),
-        validator: isRequired
-            ? (value) => value!.isEmpty ? 'هذا الحقل مطلوب' : null
-            : null,
+        ],
       ),
     );
   }
 
-  Widget _buildSaveButton() {
-    final theam = Theme.of(context);
+  Widget _buildTextFieldWidget({
+    // تم تغيير الاسم لتجنب التعارض إذا كنت ستستخدمه بشكل مختلف في مكان آخر
+    required BuildContext context,
+    required TextEditingController controller,
+    required String labelKey,
+    required IconData icon,
+    bool isRequired = true,
+    TextInputType keyboardType = TextInputType.text,
+  }) {
+    final theme = Theme.of(context);
+    final local = AppLocalizations.of(context);
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 20),
-      child: ElevatedButton(
-        onPressed: isUploading ? null : saveProfile,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: theam.primaryColor,
-          minimumSize: const Size(double.infinity, 50),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
+      // الحشوة العمودية هنا، والحشوة الأفقية ستتم إدارتها بواسطة Row أو Column
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: TextFormField(
+        controller: controller,
+        keyboardType: keyboardType,
+        decoration: InputDecoration(
+          labelText: local.translate(labelKey),
+          prefixIcon: Icon(icon, color: theme.colorScheme.primary),
+          filled: true,
+          fillColor: Colors.grey[50],
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
           ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Colors.grey[300]!),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: theme.colorScheme.primary, width: 2),
+          ),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         ),
-        child: isUploading
-            ? const CircularProgressIndicator(color: Colors.white)
-            : const Text('حفظ التغييرات', style: TextStyle(fontSize: 18)),
+        validator: isRequired
+            ? (value) => value!.isEmpty
+                ? local.translate('validation_field_required')
+                : null
+            : null,
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final theam = Theme.of(context);
+    final theme = Theme.of(context);
+    final local = AppLocalizations.of(context);
+    final screenWidth = MediaQuery.of(context).size.width;
+    // تحديد نقطة الفصل بين التخطيطين، يمكنك تعديل هذه القيمة
+    // 600 تعتبر نقطة فصل شائعة بين الهواتف والأجهزة اللوحية الصغيرة
+    final bool useTwoColumns = screenWidth > 500; // <--- نقطة التحكم في التخطيط
+
+    final double horizontalPagePadding = screenWidth < 400 ? 16 : 24;
+
+    List<Widget> formFields = [
+      _buildTextFieldWidget(
+        context: context,
+        controller: fullNameController,
+        labelKey: 'label_full_name',
+        icon: Icons.person_outline,
+      ),
+      _buildTextFieldWidget(
+        context: context,
+        controller: phoneController,
+        labelKey: 'label_phone_number',
+        icon: Icons.phone_android_outlined,
+        keyboardType: TextInputType.phone,
+      ),
+      _buildTextFieldWidget(
+        context: context,
+        controller: emailController,
+        labelKey: 'label_email',
+        icon: Icons.email_outlined,
+        isRequired: false,
+        keyboardType: TextInputType.emailAddress,
+      ),
+      _buildTextFieldWidget(
+        context: context,
+        controller: carModelController,
+        labelKey: 'label_car_model',
+        icon: Icons.directions_car_filled_outlined,
+      ),
+      _buildTextFieldWidget(
+        context: context,
+        controller: carColorController,
+        labelKey: 'label_car_color',
+        icon: Icons.color_lens_outlined,
+      ),
+      _buildTextFieldWidget(
+        context: context,
+        controller: plateNumberController,
+        labelKey: 'label_plate_number',
+        icon: Icons.confirmation_number_outlined,
+      ),
+      _buildTextFieldWidget(
+        context: context,
+        controller: licenseNumberController,
+        labelKey: 'label_license_number',
+        icon: Icons.card_membership_outlined,
+      ),
+      _buildTextFieldWidget(
+        context: context,
+        controller: licenseExpiryController,
+        labelKey: 'label_license_expiry_date',
+        icon: Icons.calendar_today_outlined,
+        keyboardType: TextInputType.datetime,
+      ),
+    ];
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('تعديل الملف الشخصي'),
+        title: Text(local.translate('title_edit_driver_profile')),
         centerTitle: true,
-        backgroundColor: theam.primaryColor,
+        elevation: 0,
+        backgroundColor: theme.scaffoldBackgroundColor,
+        foregroundColor: theme.colorScheme.primary,
       ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
+              padding: EdgeInsets.symmetric(
+                horizontal: horizontalPagePadding,
+                vertical: 20,
+              ),
               child: Form(
                 key: _formKey,
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    _buildProfileImage(),
-                    const SizedBox(height: 30),
-                    _buildTextField(
-                      controller: fullNameController,
-                      label: 'الاسم الكامل',
-                      icon: Icons.person,
+                    _buildProfileImage(context),
+                    const SizedBox(height: 24),
+                    if (useTwoColumns) // <--- بناء الواجهة بناءً على عرض الشاشة
+                      ..._buildTwoColumnLayout(context, formFields)
+                    else
+                      ..._buildSingleColumnLayout(context, formFields),
+                    const SizedBox(height: 24),
+                    ElevatedButton(
+                      onPressed: isUploading ? null : saveProfile,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: theme.colorScheme.primary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 2,
+                      ),
+                      child: isUploading
+                          ? const SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : Text(
+                              local.translate('button_save_changes'),
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                     ),
-                    _buildTextField(
-                      controller: phoneController,
-                      label: 'رقم الجوال',
-                      icon: Icons.phone,
-                    ),
-                    _buildTextField(
-                      controller: emailController,
-                      label: 'البريد الإلكتروني',
-                      icon: Icons.email,
-                    ),
-                    _buildTextField(
-                      controller: carModelController,
-                      label: 'موديل السيارة',
-                      icon: Icons.directions_car,
-                    ),
-                    _buildTextField(
-                      controller: carColorController,
-                      label: 'لون السيارة',
-                      icon: Icons.color_lens,
-                    ),
-                    _buildTextField(
-                      controller: plateNumberController,
-                      label: 'رقم اللوحة',
-                      icon: Icons.confirmation_number,
-                    ),
-                    _buildTextField(
-                      controller: licenseNumberController,
-                      label: 'رقم الرخصة',
-                      icon: Icons.card_membership,
-                    ),
-                    _buildTextField(
-                      controller: licenseExpiryController,
-                      label: 'انتهاء الرخصة (YYYY-MM-DD)',
-                      icon: Icons.calendar_today,
-                    ),
-                    _buildSaveButton(),
+                    const SizedBox(height: 10),
                   ],
                 ),
               ),
             ),
     );
+  }
+
+  // دالة لبناء تخطيط العمود الواحد
+  List<Widget> _buildSingleColumnLayout(
+      BuildContext context, List<Widget> fields) {
+    List<Widget> widgets = [];
+    for (var field in fields) {
+      widgets.add(field);
+      // لا حاجة لـ SizedBox إضافي هنا لأن _buildTextFieldWidget لديه vertical padding
+    }
+    return widgets;
+  }
+
+  // دالة لبناء تخطيط العمودين
+  List<Widget> _buildTwoColumnLayout(
+      BuildContext context, List<Widget> fields) {
+    List<Widget> rows = [];
+    for (int i = 0; i < fields.length; i += 2) {
+      rows.add(
+        Row(
+          crossAxisAlignment: CrossAxisAlignment
+              .start, // لمحاذاة الحقول بشكل أفضل إذا كان ارتفاعها مختلفًا
+          children: [
+            Expanded(child: fields[i]),
+            const SizedBox(width: 12), // مسافة بين الحقلين في نفس الصف
+            if (i + 1 < fields.length)
+              Expanded(child: fields[i + 1])
+            else
+              Expanded(
+                  child: Container()), // حقل فارغ ممتد إذا كان العدد فرديًا
+          ],
+        ),
+      );
+      // لا حاجة لـ SizedBox إضافي هنا لأن _buildTextFieldWidget لديه vertical padding
+    }
+    return rows;
   }
 }

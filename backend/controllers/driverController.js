@@ -88,6 +88,7 @@ exports.updateAvailability = async (req, res) => {
   try {
     const { id } = req.params;
     const { isAvailable } = req.body;
+    console.log('تم استلام طلب تحديث حالة التوفر للسائق:', id, 'حالة التوفر:', isAvailable);
 
     // البحث باستخدام findById أولاً للتحقق
     // التحديث
@@ -97,6 +98,7 @@ exports.updateAvailability = async (req, res) => {
       { new: true }
     );
     if (!updatedDriver) {
+      console.log('لم يتم العثور على السائق:', id);
       return res.status(404).json({ message: 'Driver not found' });
     }
 

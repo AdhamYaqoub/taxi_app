@@ -45,7 +45,7 @@ class Driver {
 
     return Driver(
       id: json['_id'] ?? '',
-      driverUserId: json['driverUserId'] ?? 0,
+      driverUserId: userDetails['userId'] ?? 0, // ✅ صح
       fullName: userDetails['fullName'] ?? 'Unknown',
       profileImageUrl: json['profileImageUrl'],
       carModel: carDetails['model'] ?? 'N/A',

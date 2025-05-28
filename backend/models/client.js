@@ -15,7 +15,7 @@ const clientSchema = new mongoose.Schema({
   },
     walletBalance: { // أضف هذا الحقل الجديد
     type: Number,
-    default: 0,
+    default: 200,
     min: 0
   },
 
