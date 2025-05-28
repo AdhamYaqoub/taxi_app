@@ -10,6 +10,8 @@ class DriverDetailPageWeb extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final screenSize = MediaQuery.of(context).size;
+    print(
+        "DriverDetailPageWeb: Building driver detail page for ${driver.profileImageUrl}");
 
     return Scaffold(
       appBar: AppBar(

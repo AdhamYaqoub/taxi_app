@@ -233,44 +233,43 @@ class _DriversListPageState extends State<DriversListPage> {
 
   // لعرض نجوم التقييم
   Widget _buildRatingStars(
-      BuildContext context, double rating, int ratingCount) {
+      // سنبقي الاسم كما هو لتجنب تغييرات كثيرة، أو يمكنك تغييره إلى _buildRatingDisplay
+      BuildContext context,
+      double rating,
+      int ratingCount) {
     final theme = Theme.of(context);
-    final local = AppLocalizations.of(context);
-    List<Widget> stars = [];
-    int fullStars = rating.floor();
-    bool hasHalfStar = (rating - fullStars) >= 0.5;
 
-    for (int i = 0; i < 5; i++) {
-      IconData icon;
-      Color color = Colors.amber;
-      if (i < fullStars) {
-        icon = Icons.star;
-      } else if (i == fullStars && hasHalfStar) {
-        icon = Icons.star_half;
-      } else {
-        icon = Icons.star_border;
-        color = Colors.grey; // لون النجمة الفارغة
-      }
-      stars.add(Icon(icon, color: color, size: 18));
-    }
-
-    // إضافة عدد التقييمات إذا كان أكبر من صفر
-    if (ratingCount > 0) {
-      stars.add(const SizedBox(width: 4));
-      stars.add(Text(
-        '($ratingCount)', // يمكنك استخدام local.translate إذا أردت تنسيقًا معينًا
-        style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey),
-      ));
-    } else {
-      // رسالة في حالة عدم وجود تقييمات
-      stars.add(const SizedBox(width: 4));
-      stars.add(Text(
-        local.translate('no_ratings_yet'), // مفتاح ترجمة
-        style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey),
-      ));
-    }
-
-    return Row(children: stars);
+    // في حالة وجود تقييمات
+    return Row(
+      children: [
+        Icon(
+          LucideIcons
+              .award, // أو أي أيقونة أخرى تراها مناسبة مثل LucideIcons.trendingUp
+          size: 18,
+          color: theme
+              .colorScheme.primary, // يمكنك استخدام لون مختلف مثل Colors.amber
+        ),
+        const SizedBox(width: 4),
+        Text(
+          '${rating.toStringAsFixed(0)}/100', // عرض التقييم كـ X/100
+          style: theme.textTheme.bodyMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+            // يمكنك إضافة لون هنا إذا أردت تمييز الرقم
+            // color: theme.colorScheme.primary,
+          ),
+        ),
+        // عرض عدد المقيمين إذا كان أكبر من صفر
+        // هذا الجزء سيعرض عدد المقيمين بجانب التقييم الرقمي
+        // إذا كنت لا تريد عرضه، يمكنك حذف هذا الجزء
+        if (ratingCount > 0) ...[
+          const SizedBox(width: 4),
+          Text(
+            '($ratingCount)', // يمكنك استخدام local.translate إذا أردت تنسيقًا معينًا مثل "(15 تقييمًا)"
+            style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey),
+          ),
+        ]
+      ],
+    );
   }
 
   // ودجت لعرض صف تفاصيل (مثل السيارة أو اللوحة)

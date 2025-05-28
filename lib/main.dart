@@ -8,11 +8,11 @@ import 'package:taxi_app/providers/theme_provider.dart';
 import 'package:taxi_app/providers/language_provider.dart';
 import 'package:taxi_app/screens/homepage.dart';
 import 'package:taxi_app/screens/splash_screen.dart';
-import 'package:taxi_app/theme/theme.dart'; // تأكد من إضافة هذا الملف
+import 'package:taxi_app/theme/theme.dart';
 
 void main() {
-    WidgetsFlutterBinding.ensureInitialized();
-     dotenv.load(); // تحميل المتغيرات من .env
+  WidgetsFlutterBinding.ensureInitialized();
+  dotenv.load(); // تحميل المتغيرات من .env
   runApp(const MyApp());
 }
 
@@ -47,8 +47,8 @@ class MyApp extends StatelessWidget {
             ],
             home: SplashScreen(),
             routes: {
-    '/home': (context) => HomePage(), // ضيف هذه السطر
-  },
+              '/home': (context) => HomePage(), // ضيف هذه السطر
+            },
           );
         },
       ),

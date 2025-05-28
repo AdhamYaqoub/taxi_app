@@ -9,13 +9,13 @@ exports.getAllDrivers = async (req, res) => {
     // نستخدم find({}) بدون شروط لجلب كل السائقين
     const allDrivers = await Driver.find({})
       .populate({
-        path: 'user',
-        select: 'fullName userId email phone' // اختر الحقول التي تريدها من نموذج User
+        path: 'user',           
+        select: 'fullName userId email phone' 
+                                    
       })
-      // اختر الحقول التي تريدها من نموذج Driver
-      .select('user carDetails rating numberOfRatings profileImageUrl taxiOffice isAvailable earnings')
-      .lean(); // .lean() للحصول على كائنات JavaScript بسيطة أسرع
-    res.status(200).json(allDrivers); // أرسل قائمة جميع السائقين
+      .select('user carDetails rating numberOfRatings profileImageUrl taxiOffice isAvailable')
+      .lean();
+    res.status(200).json(allDrivers);
 
   } catch (error) {
     console.error("Error fetching all drivers:", error);
