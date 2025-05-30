@@ -37,13 +37,10 @@ class _DriverHomePageState extends State<DriverHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final local = AppLocalizations.of(context);
-
     // Distinguish web vs mobile
     final isWeb = kIsWeb;
 
     return Scaffold(
-      appBar: AppBar(title: Text(local.translate('driver_home'))),
       body: RefreshIndicator(
         onRefresh: () async {
           _loadData();

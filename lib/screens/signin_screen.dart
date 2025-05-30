@@ -97,6 +97,7 @@ class _SignInScreenState extends State<SignInScreen> {
     } else {
       showError("Login failed! Please check your credentials.");
     }
+    return;
   }
 
   void showError(String message) {
@@ -171,7 +172,7 @@ class _SignInScreenState extends State<SignInScreen> {
                   CustomButton(
                     text: isLoading ? "Loading..." : signInText,
                     width: double.infinity,
-                    onPressed: isLoading ? () {} : () => signIn(context),
+                    onPressed: isLoading ? null : () => signIn(context),
                   ),
                   SizedBox(height: 20),
                   Row(mainAxisAlignment: MainAxisAlignment.center, children: [

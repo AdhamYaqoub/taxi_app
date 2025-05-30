@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:provider/provider.dart';
 import 'package:taxi_app/providers/notification_provider.dart';
-import 'package:taxi_app/screens/User/mytrip.dart';
 
 class NotificationIcon extends StatefulWidget {
-    final int userId;
+  final int userId;
 
   const NotificationIcon({super.key, required this.userId});
 
@@ -50,7 +49,8 @@ class _NotificationIconState extends State<NotificationIcon> {
   void _showNotifications(BuildContext context) async {
     final provider = Provider.of<NotificationProvider>(context, listen: false);
 
-    await provider.fetchAllNotifications(widget.userId); // استبدل 13 بالـ userId الحقيقي
+    await provider
+        .fetchAllNotifications(widget.userId); // استبدل 13 بالـ userId الحقيقي
     // عرض الإشعارات في BottomSheet
     await showModalBottomSheet(
       context: context,
@@ -106,18 +106,6 @@ class _NotificationIconState extends State<NotificationIcon> {
 
                       // 2. إغلاق صفحة الإشعارات
                       Navigator.pop(context);
-
-                      // 3. الانتقال إلى صفحة Trip History
-                      if (mounted) {
-                        // تأكد أن الـ widget ما زال موجودًا في الشجرة
-                        Navigator.of(context).pushReplacement(
-                          MaterialPageRoute(
-                            builder: (context) => ClientTripsPage(
-
-                                userId:widget.userId), // استبدل 13 بالـ userId الحقيقي
-                          ),
-                        );
-                      }
                     },
                   );
                 },

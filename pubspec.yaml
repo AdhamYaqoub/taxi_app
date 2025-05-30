@@ -87,3 +87,6 @@ flutter:
     - assets/taxi_drivers.xlsx
     - .env
     - assets/adham.png
+    - assets/logo.png
+    - assets/light_background.png
+    - assets/dark_background.png

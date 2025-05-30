@@ -21,6 +21,7 @@ const dashboardRoutes = require('./routes/dashboard');
 const paymentsRoutes = require('./routes/payments');
 const notificationRoutes = require('./routes/notificationRoutes');
 const taxiOfficeMapRoutes = require('./routes/taxiOfficeMapRoutes');
+const taxiOfficeRoutes = require('./routes/taxiOfficeRouter'); // استيراد مسارات مكتب التاكسي
 
 // إعداد السوكيت
 const { init } = require('./config/socket');
@@ -59,6 +60,7 @@ app.use('/api/payments', paymentsRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/map', taxiOfficeMapRoutes);
+app.use('/api/offices', taxiOfficeRoutes);
 
 
 
