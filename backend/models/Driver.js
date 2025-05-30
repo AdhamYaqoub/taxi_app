@@ -67,7 +67,7 @@ const driverSchema = new mongoose.Schema({
   
  profileImageUrl: {
     type: String,
-    default: 'https://res.cloudinary.com/.../default-avatar.png'
+    default: 'https://static.vecteezy.com/system/resources/previews/027/448/973/non_2x/avatar-account-icon-default-social-media-profile-photo-vector.jpg'
   },
   
   earnings: {

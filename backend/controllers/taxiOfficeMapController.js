@@ -49,7 +49,17 @@ res.status(200).json({
 // الحصول على تفاصيل مكتب معين
 exports.getOfficeDetails = async (req, res) => {
   try {
-    const office = await TaxiOffice.findById(req.params.id)
+    const officeId = parseInt(req.params.id); // تحويل إلى رقم
+    
+    if (isNaN(officeId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'معرف المكتب غير صالح'
+      });
+    }
+    
+    // البحث باستخدام officeId بدلاً من _id
+    const office = await TaxiOffice.findOne({ officeId })
       .populate('manager', 'fullName phone')
       .select('-__v -createdAt -updatedAt');
 

@@ -15,136 +15,142 @@ const jwt = require('jsonwebtoken');
 const createUser = async (req, res) => {
   const {
     fullName, email, phone, password, confirmPassword, role, gender,
-    officeId, carModel, carPlateNumber, carColor, carYear,
-    licenseNumber, licenseExpiry
+    officeIdentifier, carModel, carPlateNumber, carColor, carYear,
+    licenseNumber, licenseExpiry, profileImageUrl
   } = req.body;
 
-  // التحقق من المدخلات الأساسية
   if (!fullName || !phone || !email || !password || !role || !gender) {
     return res.status(400).json({ message: 'الرجاء تقديم جميع الحقول المطلوبة' });
-  }
-
-  // تحقق من حقول السائق الإضافية
-  if (role === 'Driver') {
-    if (!officeId || !licenseNumber || !licenseExpiry || !carPlateNumber) {
-      return res.status(400).json({ 
-        message: 'مطلوب: مكتب التكاسي، رقم الرخصة، تاريخ انتهاء الرخصة، ورقم لوحة السيارة'
-      });
-    }
   }
 
   if (password !== confirmPassword) {
     return res.status(400).json({ message: 'كلمات المرور غير متطابقة' });
   }
 
+  if (role === 'Driver') {
+    const requiredDriverFields = ['officeIdentifier', 'licenseNumber', 'licenseExpiry', 'carPlateNumber', 'carModel'];
+    const missingFields = requiredDriverFields.filter(field => !req.body[field]);
+
+    if (missingFields.length > 0) {
+      return res.status(400).json({
+        message: `الحقول المطلوبة للسائق: ${missingFields.join(', ')}`,
+        missingFields
+      });
+    }
+  }
+
   try {
-    // التحقق من وجود المستخدم
+    // تحقق من وجود المستخدم مسبقًا
     const existingUser = await User.findOne({ $or: [{ phone }, { email }] });
     if (existingUser) {
-      return res.status(400).json({ message: 'رقم الهاتف أو البريد الإلكتروني موجود مسبقاً' });
+      return res.status(400).json({
+        success: false,
+        message: 'رقم الهاتف أو البريد الإلكتروني موجود مسبقاً'
+      });
     }
 
-    // التحقق من وجود المكتب إذا كان سائقاً
+    // تحقق من وجود المكتب إذا كان سائقًا
     let office = null;
     if (role === 'Driver') {
-      office = await TaxiOffice.findOne({ officeId: officeId });
+      office = await TaxiOffice.findOne({ officeIdentifier: officeIdentifier });
       if (!office) {
-        return res.status(404).json({ message: 'مكتب التكاسي غير موجود' });
+        return res.status(404).json({
+          success: false,
+          message: 'مكتب التكاسي غير موجود'
+        });
       }
     }
 
-    // إنشاء المستخدم
+    // كل التحققات ناجحة – نبدأ بإنشاء الكائنات
     const hashedPassword = await bcrypt.hash(password, 12);
-    const newUser = new User({ 
-      fullName, 
-      email, 
-      phone, 
-      password: hashedPassword, 
-      role, 
+
+    const newUser = new User({
+      fullName,
+      email,
+      phone,
+      password: hashedPassword,
+      role,
       gender,
-      mustChangePassword: role === 'Driver' // إجبار السائقين على تغيير كلمة المرور
+      mustChangePassword: role === 'Driver',
+      profileImageUrl: profileImageUrl || undefined
     });
 
-    const savedUser = await newUser.save();
+    let newDriver = null;
+    let newClient = null;
 
-    // إنشاء السجل المناسب حسب الدور
     if (role === 'Driver') {
-      try {
-        const newDriver = new Driver({
-          user: savedUser._id,
-          driverUserId: savedUser.userId,
-          office: office._id,
-          officeId: office.officeId,
-          carDetails: {
-            model: carModel || 'غير محدد',
-            plateNumber: carPlateNumber,
-            color: carColor || 'غير محدد',
-            year: carYear || new Date().getFullYear()
-          },
-          licenseNumber,
-          licenseExpiry: new Date(licenseExpiry),
-          isAvailable: false // غير متاح حتى يكمل ملفه الشخصي
-        });
-
-        await newDriver.save();
-
-        // تحديث عدد السائقين في المكتب
-        await TaxiOffice.findByIdAndUpdate(office._id, {
-          $inc: { driversCount: 1 }
-        });
-
-      } catch (driverError) {
-        await User.findByIdAndDelete(savedUser._id);
-        return res.status(500).json({ 
-          message: 'خطأ في إنشاء ملف السائق',
-          error: driverError.message 
-        });
-      }
+      newDriver = new Driver({
+        user: newUser._id, // مؤقتًا، سيتم تعيينه بعد حفظ المستخدم
+        driverUserId: newUser.userId,
+        office: office._id,
+        officeIdentifier: officeIdentifier,
+        carDetails: {
+          model: carModel,
+          plateNumber: carPlateNumber,
+          color: carColor || 'غير محدد',
+          year: carYear || new Date().getFullYear()
+        },
+        licenseNumber,
+        licenseExpiry: new Date(licenseExpiry),
+        isAvailable: false,
+        rating: 80,
+        numberOfRatings: 0,
+        profileImageUrl: profileImageUrl || undefined,
+        earnings: 0
+      });
     } else if (role === 'User') {
-      try {
-        const newClient = new Client({
-          user: savedUser._id,
-          clientUserId: savedUser.userId,
-        });
-        await newClient.save();
-      } catch (clientError) {
-        await User.findByIdAndDelete(savedUser._id);
-        return res.status(500).json({ 
-          message: 'خطأ في إنشاء ملف العميل',
-          error: clientError.message 
-        });
-      }
+      newClient = new Client({
+        user: newUser._id,
+        clientUserId: newUser.userId
+      });
     }
 
+    // 🔒 نحفظ المستخدم أولاً
+    const savedUser = await newUser.save();
 
+    // 🧾 ثم نحفظ السائق أو العميل
     if (role === 'Driver') {
+      newDriver.user = savedUser._id;
+      newDriver.driverUserId = savedUser.userId;
+      await newDriver.save();
       await sendWelcomeEmail(savedUser, {
         officeName: office.name,
         licenseNumber: licenseNumber
       });
-    } else {
+    } else if (role === 'User') {
+      newClient.user = savedUser._id;
+      newClient.clientUserId = savedUser.userId;
+      await newClient.save();
       await sendWelcomeEmail(savedUser);
     }
 
-    // إعداد الرد النهائي
+    // نجهز الرد النهائي
     const userResponse = savedUser.toObject();
     delete userResponse.password;
 
     res.status(201).json({
       success: true,
       message: 'تم إنشاء المستخدم بنجاح',
-      user: userResponse
+      user: userResponse,
+      ...(role === 'Driver' && {
+        driverDetails: {
+          licenseNumber,
+          carPlateNumber,
+          officeName: office?.name
+        }
+      })
     });
 
   } catch (error) {
     console.error("Error during user creation:", error);
-    res.status(500).json({ 
+    res.status(500).json({
       success: false,
       message: 'حدث خطأ أثناء إنشاء المستخدم',
-      error: error.message 
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
+
 
 // تسجيل الدخول
 

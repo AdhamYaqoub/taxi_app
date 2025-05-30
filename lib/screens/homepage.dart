@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:taxi_app/screens/manager_test.dart';
 import 'package:taxi_app/screens/about.dart';
 import 'package:taxi_app/screens/admin.dart';
 import 'package:taxi_app/screens/driver_dashboard.dart';
 import 'package:taxi_app/screens/manegar.dart';
 import 'package:taxi_app/screens/maps_screen.dart';
+import 'package:taxi_app/screens/office_manage/office_manager_dashboard.dart';
 import 'package:taxi_app/screens/public_offices_map.dart';
 import 'package:taxi_app/screens/pyment.dart';
 import 'package:taxi_app/screens/rodes_telgrame.dart';
@@ -219,8 +221,9 @@ class _HomePageState extends State<HomePage> {
             onTap: () {
               Navigator.pop(context); // إغلاق القائمة
               Navigator.of(context).push(MaterialPageRoute(
-                  builder: (context) => const OfficeManagerPage(
-                        officeId: '',
+                  builder: (context) => const OfficeManagerDashboard(
+                        userId: 49,
+                        token: '',
                       )));
             },
           ),
@@ -521,8 +524,9 @@ class _HomePageState extends State<HomePage> {
             onTap: () {
               Navigator.of(context).push(
                 MaterialPageRoute(
-                    builder: (context) => OfficeManagerPage(
-                          officeId: '',
+                    builder: (context) => OfficeManagerDashboard(
+                          userId: 49,
+                          token: '',
                         )),
               );
             },

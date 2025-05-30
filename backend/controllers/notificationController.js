@@ -12,13 +12,12 @@ exports.createNotification = async (data) => {
 };
 
 // الحصول على إشعارات مستخدم معين
-exports.getUserNotifications = async (userId, userType, { limit = 10, page = 1 }) => {
+exports.getUserNotifications = async (userId, { limit = 10, page = 1 }) => {
   try {
     const skip = (page - 1) * limit;
     
     const notifications = await Notification.find({
       recipient: userId,
-      recipientType: userType,
       status: { $ne: 'deleted' }
     })
     .sort({ createdAt: -1 })

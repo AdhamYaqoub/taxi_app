@@ -5,33 +5,43 @@ import 'package:taxi_app/screens/components/custom_button.dart';
 import 'package:taxi_app/screens/components/custom_text_field.dart';
 import 'package:country_picker/country_picker.dart';
 import 'package:taxi_app/screens/signin_screen.dart';
-import 'package:taxi_app/widgets/CustomAppBar.dart';
 import 'package:taxi_app/language/localization.dart';
 import 'package:http/http.dart' as http;
-import 'driver_signup_screen.dart'; // إضافة صفحة تسجيل السائقين
+import 'package:intl/intl.dart';
 
-class SignUpScreen extends StatefulWidget {
-  const SignUpScreen({super.key});
+class DriverSignUpScreen extends StatefulWidget {
+  const DriverSignUpScreen({super.key});
 
   @override
-  _SignUpScreenState createState() => _SignUpScreenState();
+  _DriverSignUpScreenState createState() => _DriverSignUpScreenState();
 }
 
-class _SignUpScreenState extends State<SignUpScreen> {
+class _DriverSignUpScreenState extends State<DriverSignUpScreen> {
   final TextEditingController phoneController = TextEditingController();
   final TextEditingController fullNameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController confirmPasswordController =
       TextEditingController();
+  final TextEditingController licenseNumberController = TextEditingController();
+  final TextEditingController licenseExpiryController = TextEditingController();
+  final TextEditingController plateNumberController = TextEditingController();
+  final TextEditingController carModelController = TextEditingController();
+  final TextEditingController carColorController = TextEditingController();
+  final TextEditingController taxiOfficeNumberController =
+      TextEditingController(); // حقل جديد لرقم مكتب التاكسي
 
-  String selectedCountryCode = '+1'; // رمز الدولة الافتراضي
-  String selectedCountryFlag = '🇺🇸'; // علم الدولة الافتراضي
+  String selectedCountryCode = '+1';
+  String selectedCountryFlag = '🇺🇸';
   String? selectedGender = 'Male';
+  // String? selectedTaxiOffice; // تم الاستغناء عنه
   bool isPrivacyAccepted = false;
   bool isPasswordVisible = false;
   bool isConfirmPasswordVisible = false;
+  DateTime? selectedLicenseExpiry;
   bool isLoading = false; // حالة التحميل للزر
+
+  // List<String> taxiOffices = ['Office 1', 'Office 2', 'Office 3']; // تم الاستغناء عنها
 
   // دالة لعرض رسائل SnackBar
   void showSnackBarMessage(String message, {bool isError = false}) {
@@ -44,16 +54,55 @@ class _SignUpScreenState extends State<SignUpScreen> {
     );
   }
 
-  Future<void> signUp() async {
-    if (!mounted) return; // تحقق من mounted قبل setState
-    setState(() => isLoading = true); // بدء التحميل
+  Future<void> _selectLicenseExpiry(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: selectedLicenseExpiry ??
+          DateTime.now(), // استخدم التاريخ المحدد مسبقًا
+      firstDate: DateTime.now(),
+      lastDate: DateTime(2100),
+      builder: (BuildContext context, Widget? child) {
+        return Theme(
+          data: ThemeData.light().copyWith(
+            colorScheme: ColorScheme.light(
+              primary: Theme.of(context).primaryColor, // لون الثيم الأساسي
+              onPrimary: Colors.white, // لون النص على اللون الأساسي
+              surface: Theme.of(context).cardColor, // لون خلفية التقويم
+              onSurface: Theme.of(context).textTheme.bodyLarge?.color ??
+                  Colors.black, // لون النص على الخلفية
+            ),
+            dialogBackgroundColor:
+                Theme.of(context).cardColor, // لون خلفية الحوار
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null) {
+      setState(() {
+        selectedLicenseExpiry = picked;
+        licenseExpiryController.text = DateFormat('yyyy-MM-dd').format(picked);
+      });
+    }
+  }
 
-    // تحقق من شروط التسجيل قبل إرسال الطلب
+  Future<void> signUp() async {
+    if (!mounted) return;
+    setState(() => isLoading = true);
+
+    // التحقق من الحقول الأساسية
     if (fullNameController.text.isEmpty ||
         phoneController.text.isEmpty ||
         emailController.text.isEmpty ||
         passwordController.text.isEmpty ||
-        confirmPasswordController.text.isEmpty) {
+        confirmPasswordController.text.isEmpty ||
+        licenseNumberController.text.isEmpty ||
+        licenseExpiryController.text.isEmpty ||
+        plateNumberController.text.isEmpty ||
+        carModelController.text.isEmpty ||
+        carColorController.text.isEmpty ||
+        taxiOfficeNumberController.text.isEmpty) {
+      // التحقق من حقل رقم المكتب الجديد
       showSnackBarMessage(
           AppLocalizations.of(context).translate('fill_all_fields'),
           isError: true);
@@ -100,21 +149,27 @@ class _SignUpScreenState extends State<SignUpScreen> {
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'fullName': fullNameController.text,
-          'phone': selectedCountryCode +
-              phoneController.text, // دمج رمز الدولة مع الرقم
+          'phone': selectedCountryCode + phoneController.text, // دمج رمز الدولة
           'email': emailController.text,
           'password': passwordController.text,
           'confirmPassword': confirmPasswordController.text,
-          'role': 'User',
+          'role': 'Driver',
           'gender': selectedGender,
+          'officeIdentifier':
+              taxiOfficeNumberController.text, // استخدام قيمة الحقل النصي
+          'carModel': carModelController.text,
+          'carPlateNumber': plateNumberController.text,
+          'carColor': carColorController.text,
+          'licenseNumber': licenseNumberController.text,
+          'licenseExpiry': licenseExpiryController.text,
         }),
       );
 
-      if (!mounted) return; // تحقق من mounted بعد الـ await
+      if (!mounted) return;
 
       if (response.statusCode == 201) {
-        showSnackBarMessage(
-            AppLocalizations.of(context).translate('account_created_success'));
+        showSnackBarMessage(AppLocalizations.of(context)
+            .translate('account_created_success_driver')); // رسالة خاصة بالسائق
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const SignInScreen()),
@@ -134,7 +189,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
           isError: true);
     } finally {
       if (!mounted) return;
-      setState(() => isLoading = false); // إنهاء التحميل
+      setState(() => isLoading = false);
     }
   }
 
@@ -142,19 +197,31 @@ class _SignUpScreenState extends State<SignUpScreen> {
   Widget build(BuildContext context) {
     final localizations = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    // استخدام ألوان الثيم لضمان التوافق مع الوضع الفاتح/الداكن
     Color textColor = theme.textTheme.bodyLarge?.color ?? Colors.black;
     Color hintColor = theme.hintColor;
     Color cardColor = theme.cardColor;
     Color primaryColor = theme.primaryColor;
-    Color accentColor = theme.colorScheme.secondary; // لون ثانوي
+    Color accentColor = theme.colorScheme.secondary;
 
     return Scaffold(
-      appBar: CustomAppBar(),
       backgroundColor: theme.scaffoldBackgroundColor,
+      appBar: AppBar(
+        backgroundColor:
+            theme.appBarTheme.backgroundColor ?? theme.primaryColor,
+        foregroundColor: theme.appBarTheme.foregroundColor ??
+            Colors.white, // لون أيقونات ونصوص الـ AppBar
+        elevation: 0,
+        title: Text(localizations.translate('driver_sign_up')),
+        centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: isLoading
+              ? null
+              : () => Navigator.pop(context), // تعطيل الزر أثناء التحميل
+        ),
+      ),
       body: LayoutBuilder(
         builder: (context, constraints) {
-          // تحديد ما إذا كانت الشاشة كبيرة (غالباً للويب أو الأجهزة اللوحية)
           bool isLargeScreen = constraints.maxWidth > 600;
 
           return SingleChildScrollView(
@@ -164,10 +231,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
             child: Center(
               child: ConstrainedBox(
                 constraints: BoxConstraints(
-                  maxWidth: isLargeScreen ? 600 : double.infinity,
+                  maxWidth: isLargeScreen
+                      ? 800
+                      : double
+                          .infinity, // عرض أقصى أكبر قليلاً للسائقين بسبب الحقول الإضافية
                 ),
                 child: Container(
-                  // الحاوية الرئيسية للفورم لإعطائه مظهر البطاقة
                   padding: EdgeInsets.all(isLargeScreen ? 30 : 20),
                   decoration: BoxDecoration(
                     color: cardColor,
@@ -181,31 +250,46 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     ],
                   ),
                   child: Column(
-                    mainAxisSize:
-                        MainAxisSize.min, // لجعل العمود يأخذ أقل مساحة ممكنة
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        localizations.translate('sign_up'),
+                        localizations.translate('driver_sign_up'),
                         style: TextStyle(
                           fontSize: isLargeScreen ? 32 : 28,
                           fontWeight: FontWeight.bold,
-                          color: primaryColor, // استخدام اللون الأساسي للعنوان
+                          color: primaryColor,
                         ),
                       ),
                       SizedBox(height: isLargeScreen ? 30 : 20),
+
+                      // القسم 1: معلومات أساسية
+                      Align(
+                        alignment: localizations.isRTL
+                            ? Alignment.centerRight
+                            : Alignment.centerLeft,
+                        child: Text(
+                          localizations.translate('basic_info'),
+                          style: TextStyle(
+                            fontSize: isLargeScreen ? 22 : 18,
+                            fontWeight: FontWeight.bold,
+                            color: primaryColor,
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: isLargeScreen ? 20 : 15),
+
                       CustomTextField(
                         hintText: localizations.translate('full_name'),
                         controller: fullNameController,
                         width: double.infinity,
                         hintTextColor: hintColor,
                         textColor: textColor,
-                        prefixIcon: Icons.person, // إضافة أيقونة
+                        prefixIcon: Icons.person,
                       ),
                       const SizedBox(height: 15),
-                      // حقل رقم الهاتف مع منتقي الدولة
+
                       Row(
                         children: [
-                          // زر اختيار الدولة
                           InkWell(
                             onTap: () {
                               showCountryPicker(
@@ -233,18 +317,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             },
                             child: Container(
                               padding: const EdgeInsets.symmetric(
-                                  vertical: 16,
-                                  horizontal: 10), // تعديل الـ padding
+                                  vertical: 16, horizontal: 10),
                               decoration: BoxDecoration(
                                 color: Theme.of(context)
                                         .inputDecorationTheme
                                         .fillColor ??
-                                    Colors.grey[200], // لون خلفية حقل النص
-                                borderRadius:
-                                    BorderRadius.circular(10), // حواف دائرية
+                                    Colors.grey[200],
+                                borderRadius: BorderRadius.circular(10),
                                 border: Border.all(
-                                    color: hintColor
-                                        .withOpacity(0.5)), // حدود خفيفة
+                                    color: hintColor.withOpacity(0.5)),
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
@@ -264,7 +345,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             ),
                           ),
                           const SizedBox(width: 10),
-                          // حقل إدخال رقم الهاتف
                           Expanded(
                             child: CustomTextField(
                               hintText: localizations.translate('phone_number'),
@@ -273,7 +353,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                               hintTextColor: hintColor,
                               textColor: textColor,
                               keyboardType: TextInputType.phone,
-                              prefixIcon: Icons.phone, // أيقونة الهاتف
+                              prefixIcon: Icons.phone,
                             ),
                           ),
                         ],
@@ -286,7 +366,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         hintTextColor: hintColor,
                         textColor: textColor,
                         keyboardType: TextInputType.emailAddress,
-                        prefixIcon: Icons.email, // أيقونة البريد الإلكتروني
+                        prefixIcon: Icons.email,
                       ),
                       const SizedBox(height: 15),
                       CustomTextField(
@@ -304,7 +384,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         width: double.infinity,
                         hintTextColor: hintColor,
                         textColor: textColor,
-                        prefixIcon: Icons.lock, // أيقونة القفل
+                        prefixIcon: Icons.lock,
                       ),
                       const SizedBox(height: 15),
                       CustomTextField(
@@ -323,10 +403,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         width: double.infinity,
                         hintTextColor: hintColor,
                         textColor: textColor,
-                        prefixIcon: Icons.lock, // أيقونة القفل
+                        prefixIcon: Icons.lock,
                       ),
                       const SizedBox(height: 15),
-                      // منتقي الجنس مع تنسيق أفضل
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12),
                         decoration: BoxDecoration(
@@ -337,58 +416,147 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(color: hintColor.withOpacity(0.5)),
                         ),
-                        child: DropdownButton<String>(
-                          value: selectedGender,
-                          dropdownColor: cardColor,
-                          isExpanded: true,
-                          underline: const SizedBox(),
-                          icon: Icon(Icons.arrow_drop_down, color: textColor),
-                          style: TextStyle(color: textColor, fontSize: 16),
-                          onChanged: (String? newValue) {
-                            setState(() {
-                              selectedGender = newValue;
-                            });
-                          },
-                          items: <String>['Male', 'Female']
-                              .map<DropdownMenuItem<String>>((String value) {
-                            return DropdownMenuItem<String>(
-                              value: value,
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    value == 'Male'
-                                        ? Icons.male_outlined
-                                        : Icons.female_outlined,
-                                    color: primaryColor,
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Text(localizations
-                                      .translate(value.toLowerCase())),
-                                ],
-                              ),
-                            );
-                          }).toList(),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<String>(
+                            value: selectedGender,
+                            dropdownColor: cardColor,
+                            isExpanded: true,
+                            underline: const SizedBox(),
+                            icon: Icon(Icons.arrow_drop_down, color: textColor),
+                            style: TextStyle(color: textColor, fontSize: 16),
+                            onChanged: (String? newValue) {
+                              setState(() {
+                                selectedGender = newValue;
+                              });
+                            },
+                            items: <String>['Male', 'Female']
+                                .map<DropdownMenuItem<String>>((String value) {
+                              return DropdownMenuItem<String>(
+                                value: value,
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      value == 'Male'
+                                          ? Icons.male_outlined
+                                          : Icons.female_outlined,
+                                      color: primaryColor,
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Text(localizations
+                                        .translate(value.toLowerCase())),
+                                  ],
+                                ),
+                              );
+                            }).toList(),
+                          ),
                         ),
                       ),
+
+                      SizedBox(height: isLargeScreen ? 30 : 20),
+
+                      // القسم 2: معلومات السائق والمركبة
+                      Align(
+                        alignment: localizations.isRTL
+                            ? Alignment.centerRight
+                            : Alignment.centerLeft,
+                        child: Text(
+                          localizations.translate('driver_vehicle_info'),
+                          style: TextStyle(
+                            fontSize: isLargeScreen ? 22 : 18,
+                            fontWeight: FontWeight.bold,
+                            color: primaryColor,
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: isLargeScreen ? 20 : 15),
+
+                      CustomTextField(
+                        hintText: localizations.translate('license_number'),
+                        controller: licenseNumberController,
+                        width: double.infinity,
+                        hintTextColor: hintColor,
+                        textColor: textColor,
+                        prefixIcon: Icons.credit_card,
+                      ),
+                      const SizedBox(height: 15),
+                      GestureDetector(
+                        onTap: () => _selectLicenseExpiry(context),
+                        child: AbsorbPointer(
+                          child: CustomTextField(
+                            hintText: localizations.translate('license_expiry'),
+                            controller: licenseExpiryController,
+                            suffixIcon: Icons.calendar_today,
+                            width: double.infinity,
+                            hintTextColor: hintColor,
+                            textColor: textColor,
+                            prefixIcon: Icons.date_range,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 15),
+                      CustomTextField(
+                        hintText: localizations.translate('plate_number'),
+                        controller: plateNumberController,
+                        width: double.infinity,
+                        hintTextColor: hintColor,
+                        textColor: textColor,
+                        prefixIcon: Icons.numbers,
+                      ),
+                      const SizedBox(height: 15),
+                      CustomTextField(
+                        hintText: localizations.translate('car_model'),
+                        controller: carModelController,
+                        width: double.infinity,
+                        hintTextColor: hintColor,
+                        textColor: textColor,
+                        prefixIcon: Icons.directions_car,
+                      ),
+                      const SizedBox(height: 15),
+                      CustomTextField(
+                        hintText: localizations.translate('car_color'),
+                        controller: carColorController,
+                        width: double.infinity,
+                        hintTextColor: hintColor,
+                        textColor: textColor,
+                        prefixIcon: Icons.color_lens,
+                      ),
+                      const SizedBox(height: 15),
+
+                      // حقل رقم مكتب التاكسي (بدلاً من القائمة المنسدلة)
+                      CustomTextField(
+                        hintText: localizations.translate('taxi_office_number'),
+                        controller: taxiOfficeNumberController,
+                        width: double.infinity,
+                        hintTextColor: hintColor,
+                        textColor: textColor,
+                        keyboardType: TextInputType.number, // لأنه رقم
+                        prefixIcon: Icons.business, // أيقونة مناسبة للمكتب
+                      ),
                       const SizedBox(height: 20),
-                      // مربع اختيار سياسة الخصوصية
+
+                      // سياسة الخصوصية
                       Row(
                         children: [
                           Checkbox(
                             value: isPrivacyAccepted,
-                            onChanged: (bool? value) {
-                              setState(() {
-                                isPrivacyAccepted = value!;
-                              });
-                            },
+                            onChanged: isLoading
+                                ? null
+                                : (bool? value) {
+                                    // تعطيل الـ checkbox أثناء التحميل
+                                    setState(() {
+                                      isPrivacyAccepted = value!;
+                                    });
+                                  },
                             activeColor: primaryColor,
                           ),
                           Expanded(
                             child: GestureDetector(
                               onTap: () {
-                                // يمكنك إضافة منطق لفتح سياسة الخصوصية هنا
+                                if (isLoading)
+                                  return; // تعطيل النقر أثناء التحميل
                                 showSnackBarMessage(localizations
                                     .translate('privacy_policy_clicked'));
+                                // يمكنك إضافة منطق لفتح سياسة الخصوصية هنا
                               },
                               child: Text.rich(
                                 TextSpan(
@@ -415,54 +583,20 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       const SizedBox(height: 20),
                       CustomButton(
                         text: isLoading
-                            ? localizations.translate('loading') // "Loading..."
+                            ? localizations.translate('loading')
                             : localizations.translate('sign_up'),
                         width: double.infinity,
-                        onPressed: isLoading || !isPrivacyAccepted
-                            ? null
-                            : signUp, // تعطيل الزر أثناء التحميل أو إذا لم يتم قبول السياسة
+                        onPressed:
+                            isLoading || !isPrivacyAccepted ? null : signUp,
                         buttonColor: primaryColor,
                       ),
                       const SizedBox(height: 20),
-                      // رابط لتسجيل السائقين
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        child: TextButton(
-                          onPressed: isLoading
-                              ? null
-                              : () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (context) =>
-                                            const DriverSignUpScreen()),
-                                  );
-                                },
-                          child: Text.rich(
-                            TextSpan(
-                              text: localizations.translate('are_you_driver'),
-                              style: TextStyle(color: textColor),
-                              children: [
-                                TextSpan(
-                                  text: localizations
-                                      .translate('sign_up_as_driver'),
-                                  style: TextStyle(
-                                    color: accentColor, // لون مميز للرابط
-                                    fontWeight: FontWeight.bold,
-                                    decoration: TextDecoration.underline,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                      // رابط لتسجيل الدخول
                       Center(
                         child: TextButton(
                           onPressed: isLoading
                               ? null
                               : () {
+                                  // تعطيل الزر أثناء التحميل
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
@@ -479,7 +613,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                 TextSpan(
                                   text: localizations.translate('sign_in'),
                                   style: TextStyle(
-                                    color: accentColor, // لون مميز للرابط
+                                    color: accentColor,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
@@ -488,10 +622,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           ),
                         ),
                       ),
-                      SizedBox(
-                          height: isLargeScreen
-                              ? 20
-                              : 0), // مسافة إضافية في الأسفل للشاشات الكبيرة
+                      SizedBox(height: isLargeScreen ? 20 : 0),
                     ],
                   ),
                 ),

@@ -16,7 +16,6 @@ router.post('/', async (req, res) => {
 router.get('/', async (req, res) => {
   try {
     const userId = req.query.userId;
-    const role = req.query.role || 'Client'; // أو 'Driver'
 
     if (!userId) {
       return res.status(400).json({ success: false, error: 'User ID is required' });
@@ -24,7 +23,6 @@ router.get('/', async (req, res) => {
 
     const notifications = await notificationController.getUserNotifications(
       userId,
-      role,
       req.query
     );
 
