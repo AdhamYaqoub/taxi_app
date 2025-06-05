@@ -54,8 +54,31 @@ const userSchema = new mongoose.Schema({
   userId: {
     type: Number,
     unique: true
+  },
+  isVerified: {
+    type: Boolean,
+    default: true
+  },
+  verificationToken: {
+    type: String,
+    default: null
+  },
+  verificationTokenExpires: {
+    type: Date,
+    default: null
+  },
+
+    resetPasswordToken: {
+    type: String,
+    default: null
+  },
+  resetPasswordExpires: {
+    type: Date,
+    default: null
   }
-}, { 
+}, 
+
+{ 
   timestamps: true,
   toJSON: { virtuals: true },
   toObject: { virtuals: true }

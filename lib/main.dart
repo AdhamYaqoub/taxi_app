@@ -12,7 +12,7 @@ import 'package:taxi_app/theme/theme.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  dotenv.load(); // تحميل المتغيرات من .env
+  dotenv.load();
   runApp(const MyApp());
 }
 
@@ -47,7 +47,7 @@ class MyApp extends StatelessWidget {
             ],
             home: SplashScreen(),
             routes: {
-              '/home': (context) => HomePage(), // ضيف هذه السطر
+              '/home': (context) => HomePage(),
             },
           );
         },

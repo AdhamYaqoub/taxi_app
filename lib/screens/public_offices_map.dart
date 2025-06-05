@@ -27,7 +27,7 @@ class _PublicTaxiOfficesMapState extends State<PublicTaxiOfficesMap> {
   Future<void> _fetchOffices() async {
     try {
       final response = await ApiService.getPublic(
-        endpoint: '/api/map/offices',
+        endpoint: '/api/admin/offices',
       );
 
       print('Raw API Response: $response'); // إضافة هذه السطر

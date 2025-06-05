@@ -61,9 +61,6 @@ class _DriverDashboardState extends State<DriverDashboard> {
       ),
     ];
 
-    // Titles need to be initialized after context is available for localization
-    // For now, we'll use placeholder strings and update them in build if needed,
-    // or rely on _buildAppBarTitle which will use local.translate
     _pageTitles = [
       'Home',
       'Trip Requests',
@@ -76,8 +73,8 @@ class _DriverDashboardState extends State<DriverDashboard> {
 
   Future<void> _verifyAndLoadData() async {
     try {
-      // Access verification
-      final accessResponse = await http.get(
+      // --- Step 1: Verify user's basic info (isLoggedIn and role) ---
+      final userAccessResponse = await http.get(
         Uri.parse('${dotenv.env['BASE_URL']}/api/users/${widget.userId}'),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
@@ -87,19 +84,65 @@ class _DriverDashboardState extends State<DriverDashboard> {
 
       if (!mounted) return;
 
-      if (accessResponse.statusCode != 200) {
-        _handleAccessDenied();
+      if (userAccessResponse.statusCode != 200) {
+        _handleAccessDenied(
+            AppLocalizations.of(context).translate('access_denied_general'));
         return;
       }
 
-      final userData = jsonDecode(accessResponse.body);
-      // Check if user exists and is logged in
-      if (userData['user'] == null || userData['user']?['isLoggedIn'] != true) {
-        _handleAccessDenied();
+      final userData = jsonDecode(userAccessResponse.body);
+      print('User data from /api/users: $userData'); // Debugging user data
+
+      final userDetails = userData['user'];
+
+      // Check if user object exists and is logged in
+      if (userDetails == null || userDetails['isLoggedIn'] != true) {
+        _handleAccessDenied(
+            AppLocalizations.of(context).translate('login_required_driver'));
         return;
       }
 
-      // Fetch driver data if verification is successful
+      final String? userRole = userDetails['role'];
+
+      // Check if the user's role is 'Driver'
+      if (userRole != 'Driver') {
+        _handleAccessDenied(AppLocalizations.of(context)
+            .translate('access_denied_not_driver')); // Add this translation key
+        return;
+      }
+
+      // --- Step 2: If user is a logged-in Driver, fetch driver-specific details (including isAvailable) ---
+      // This calls the new backend endpoint designed to return driver status
+      final driverStatusResponse = await http.get(
+        Uri.parse(
+            '${dotenv.env['BASE_URL']}/api/drivers/status/${widget.userId}'), // ✅ NEW ENDPOINT
+        headers: {'Authorization': 'Bearer ${widget.token}'},
+      );
+
+      if (!mounted) return;
+
+      if (driverStatusResponse.statusCode != 200) {
+        // If driver details cannot be fetched, it's an access issue or missing driver data
+        _handleAccessDenied(AppLocalizations.of(context)
+            .translate('driver_details_not_found')); // Add this translation key
+        return;
+      }
+
+      final driverData = jsonDecode(driverStatusResponse.body);
+      print(
+          'Driver data from /api/drivers/status: $driverData'); // Debugging driver-specific data
+
+      // Now check if the driver is available from the driverData
+      final bool isAvailable = driverData['isAvailable'] == true;
+
+      if (!isAvailable) {
+        _handleAccessDenied(AppLocalizations.of(context)
+            .translate('driver_not_available')); // Add this translation key
+        return;
+      }
+
+      // All checks passed: user exists, is logged in, is a Driver, and is available
+      // Load full name (can be optimized if driverData already includes it reliably)
       await _loadDriverData();
 
       setState(() {
@@ -110,7 +153,8 @@ class _DriverDashboardState extends State<DriverDashboard> {
       if (kDebugMode) {
         print('Error during verification: $e');
       }
-      _handleAccessDenied();
+      _handleAccessDenied(
+          AppLocalizations.of(context).translate('error_verifying_access'));
     }
   }
 
@@ -138,23 +182,20 @@ class _DriverDashboardState extends State<DriverDashboard> {
     }
   }
 
-  void _handleAccessDenied() {
+  void _handleAccessDenied(String message) {
     if (!mounted) return;
 
-    // Use a Future.delayed to ensure dialog is shown after build context is stable
     Future.delayed(Duration.zero, () {
       showDialog(
         context: context,
         barrierDismissible: false,
         builder: (context) => AlertDialog(
           title: Text(AppLocalizations.of(context).translate('access_denied')),
-          content: Text(AppLocalizations.of(context)
-              .translate('login_required_driver')), // Added specific message
+          content: Text(message),
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop(); // Close the AlertDialog
-                // Pop all routes until the first one (login screen)
+                Navigator.of(context).pop();
                 Navigator.of(context).popUntil((route) => route.isFirst);
               },
               child: Text(AppLocalizations.of(context).translate('ok')),
@@ -175,11 +216,9 @@ class _DriverDashboardState extends State<DriverDashboard> {
             CircularProgressIndicator(
               strokeWidth: 4,
               valueColor: AlwaysStoppedAnimation<Color>(
-                  Theme.of(context).colorScheme.primary), // Use theme color
-              backgroundColor: Theme.of(context)
-                  .colorScheme
-                  .primary
-                  .withOpacity(0.2), // Lighter background
+                  Theme.of(context).colorScheme.primary),
+              backgroundColor:
+                  Theme.of(context).colorScheme.primary.withOpacity(0.2),
             ),
             const SizedBox(height: 20),
             Text(
@@ -204,7 +243,6 @@ class _DriverDashboardState extends State<DriverDashboard> {
     );
   }
 
-  // Define which pages are part of the bottom navigation bar
   final List<int> _bottomNavBarPagesIndices = [0, 1, 2, 3, 4];
 
   @override
@@ -217,7 +255,6 @@ class _DriverDashboardState extends State<DriverDashboard> {
     final isLargeScreen = MediaQuery.of(context).size.width > _kWebBreakpoint;
     final local = AppLocalizations.of(context);
 
-    // Update page titles with localization
     _pageTitles = [
       local.translate('home'),
       local.translate('trip_requests'),
@@ -231,9 +268,8 @@ class _DriverDashboardState extends State<DriverDashboard> {
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: theme.colorScheme.primary,
-        foregroundColor: theme.colorScheme.onPrimary, // Icon/text color
-        elevation:
-            isLargeScreen ? 0 : 4, // No elevation on web, subtle on mobile
+        foregroundColor: theme.colorScheme.onPrimary,
+        elevation: isLargeScreen ? 0 : 4,
         title: Text(
           _pageTitles[_selectedIndex],
           style: theme.textTheme.titleLarge?.copyWith(
@@ -244,12 +280,12 @@ class _DriverDashboardState extends State<DriverDashboard> {
         actions: [
           NotificationIcon(userId: widget.userId),
           const SizedBox(width: 8),
-          if (isLargeScreen) // Settings icon only on web app bar
+          if (isLargeScreen)
             IconButton(
               icon: Icon(LucideIcons.settings,
                   color: theme.colorScheme.onPrimary),
               tooltip: local.translate('settings'),
-              onPressed: () => _navigateToPage(5), // Navigate to Settings page
+              onPressed: () => _navigateToPage(5),
             ),
           const SizedBox(width: 8),
         ],
@@ -272,8 +308,7 @@ class _DriverDashboardState extends State<DriverDashboard> {
 
   Widget _buildMobileDrawer(ThemeData theme, AppLocalizations local) {
     return Drawer(
-      backgroundColor:
-          theme.colorScheme.background, // Lighter background for drawer
+      backgroundColor: theme.colorScheme.background,
       child: SafeArea(
         child: ListView(
           padding: EdgeInsets.zero,
@@ -312,26 +347,24 @@ class _DriverDashboardState extends State<DriverDashboard> {
 
   Widget _buildDesktopSidebar(ThemeData theme, AppLocalizations local) {
     return SizedBox(
-      width: 280, // Slightly wider sidebar for desktop
+      width: 280,
       child: Container(
         decoration: BoxDecoration(
-          color: theme
-              .colorScheme.primary, // Primary color for the sidebar background
+          color: theme.colorScheme.primary,
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.05),
               blurRadius: 15,
-              offset: const Offset(3, 0), // Shadow to the right
+              offset: const Offset(3, 0),
             ),
           ],
         ),
         child: Column(
           children: [
-            // Sidebar header (same content for consistency)
             _buildSidebarHeaderContent(theme, local, isDesktop: true),
             Expanded(
               child: ListView(
-                padding: EdgeInsets.zero, // Remove default padding
+                padding: EdgeInsets.zero,
                 children: [
                   _buildSidebarItem(
                     local.translate('home'),
@@ -396,7 +429,6 @@ class _DriverDashboardState extends State<DriverDashboard> {
         Text(
           "TaxiGo Driver",
           style: theme.textTheme.headlineSmall?.copyWith(
-            // Larger, more prominent
             color: theme.colorScheme.onPrimary,
             fontWeight: FontWeight.bold,
           ),
@@ -413,7 +445,7 @@ class _DriverDashboardState extends State<DriverDashboard> {
             ),
           ),
         const SizedBox(height: 15),
-        if (isDesktop) // Only show divider for desktop sidebar header
+        if (isDesktop)
           Divider(
             color: theme.colorScheme.onPrimary.withOpacity(0.2),
             thickness: 1,
@@ -429,16 +461,16 @@ class _DriverDashboardState extends State<DriverDashboard> {
     IconData icon,
     int index,
     ThemeData theme, {
-    bool isDrawer = false, // To handle Drawer close behavior
+    bool isDrawer = false,
   }) {
     final bool isSelected = _selectedIndex == index;
     return Material(
-      color: Colors.transparent, // Ensure no default material color
+      color: Colors.transparent,
       child: InkWell(
         onTap: () {
           setState(() => _selectedIndex = index);
           if (isDrawer) {
-            Navigator.of(context).pop(); // Close the drawer on item tap
+            Navigator.of(context).pop();
           }
         },
         child: Container(
@@ -446,10 +478,9 @@ class _DriverDashboardState extends State<DriverDashboard> {
           padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
           decoration: BoxDecoration(
             color: isSelected
-                ? theme.colorScheme.secondary
-                    .withOpacity(0.2) // Highlight color
+                ? theme.colorScheme.secondary.withOpacity(0.2)
                 : Colors.transparent,
-            borderRadius: BorderRadius.circular(10), // Slightly rounded corners
+            borderRadius: BorderRadius.circular(10),
             border: isSelected
                 ? Border.all(
                     color: theme.colorScheme.secondary.withOpacity(0.4),
@@ -461,9 +492,8 @@ class _DriverDashboardState extends State<DriverDashboard> {
               Icon(
                 icon,
                 color: isSelected
-                    ? theme.colorScheme.secondary // Icon color for selected
-                    : theme.colorScheme.onPrimary
-                        .withOpacity(0.8), // Default icon color
+                    ? theme.colorScheme.secondary
+                    : theme.colorScheme.onPrimary.withOpacity(0.8),
                 size: 24,
               ),
               const SizedBox(width: 16),
@@ -471,7 +501,6 @@ class _DriverDashboardState extends State<DriverDashboard> {
                 child: Text(
                   title,
                   style: theme.textTheme.titleMedium?.copyWith(
-                    // Slightly larger text
                     color: isSelected
                         ? theme.colorScheme.secondary
                         : theme.colorScheme.onPrimary,
@@ -493,7 +522,7 @@ class _DriverDashboardState extends State<DriverDashboard> {
       child: InkWell(
         onTap: () {
           if (isDrawer) {
-            Navigator.of(context).pop(); // Close drawer before navigating
+            Navigator.of(context).pop();
           }
           Navigator.push(
             context,
@@ -514,13 +543,13 @@ class _DriverDashboardState extends State<DriverDashboard> {
           ),
           child: Row(
             children: [
-              Icon(LucideIcons.messageSquare, // More appropriate icon for chat
+              Icon(LucideIcons.messageSquare,
                   color: theme.colorScheme.onPrimary.withOpacity(0.8),
                   size: 24),
               const SizedBox(width: 16),
               Expanded(
                 child: Text(
-                  local.translate('chat'), // Translate 'الدردشة'
+                  local.translate('chat'),
                   style: theme.textTheme.titleMedium?.copyWith(
                     color: theme.colorScheme.onPrimary,
                     fontWeight: FontWeight.w500,
@@ -535,14 +564,11 @@ class _DriverDashboardState extends State<DriverDashboard> {
   }
 
   Widget _buildBottomNavBar(ThemeData theme, AppLocalizations local) {
-    // Find the current index within the bottom navigation bar's page subset
     final currentBottomNavIndex =
         _bottomNavBarPagesIndices.indexOf(_selectedIndex);
 
     return BottomNavigationBar(
-      currentIndex: currentBottomNavIndex == -1
-          ? 0
-          : currentBottomNavIndex, // Default to 0 if not in list
+      currentIndex: currentBottomNavIndex == -1 ? 0 : currentBottomNavIndex,
       onTap: (index) {
         setState(() {
           _selectedIndex = _bottomNavBarPagesIndices[index];
@@ -550,10 +576,8 @@ class _DriverDashboardState extends State<DriverDashboard> {
       },
       type: BottomNavigationBarType.fixed,
       backgroundColor: theme.colorScheme.primary,
-      selectedItemColor:
-          theme.colorScheme.onPrimary, // Selected item text/icon color
-      unselectedItemColor:
-          theme.colorScheme.onPrimary.withOpacity(0.6), // Unselected
+      selectedItemColor: theme.colorScheme.onPrimary,
+      unselectedItemColor: theme.colorScheme.onPrimary.withOpacity(0.6),
       selectedLabelStyle: theme.textTheme.labelSmall?.copyWith(
         fontWeight: FontWeight.bold,
         color: theme.colorScheme.onPrimary,

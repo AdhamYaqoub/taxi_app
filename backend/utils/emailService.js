@@ -4,6 +4,8 @@ const fs = require('fs');
 const handlebars = require('handlebars');
 
 const sendWelcomeEmail = async (user, roleSpecificData = {}) => {
+    if (!user.isVerified) return; // لا ترسل إذا لم يتم التحقق
+
   const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
