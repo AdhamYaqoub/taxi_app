@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
-import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
@@ -476,46 +475,24 @@ class _LocationPickerState extends State<LocationPicker> {
               elevation: 4,
               child: Padding(
                 padding: const EdgeInsets.all(8.0),
-                child: TypeAheadField(
-                  textFieldConfiguration: TextFieldConfiguration(
-                    controller: _searchController,
-                    decoration: InputDecoration(
-                      hintText: 'ابحث عن موقع...',
-                      prefixIcon: const Icon(Icons.search),
-                      suffixIcon: IconButton(
-                        icon: const Icon(Icons.clear),
-                        onPressed: () {
-                          _searchController.clear();
-                        },
+                child: Column(
+                  children: [
+                    TextField(
+                      controller: _searchController,
+                      decoration: InputDecoration(
+                        hintText: 'ابحث عن موقع...',
+                        prefixIcon: const Icon(Icons.search),
+                        suffixIcon: IconButton(
+                          icon: const Icon(Icons.clear),
+                          onPressed: () {
+                            _searchController.clear();
+                          },
+                        ),
+                        border: InputBorder.none,
                       ),
-                      border: InputBorder.none,
+                      onSubmitted: (value) => _searchLocation(value),
                     ),
-                  ),
-                  suggestionsCallback: (pattern) async {
-                    if (pattern.isEmpty) return [];
-                    final response = await http.get(
-                      Uri.parse(
-                        'https://nominatim.openstreetmap.org/search?q=$pattern&format=json&polygon=1&addressdetails=1',
-                      ),
-                    );
-                    if (response.statusCode == 200) {
-                      return json.decode(response.body) as List<dynamic>;
-                    }
-                    return [];
-                  },
-                  itemBuilder: (context, suggestion) {
-                    return ListTile(
-                      leading: const Icon(Icons.location_on),
-                      title: Text(suggestion['display_name']),
-                    );
-                  },
-                  onSuggestionSelected: (suggestion) {
-                    final lat = double.parse(suggestion['lat']);
-                    final lon = double.parse(suggestion['lon']);
-                    _updateLocation(LatLng(lat, lon));
-                    _searchController.text = suggestion['display_name'];
-                    _address = suggestion['display_name'];
-                  },
+                  ],
                 ),
               ),
             ),
@@ -567,5 +544,41 @@ class _LocationPickerState extends State<LocationPicker> {
         ],
       ),
     );
+  }
+
+  Future<void> _searchLocation(String query) async {
+    if (query.isEmpty) return;
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final response = await http.get(
+        Uri.parse(
+          'https://nominatim.openstreetmap.org/search?format=json&q=$query',
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data.isNotEmpty) {
+          final firstResult = data[0];
+          final lat = double.parse(firstResult['lat']);
+          final lon = double.parse(firstResult['lon']);
+
+          _updateLocation(LatLng(lat, lon));
+          _address = firstResult['display_name'];
+          _searchController.text = _address;
+        }
+      }
+    } catch (e) {
+      // يمكنك إضافة عرض رسالة خطأ هنا إذا لزم الأمر
+      print('فشل في البحث: $e');
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 }
