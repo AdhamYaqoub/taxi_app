@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:taxi_app/screens/admin.dart';
 import 'package:taxi_app/screens/driver_dashboard.dart'; // صفحة السائق
 import 'package:taxi_app/screens/manegar.dart';
+import 'package:taxi_app/screens/office_manage/office_manager_dashboard.dart';
 import 'package:taxi_app/screens/signup_screen.dart';
 import 'package:taxi_app/screens/user.dart';
 import 'package:taxi_app/widgets/CustomAppBar.dart';
@@ -81,8 +82,9 @@ class _SignInScreenState extends State<SignInScreen> {
             Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(
-                    builder: (_) => OfficeManagerPage(
-                          officeId: '',
+                    builder: (_) => OfficeManagerDashboard(
+                          userId: user['userId'],
+                          token: '',
                         )));
           } else {
             showError("Invalid role received!");
