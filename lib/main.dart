@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -9,10 +10,15 @@ import 'package:taxi_app/providers/language_provider.dart';
 import 'package:taxi_app/screens/homepage.dart';
 import 'package:taxi_app/screens/splash_screen.dart';
 import 'package:taxi_app/theme/theme.dart';
+// import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:firebase_core/firebase_core.dart';
+// import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  dotenv.load();
+
+  // await Firebase.initializeApp();
+  await dotenv.load(fileName: ".env"); // Load environment variables
   runApp(const MyApp());
 }
 
