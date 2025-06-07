@@ -94,7 +94,7 @@ class SettingsPage extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const ChangePasswordPage(),
+                        builder: (context) => ChangePasswordPage(userId),
                       ),
                     );
                   },

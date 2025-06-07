@@ -246,3 +246,26 @@ exports.updateDriverProfile = async (req, res) => {
     });
   }
 };
+
+ exports.getDriverStatusByUserId = async (req, res) => {
+  try {
+    const userId = req.params.userId; // هذا هو الـ userId الرقمي من موديل User
+
+    // ابحث عن وثيقة السائق التي ترتبط بهذا الـ userId الرقمي
+    const driver = await Driver.findOne({ driverUserId: userId }).select('isAvailable fullName');
+
+    if (!driver) {
+      return res.status(404).json({ message: 'Driver details not found for this user ID.' });
+    }
+
+    // إرسال isAvailable وحقول أخرى قد تحتاجها في الـ frontend
+    res.json({
+      isAvailable: driver.isAvailable,
+      fullName: driver.fullName // يمكنك إرجاع الاسم الكامل للسائق إذا أردت
+    });
+
+  } catch (error) {
+    console.error("Error fetching driver status by user ID:", error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};

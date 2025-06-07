@@ -20,6 +20,7 @@ import 'package:taxi_app/language/localization.dart';
 import 'package:taxi_app/models/driver.dart';
 import 'package:taxi_app/services/drivers_api.dart';
 import 'package:taxi_app/services/taxi_office_api.dart';
+import 'package:taxi_app/widgets/add_driver_dialog.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../services/driver_detail_page.dart';
 
@@ -62,6 +63,17 @@ class _OfficeManagerPageState extends State<OfficeDriversManagementPage> {
         errorMessage = e.toString();
       });
     }
+  }
+
+  void _showAddDriverDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AddDriverDialog(
+        officeId: widget.officeId,
+        token: widget.token,
+        onDriverAdded: _loadDrivers, // سيتم استدعاء _loadDrivers بعد الإضافة
+      ),
+    );
   }
 
   Future<void> _toggleDriverStatus(Driver driver) async {
@@ -208,6 +220,12 @@ class _OfficeManagerPageState extends State<OfficeDriversManagementPage> {
             ),
           ],
         ),
+      ),
+      floatingActionButton: FloatingActionButton.small(
+        onPressed: _showAddDriverDialog,
+        backgroundColor: theme.colorScheme.primary,
+        tooltip: 'إضافة سائق جديد',
+        child: const Icon(Icons.add, size: 18),
       ),
     );
   }

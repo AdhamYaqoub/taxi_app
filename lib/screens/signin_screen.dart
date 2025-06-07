@@ -35,7 +35,6 @@ class _SignInScreenState extends State<SignInScreen> {
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
         'email': emailController.text.trim(),
-        'phone': emailController.text.trim(),
         'password': passwordController.text.trim(),
       }),
     );

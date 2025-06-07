@@ -40,6 +40,8 @@ router.put(
 );
 
 router.put('/:driverId', driverController.updateDriverProfile);
+router.get('/status/:userId', driverController.getDriverStatusByUserId); // ✅ هذا هو الراوت الجديد
+
 
 
 module.exports = router;
