@@ -50,11 +50,12 @@ Future<void> main() async {
     await Firebase.initializeApp();
     
     // Request notification permissions
-    await FirebaseMessaging.instance.requestPermission(
-      alert: true,
-      badge: true,
-      sound: true,
-    );
+    // await FirebaseMessaging.instance.requestPermission(
+    //   alert: true,
+    //   badge: true,
+    //   sound: true,
+    // );
+  await dotenv.load(fileName: ".env");
 
     // Set background message handler
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
@@ -63,7 +64,6 @@ Future<void> main() async {
     _setupMobileFCM();
   }
 
-  await dotenv.load(fileName: ".env");
 
   runApp(const MyApp());
 }

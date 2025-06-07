@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
@@ -40,6 +42,37 @@ class _SignInScreenState extends State<SignInScreen> {
       }),
     );
 
+  String? fcmToken;
+
+        // ✅ طلب إذن الإشعارات وتوليد التوكن
+        NotificationSettings settings =
+            await FirebaseMessaging.instance.requestPermission(
+          alert: true,
+          badge: true,
+          sound: true,
+        );
+
+ if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+          if (kIsWeb) {
+            fcmToken = await FirebaseMessaging.instance.getToken(
+              vapidKey:
+                  "BGZEIrp8Oc46VWd92gmyEdP3UnQkfOOmAMVpRKSey09EkKn66cKNPnApwTMA7j49E2y-0QggAzx1J2qhiY418xE",
+            );
+          } else {
+            fcmToken = await FirebaseMessaging.instance.getToken();
+          }
+
+          print("✅ FCM Token: $fcmToken");
+        } else {
+          print("❌ Notification permission not granted");
+          fcmToken = "";
+        }
+           final credentials = {
+          'email': emailController.text,
+          'password': passwordController.text,
+          'fcmToken': fcmToken ?? "",
+        };
+        
     setState(() => isLoading = false);
 
     if (response.statusCode == 200) {

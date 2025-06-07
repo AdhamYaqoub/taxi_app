@@ -6,7 +6,7 @@ import 'package:taxi_app/models/taxi_office.dart';
 import 'package:taxi_app/models/driver.dart';
 
 class TaxiOfficeApi {
-  static final String _baseUrl = '${dotenv.env['BASE_URL']}api';
+  static final String _baseUrl = '${dotenv.env['BASE_URL']}/api';
 
   static Future<void> createDriver({
     required int
