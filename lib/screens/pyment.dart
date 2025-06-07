@@ -148,7 +148,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
       isScrollControlled: true,
       builder: (context) => Container(
         height: MediaQuery.of(context).size.height * 0.75,
-        child: SmileToPayScreen(),
+        // child: SmileToPayScreen(),
       ),
     );
   }
