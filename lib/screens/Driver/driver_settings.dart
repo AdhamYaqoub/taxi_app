@@ -9,6 +9,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart'; // Added for environment va
 import 'package:shared_preferences/shared_preferences.dart'; // Added for shared preferences
 import 'package:taxi_app/screens/Driver/edit_driver_profile_page.dart';
 import 'package:taxi_app/screens/homepage.dart'; // Added for navigation to HomePage
+import 'package:taxi_app/screens/Driver/change_password_page.dart';
 
 class AuthService {
   static Future<bool> logoutUser(int userId) async {
@@ -171,8 +172,11 @@ class _DriverSettingsPageState extends State<DriverSettingsPage> {
                   'change_password',
                   LucideIcons.key,
                   () {
-                    // TODO: Implement navigation to driver change password page
-                  },
+                      Navigator.of(context).push(
+                          MaterialPageRoute(
+                             builder: (_) => ChangePasswordPage(driverId: widget.driverId),
+                      ),
+                       );                  },
                 ),
               ]),
 
