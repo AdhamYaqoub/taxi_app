@@ -7,6 +7,68 @@ import 'package:taxi_app/models/driver.dart';
 class TaxiOfficeApi {
   static final String _baseUrl = 'http://localhost:5000/api';
 
+  static Future<void> createDriver({
+    required int
+        officeId, // تم تغيير الاسم هنا ليتوافق مع الـ backend (req.params.id)
+    required String token,
+    required String fullName,
+    required String email,
+    required String phone,
+    required String gender,
+    required String carModel,
+    required String carPlateNumber,
+    String? carColor,
+    int? carYear,
+    required String licenseNumber,
+    required String licenseExpiry, // يتوقع أن تكون ISO 8601 String
+    String? profileImageUrl,
+  }) async {
+    final url = Uri.parse('$_baseUrl/offices/$officeId/drivers');
+
+    final Map<String, dynamic> body = {
+      'fullName': fullName,
+      'email': email,
+      'phone': phone,
+      'gender': gender,
+      'carModel': carModel,
+      'carPlateNumber': carPlateNumber,
+      'carColor': carColor,
+      'carYear': carYear,
+      'licenseNumber': licenseNumber,
+      'licenseExpiry': licenseExpiry,
+      if (profileImageUrl != null) 'profileImageUrl': profileImageUrl,
+    };
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode(body),
+      );
+
+      if (response.statusCode == 201) {
+        // تم إنشاء السائق بنجاح
+        print('Driver created successfully: ${response.body}');
+        // يمكنك تحليل الجسم إذا كنت بحاجة إلى أي بيانات من الاستجابة
+        // final responseData = jsonDecode(response.body);
+      } else {
+        // التعامل مع الأخطاء بناءً على رمز الحالة
+        final responseBody = jsonDecode(response.body);
+        final message = responseBody['message'] ?? 'حدث خطأ غير معروف.';
+        print(
+            'Error creating driver (Status ${response.statusCode}): $message');
+        throw Exception(message);
+      }
+    } catch (e) {
+      print('Caught exception during driver creation: $e');
+      // قم بإعادة رمي الخطأ ليتم التقاطه بواسطة واجهة المستخدم
+      throw Exception('فشل في الاتصال بالخادم أو إنشاء السائق: $e');
+    }
+  }
+
   // الحصول على سائقين المكتب
   static Future<List<Driver>> getOfficeDrivers(
       int officeId, String token) async {

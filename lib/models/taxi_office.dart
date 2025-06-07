@@ -27,15 +27,13 @@ class TaxiOffice {
 
   factory TaxiOffice.fromJson(Map<String, dynamic> json) {
     return TaxiOffice(
-      id: json['id'] ?? json['_id'] ?? '', // تأمين ضد القيم الفارغة
+      id: json['id'] ?? json['_id'] ?? '',
       officeId: json['officeId'] as int?,
       officeIdentifier: json['officeIdentifier'] as String?,
       name: json['name'] ?? 'غير معروف',
-      location: OfficeLocation.fromJson(json), // تم التعديل هنا
+      location: OfficeLocation.fromJson(json), // نمرر json كله
       contact: OfficeContact.fromJson(json['contact'] ?? {}),
-      phone: json['phone']?.toString() ??
-          'غير متوفر', // تحويل لأString إذا كان رقمًا
-
+      phone: (json['contact']?['phone'] ?? 'غير متوفر').toString(),
       workingHours: json['workingHours'] != null
           ? WorkingHours.fromJson(json['workingHours'])
           : null,
@@ -66,10 +64,15 @@ class OfficeLocation {
   });
 
   factory OfficeLocation.fromJson(Map<String, dynamic> json) {
+    // الحصول على الإحداثيات من المصفوفة
+    final coords = (json['location']?['coordinates'] as List?) ?? [];
+    final lat = coords.isNotEmpty ? coords[1].toDouble() : 0.0; // خط العرض
+    final lng = coords.isNotEmpty ? coords[0].toDouble() : 0.0; // خط الطول
+
     return OfficeLocation(
-      latitude: (json['coordinates']?['latitude'] ?? 0.0).toDouble(),
-      longitude: (json['coordinates']?['longitude'] ?? 0.0).toDouble(),
-      address: json['address'] ?? 'غير معروف',
+      latitude: lat,
+      longitude: lng,
+      address: json['location']?['address'] ?? 'غير معروف',
     );
   }
 }

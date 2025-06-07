@@ -64,6 +64,7 @@ Future<void> main() async {
   }
 
   await dotenv.load(fileName: ".env");
+
   runApp(const MyApp());
 }
 
@@ -186,7 +187,7 @@ class MyApp extends StatelessWidget {
             ],
             home: SplashScreen(),
             routes: {
-              '/home': (context) => HomePage(), // ضيف هذه السطر
+              '/home': (context) => HomePage(),
             },
           );
         },

@@ -66,7 +66,10 @@ class _OfficeManagerDashboardState extends State<OfficeManagerDashboard> {
       // OfficeTripsOverviewPage(officeId: widget.userId),
       // OfficeReportsPage(officeId: widget.userId),
       SupportPage(), // General Support (could be specific for office manager)
-      OfficeManagerSettingsPage(officeId: widget.userId), // Settings
+      OfficeManagerSettingsPage(
+        userId: widget.userId,
+        token: '',
+      ), // Settings
     ];
 
     _pageTitles = [
