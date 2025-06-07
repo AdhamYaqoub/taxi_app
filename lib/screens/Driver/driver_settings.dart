@@ -172,11 +172,12 @@ class _DriverSettingsPageState extends State<DriverSettingsPage> {
                   'change_password',
                   LucideIcons.key,
                   () {
-                      Navigator.of(context).push(
-                          MaterialPageRoute(
-                             builder: (_) => ChangePasswordPage(driverId: widget.driverId),
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => ChangePasswordPage(widget.driverId),
                       ),
-                       );                  },
+                    );
+                  },
                 ),
               ]),
 
