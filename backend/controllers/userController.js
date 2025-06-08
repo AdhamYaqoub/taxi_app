@@ -292,7 +292,7 @@ const createUser = async (req, res) => {
 
 
 const loginUser = async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, fcmToken } = req.body;
 
   // تحقق من الحقول
   if (!email || !password) {
@@ -325,9 +325,12 @@ const loginUser = async (req, res) => {
       { expiresIn: process.env.JWT_EXPIRES_IN || '1d' }
     );
 
-    // حفظ التوكن وحالة تسجيل الدخول
+    // حفظ التوكن وحالة تسجيل الدخول وFCM token
     user.token = token;
     user.isLoggedIn = true;
+    if (fcmToken) {
+      user.fcmToken = fcmToken;
+    }
     await user.save();
 
     // إزالة كلمة المرور من الرد
