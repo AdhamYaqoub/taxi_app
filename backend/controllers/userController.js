@@ -33,7 +33,7 @@ async function sendVerificationEmail(user) {
   });
 
   const verificationUrl = `${process.env.APP_URL}/verify-email?token=${token}`;
-
+console.log("Verification URL:", verificationUrl); // للتأكد من صحة الرابط
   const mailOptions = {
     from: process.env.EMAIL,
     to: user.email,

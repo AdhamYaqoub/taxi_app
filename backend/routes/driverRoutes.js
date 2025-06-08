@@ -2,8 +2,8 @@
 const express = require('express');
 const driverController = require('../controllers/driverController');
 const upload = require('../middleware/multerCloudinary');
-const Driver = require('../models/driverModel');
-const TaxiOffice = require('../models/taxiOfficeModel');
+const Driver = require('../models/Driver');
+const TaxiOffice = require('../models/TaxiOffice');
 
 // قد تحتاج إلى middleware للتحقق من المصادقة في مسارات أخرى
 // const { protect, isUser } = require('../middleware/authMiddleware');
