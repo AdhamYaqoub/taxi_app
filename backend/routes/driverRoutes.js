@@ -2,6 +2,8 @@
 const express = require('express');
 const driverController = require('../controllers/driverController');
 const upload = require('../middleware/multerCloudinary');
+const Driver = require('../models/driverModel');
+const TaxiOffice = require('../models/taxiOfficeModel');
 
 // قد تحتاج إلى middleware للتحقق من المصادقة في مسارات أخرى
 // const { protect, isUser } = require('../middleware/authMiddleware');
@@ -47,5 +49,37 @@ const { updateDriverLocation } = require('../controllers/driverLocationControlle
 // راوت لتحديث موقع السائق
 // يجب أن يكون هذا الراوت محمياً بـ authMiddleware
 router.post('/:driverUserId/location', updateDriverLocation);
+
+// Get office manager for a specific driver
+router.get('/:driverId/manager', async (req, res) => {
+  try {
+    const driverId = req.params.driverId;
+    
+    // Find the driver and get their office ID
+    const driver = await Driver.findOne({ driverUserId: driverId });
+    if (!driver) {
+      return res.status(404).json({ message: 'Driver not found' });
+    }
+
+    // Find the office and get the manager's information
+    const office = await TaxiOffice.findOne({ officeId: driver.officeId });
+    if (!office) {
+      return res.status(404).json({ message: 'Office not found' });
+    }
+
+    // Get manager's information
+    const manager = {
+      id: office.managerId,
+      fullName: office.managerName,
+      profileImage: office.managerImage,
+      officeId: office.officeId
+    };
+
+    res.status(200).json(manager);
+  } catch (error) {
+    console.error('Error getting driver manager:', error);
+    res.status(500).json({ message: 'Error getting driver manager' });
+  }
+});
 
 module.exports = router;

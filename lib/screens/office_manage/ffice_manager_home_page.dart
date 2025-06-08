@@ -36,6 +36,7 @@ class _OfficeManagerHomePageState extends State<OfficeManagerHomePage> {
   }
 
   Future<void> _loadOfficeData() async {
+    if (!mounted) return;
     setState(() => _isLoading = true);
     print('Loading office data for ID: ${widget.officeId}');
 
@@ -55,6 +56,7 @@ class _OfficeManagerHomePageState extends State<OfficeManagerHomePage> {
       final activeDrivers =
           drivers.where((driver) => driver.isAvailable).toList();
 
+      if (!mounted) return;
       setState(() {
         _activeDrivers = activeDrivers;
         _driversCount = stats['driversCount'] ?? 0;
@@ -64,6 +66,7 @@ class _OfficeManagerHomePageState extends State<OfficeManagerHomePage> {
       });
     } catch (e) {
       if (kDebugMode) print('Error loading office data: $e');
+      if (!mounted) return;
       setState(() => _isLoading = false);
       // يمكنك إضافة معالجة الأخطاء هنا (مثال: إظهار SnackBar)
       ScaffoldMessenger.of(context).showSnackBar(

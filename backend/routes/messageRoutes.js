@@ -1,30 +1,17 @@
 const express = require('express');
 const router = express.Router();
-const Message = require('../models/messageModel');
+const messageController = require('../controllers/messageController');
 
 // إرسال رسالة
-router.post('/', async (req, res) => {
-  const { sender, receiver, message, image, audio } = req.body;
-
-  try {
-    const newMessage = new Message({ sender, receiver, message, image, audio });
-    await newMessage.save();
-    res.status(201).json(newMessage);
-  } catch (error) {
-    res.status(500).json({ message: 'Error sending message', error });
-  }
-});
+router.post('/', messageController.sendMessage);
 
 // جلب الرسائل بين المستخدم والسائق
-router.get('/', async (req, res) => {
-  const { receiver } = req.query;
+router.get('/', messageController.getMessages);
 
-  try {
-    const messages = await Message.find({ receiver }).sort({ createdAt: 1 });
-    res.status(200).json(messages);
-  } catch (error) {
-    res.status(500).json({ message: 'Error fetching messages', error });
-  }
-});
+// تحديث حالة القراءة للرسائل
+router.post('/mark-read', messageController.markMessagesAsRead);
+
+// الحصول على عدد الرسائل غير المقروءة
+router.get('/unread/:receiver', messageController.getUnreadCount);
 
 module.exports = router;

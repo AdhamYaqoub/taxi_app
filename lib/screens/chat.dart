@@ -6,6 +6,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:socket_io_client/socket_io_client.dart' as IO;
+import 'package:taxi_app/services/taxi_office_api.dart';
 
 void main() => runApp(MyApp());
 
@@ -15,20 +16,22 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Taxi App with Google Maps',
       theme: ThemeData(primarySwatch: Colors.blue),
-      home: ChatScreen(userId: '', userType: '', selectedDriverId: null),
+      home: ChatScreen(userId: '', userType: '', selectedDriverId: null, officeId: null),
     );
   }
 }
 
 class ChatScreen extends StatefulWidget {
   final String userId;
-  final String userType; // 'user', 'driver', or 'admin'
-  final String? selectedDriverId; // إضافة معرف السائق المحدد
+  final String userType; // 'user', 'driver', 'office_manager', or 'admin'
+  final String? selectedDriverId;
+  final int? officeId; // Add officeId for office managers
 
   ChatScreen({
     required this.userId, 
     required this.userType,
     this.selectedDriverId,
+    this.officeId,
   });
 
   @override
@@ -46,6 +49,7 @@ class _ChatScreenState extends State<ChatScreen> {
   bool _isRecording = false;
   String? _audioPath;
   late IO.Socket socket;
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -54,7 +58,6 @@ class _ChatScreenState extends State<ChatScreen> {
     _loadContacts();
     _initAudio();
     
-    // إذا تم تحديد سائق، قم بتحديده تلقائياً
     if (widget.selectedDriverId != null) {
       selectedContact = widget.selectedDriverId;
       _loadMessages();
@@ -69,61 +72,101 @@ class _ChatScreenState extends State<ChatScreen> {
 
     socket.connect();
 
-    // Join appropriate room based on user type
-    if (widget.userType == 'user') {
-      socket.emit('join_user', {'userId': widget.userId});
+    if (widget.userType == 'office_manager') {
+      socket.emit('join_office_manager', {
+        'managerId': widget.userId,
+        'officeId': widget.officeId
+      });
     } else if (widget.userType == 'driver') {
       socket.emit('join_driver', {'driverId': widget.userId});
-    } else if (widget.userType == 'admin') {
-      socket.emit('join_admin', {'adminId': widget.userId});
     }
 
-    // Listen for new messages
     socket.on('new_message', (data) {
-      setState(() {
-        messages.add({
-          'senderId': data['senderId'],
-          'senderType': data['senderType'],
-          'message': data['message'],
-          'timestamp': data['timestamp'],
+      if (mounted) {
+        setState(() {
+          messages.add({
+            'senderId': data['senderId'],
+            'senderType': data['senderType'],
+            'message': data['message'],
+            'timestamp': data['timestamp'],
+          });
         });
-      });
+      }
     });
   }
 
   Future<void> _loadContacts() async {
-    final response = await http.get(Uri.parse('http://localhost:5000/api/users'));
-    if (response.statusCode == 200) {
-      final List<dynamic> data = json.decode(response.body);
-      setState(() {
-        contacts = data
-            .where((contact) => contact['role'] != widget.userType)
-            .map((contact) {
-          return {
-            'id': contact['_id'],
-            'name': contact['fullName'],
-            'image': contact['image'] ?? '',
-            'role': contact['role'],
-          };
-        }).toList();
-      });
-    } else {
-      throw Exception('Failed to load contacts');
+    try {
+      setState(() => _isLoading = true);
+      
+      if (widget.userType == 'office_manager' && widget.officeId != null) {
+        // Load only drivers from the same office
+        final drivers = await TaxiOfficeApi.getOfficeDrivers(widget.officeId!, widget.userId);
+        setState(() {
+          contacts = drivers.map((driver) {
+            return {
+              'id': driver.driverUserId.toString(),
+              'name': driver.fullName,
+              'image': driver.profileImageUrl ?? '',
+              'role': 'driver',
+            };
+          }).toList();
+        });
+      } else if (widget.userType == 'driver') {
+        // Load only the office manager responsible for this driver
+        final response = await http.get(
+          Uri.parse('http://localhost:5000/api/drivers/${widget.userId}/manager'),
+        );
+        
+        if (response.statusCode == 200) {
+          final managerData = json.decode(response.body);
+          setState(() {
+            contacts = [{
+              'id': managerData['id'].toString(),
+              'name': managerData['fullName'],
+              'image': managerData['profileImage'] ?? '',
+              'role': 'office_manager',
+              'officeId': managerData['officeId'],
+            }];
+            selectedContact = managerData['id'].toString();
+            _loadMessages();
+          });
+        }
+      }
+      
+      setState(() => _isLoading = false);
+    } catch (e) {
+      print('Error loading contacts: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load contacts')),
+        );
+      }
+      setState(() => _isLoading = false);
     }
   }
 
   Future<void> _loadMessages() async {
     if (selectedContact != null) {
-      final response = await http.get(
-        Uri.parse('http://localhost:5000/messages?receiver=$selectedContact'),
-      );
-      if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
-        setState(() {
-          messages = List<Map<String, dynamic>>.from(data);
-        });
-      } else {
-        throw Exception('Failed to load messages');
+      try {
+        final response = await http.get(
+          Uri.parse('http://localhost:5000/messages?receiver=$selectedContact'),
+        );
+        if (response.statusCode == 200) {
+          final List<dynamic> data = json.decode(response.body);
+          if (mounted) {
+            setState(() {
+              messages = List<Map<String, dynamic>>.from(data);
+            });
+          }
+        }
+      } catch (e) {
+        print('Error loading messages: $e');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to load messages')),
+          );
+        }
       }
     }
   }
@@ -134,20 +177,9 @@ class _ChatScreenState extends State<ChatScreen> {
         (contact) => contact['id'] == selectedContact,
       );
 
-      String eventName;
-      if (widget.userType == 'user') {
-        eventName = selectedContactData['role'] == 'Driver'
-            ? 'user_driver_message'
-            : 'user_admin_message';
-      } else if (widget.userType == 'driver') {
-        eventName = selectedContactData['role'] == 'User'
-            ? 'user_driver_message'
-            : 'driver_admin_message';
-      } else {
-        eventName = selectedContactData['role'] == 'User'
-            ? 'user_admin_message'
-            : 'driver_admin_message';
-      }
+      String eventName = widget.userType == 'office_manager' 
+          ? 'office_manager_driver_message'
+          : 'driver_office_manager_message';
 
       socket.emit(eventName, {
         'senderId': widget.userId,
@@ -155,9 +187,12 @@ class _ChatScreenState extends State<ChatScreen> {
         'message': message,
         'image': imagePath,
         'audio': audioPath,
+        'officeId': widget.userType == 'office_manager' ? widget.officeId : selectedContactData['officeId'],
+        'senderType': widget.userType,
+        'receiverType': widget.userType == 'office_manager' ? 'driver' : 'office_manager',
       });
 
-      // Also save to database
+      // Save to database
       http.post(
         Uri.parse('http://localhost:5000/messages'),
         headers: {'Content-Type': 'application/json'},
@@ -167,6 +202,9 @@ class _ChatScreenState extends State<ChatScreen> {
           'message': message,
           'image': imagePath,
           'audio': audioPath,
+          'officeId': widget.userType == 'office_manager' ? widget.officeId : selectedContactData['officeId'],
+          'senderType': widget.userType,
+          'receiverType': widget.userType == 'office_manager' ? 'driver' : 'office_manager',
         }),
       );
 
@@ -257,13 +295,26 @@ class _ChatScreenState extends State<ChatScreen> {
         children: [
           for (var contact in contacts)
             ListTile(
+              selected: selectedContact == contact['id'],
+              selectedTileColor: Colors.yellow[200],
               leading: CircleAvatar(
                 backgroundImage: contact['image'] != ''
                     ? NetworkImage(contact['image'])
                     : AssetImage('assets/default_avatar.png') as ImageProvider,
               ),
-              title: Text(contact['name'], style: TextStyle(color: Colors.black)),
-              subtitle: Text(contact['role'], style: TextStyle(color: Colors.grey)),
+              title: Text(
+                contact['name'],
+                style: TextStyle(
+                  color: selectedContact == contact['id'] ? Colors.black : Colors.black87,
+                  fontWeight: selectedContact == contact['id'] ? FontWeight.bold : FontWeight.normal,
+                ),
+              ),
+              subtitle: Text(
+                contact['role'],
+                style: TextStyle(
+                  color: selectedContact == contact['id'] ? Colors.black54 : Colors.grey,
+                ),
+              ),
               onTap: () {
                 setState(() {
                   selectedContact = contact['id'];
@@ -277,24 +328,52 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Widget _buildChatUI() {
+    final selectedContactData = contacts.firstWhere(
+      (contact) => contact['id'] == selectedContact,
+      orElse: () => {'name': 'Unknown', 'image': ''},
+    );
+
     return Column(
       children: [
+        Container(
+          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          color: Colors.yellow[50],
+          child: Row(
+            children: [
+              CircleAvatar(
+                backgroundImage: selectedContactData['image'] != ''
+                    ? NetworkImage(selectedContactData['image'])
+                    : AssetImage('assets/default_avatar.png') as ImageProvider,
+              ),
+              SizedBox(width: 12),
+              Text(
+                selectedContactData['name'],
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+            ],
+          ),
+        ),
         Expanded(
           child: ListView.builder(
             reverse: true,
             itemCount: messages.length,
             itemBuilder: (context, index) {
+              final isMe = messages[index]['senderId'] == widget.userId;
               return Align(
-                alignment: Alignment.centerRight,
+                alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
                 child: Container(
                   padding: EdgeInsets.all(10),
                   margin: EdgeInsets.symmetric(vertical: 5, horizontal: 10),
                   decoration: BoxDecoration(
-                    color: Colors.yellow[200],
+                    color: isMe ? Colors.yellow[200] : Colors.grey[200],
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    messages[index]['message'] ?? "No message",  // عرض الرسالة من قاعدة البيانات
+                    messages[index]['message'] ?? "No message",
                     style: TextStyle(color: Colors.black),
                   ),
                 ),
@@ -309,25 +388,42 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Scaffold(
+        appBar: AppBar(
+          title: Text("الدردشة"),
+          backgroundColor: Colors.yellow[700],
+        ),
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: Text("الدردشة"),
         backgroundColor: Colors.yellow[700],
       ),
-      body: widget.selectedDriverId != null
-          // إذا تم تمرير سائق محدد، اعرض فقط الدردشة معه
-          ? _buildChatUI()
-          // إذا لم يتم تمرير سائق، اعرض القائمة الجانبية
-          : Row(
-              children: [
-                _buildContactsList(),
-                Expanded(
-                  child: selectedContact == null
-                      ? Center(child: Text("اختر جهة اتصال لبدء المحادثة", style: TextStyle(color: Colors.black)))
-                      : _buildChatUI(),
+      body: widget.userType == 'driver'
+          ? _buildChatUI() // For drivers, show chat directly with their manager
+          : widget.selectedDriverId != null
+              ? _buildChatUI()
+              : Row(
+                  children: [
+                    _buildContactsList(),
+                    Expanded(
+                      child: selectedContact == null
+                          ? Center(
+                              child: Text(
+                                "اختر جهة اتصال لبدء المحادثة",
+                                style: TextStyle(color: Colors.black),
+                              ),
+                            )
+                          : _buildChatUI(),
+                    ),
+                  ],
                 ),
-              ],
-            ),
     );
   }
 
