@@ -14,7 +14,7 @@ const driverSchema = new mongoose.Schema({
     index: true,
   },
   
-  // الربط مع مكتب التكاسي
+  // الربط مع مكتب التاكسي
   office: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'TaxiOffice',
@@ -65,7 +65,7 @@ const driverSchema = new mongoose.Schema({
     min: 0
   },
   
- profileImageUrl: {
+  profileImageUrl: {
     type: String,
     default: 'https://static.vecteezy.com/system/resources/previews/027/448/973/non_2x/avatar-account-icon-default-social-media-profile-photo-vector.jpg'
   },
@@ -90,12 +90,28 @@ const driverSchema = new mongoose.Schema({
   joinedAt: {
     type: Date,
     default: Date.now
+  },
+  
+  // ✅ إضافة حقل الموقع الحالي للسائق
+currentLocation: {
+  type: {
+    type: String, // لازم يكون "Point"
+    enum: ['Point'],
+    default: 'Point',
+  },
+  coordinates: {
+    type: [Number],
+    default: [35.2137, 31.7683] // ⚠️ مثال: القدس (longitude, latitude)
   }
+}
 }, { 
   timestamps: true,
   toJSON: { virtuals: true },
   toObject: { virtuals: true }
 });
+
+// ✅ إنشاء مؤشر 2dsphere للاستعلامات الجغرافية المكانية
+driverSchema.index({ currentLocation: '2dsphere' });
 
 // Middleware لتحديث عدد السائقين عند الحذف
 driverSchema.post('save', async function(doc) {

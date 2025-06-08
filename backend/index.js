@@ -4,44 +4,43 @@ const dotenv = require('dotenv');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const http = require('http');
-const adminRoutes = require('./routes/adminRoutes');
 
-
-const db = require('./config/db');
-
+// ... (استيرادات Routes الأخرى)
 const userRoutes = require('./routes/user.Routes');
-// const userRoutes = require('./routes/userRoutes');
-// const driverRoutes = require('./routes/driverRoutes');
 const tripRoutes = require('./routes/trips.Routes');
-// const tripRequestRoutes = require('./routes/tripRequests'); 
 const messageRoutes = require('./routes/messageRoutes');
-const driver = require('./routes/driverRoutes');
+const driverRoutes = require('./routes/driverRoutes'); // هذا هو الـ driver routes الأصلي
 const clientRoutes = require('./routes/clientRoutes');
 const dashboardRoutes = require('./routes/dashboard');
 const paymentsRoutes = require('./routes/payments');
 const notificationRoutes = require('./routes/notificationRoutes');
 const taxiOfficeMapRoutes = require('./routes/taxiOfficeMapRoutes');
-const taxiOfficeRoutes = require('./routes/taxiOfficeRouter'); // استيراد مسارات مكتب التاكسي
+const taxiOfficeRoutes = require('./routes/taxiOfficeRouter');
+const adminRoutes = require('./routes/adminRoutes'); // تأكد من استيراد مسار المدير
+
+const driverLocationRoutes = require('./routes/driverLocationRoutes'); // ✅ استيراد راوتر الموقع الجديد
+
+const db = require('./config/db');
 
 // إعداد السوكيت
-const { init } = require('./config/socket');
+const { init } = require('./config/socket'); // ✅ استخدام init من الملف المنفصل
 
 // تحميل ملف البيئة
 dotenv.config();
 
 // إعداد السيرفر
 const app = express();
-const server = http.createServer(app); 
+const server = http.createServer(app);
 
 // تهيئة السوكيت
-init(server); 
+init(server); // ✅ تهيئة السوكيت باستخدام السيرفر
 
 // Middlewares
 app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cors({
   origin: process.env.CORS_ORIGIN || '*',
-  methods: ['GET', 'POST', 'PUT', 'DELETE']
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'] // أضف PATCH إذا كنت تستخدمها
 }));
 
 // الاتصال بقاعدة البيانات
@@ -49,11 +48,10 @@ db();
 
 // مسارات API
 app.use('/api/users', userRoutes);
-// app.use('/api/drivers', driverRoutes);
 app.use('/api/trips', tripRoutes);
-// app.use('/api/trip-requests', tripRequestRoutes); 
 app.use('/messages', messageRoutes);
-app.use('/api/drivers', driver);
+app.use('/api/drivers', driverRoutes); // مسار drivers الأصلي
+// app.use('/api/drivers', driverLocationRoutes); // ✅ ربط راوتر الموقع الجديد (يمكن أن يكون نفس المسار الأساسي إذا كنت تستخدمه بشكل جيد)
 app.use('/api/clients', clientRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/payments', paymentsRoutes);
@@ -61,9 +59,6 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/map', taxiOfficeMapRoutes);
 app.use('/api/offices', taxiOfficeRoutes);
-
-
-
 
 // Route for health check
 app.get('/api/health', (req, res) => {

@@ -22,7 +22,7 @@ final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
   print("📩 إشعار بالخلفية (Mobile): ${message.notification?.title}");
-  
+
   // Show local notification for background messages
   if (message.notification != null) {
     await flutterLocalNotificationsPlugin.show(
@@ -33,7 +33,8 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
         android: AndroidNotificationDetails(
           'high_importance_channel',
           'High Importance Notifications',
-          channelDescription: 'This channel is used for important notifications.',
+          channelDescription:
+              'This channel is used for important notifications.',
           importance: Importance.high,
           priority: Priority.high,
           icon: '@mipmap/ic_launcher',
@@ -45,25 +46,24 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env");
 
   if (!kIsWeb) {
     await Firebase.initializeApp();
-    
+
     // Request notification permissions
     // await FirebaseMessaging.instance.requestPermission(
     //   alert: true,
     //   badge: true,
     //   sound: true,
     // );
-  await dotenv.load(fileName: ".env");
 
     // Set background message handler
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-    
+
     // Initialize FCM
     _setupMobileFCM();
   }
-
 
   runApp(const MyApp());
 }
@@ -93,7 +93,8 @@ void _setupMobileFCM() async {
   );
 
   await flutterLocalNotificationsPlugin
-      .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+      .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>()
       ?.createNotificationChannel(channel);
 
   // Initialize local notifications
@@ -143,9 +144,11 @@ void _setupMobileFCM() async {
   });
 
   // Get initial notification if app was opened from terminated state
-  RemoteMessage? initialMessage = await FirebaseMessaging.instance.getInitialMessage();
+  RemoteMessage? initialMessage =
+      await FirebaseMessaging.instance.getInitialMessage();
   if (initialMessage != null) {
-    print('📲 تم فتح التطبيق من الإشعار: ${initialMessage.notification?.title}');
+    print(
+        '📲 تم فتح التطبيق من الإشعار: ${initialMessage.notification?.title}');
     // Handle initial notification - similar to onMessageOpenedApp
   }
 }

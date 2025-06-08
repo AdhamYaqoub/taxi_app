@@ -1,19 +1,16 @@
 import 'dart:convert';
-import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:taxi_app/screens/admin.dart';
 import 'package:taxi_app/screens/driver_dashboard.dart'; // صفحة السائق
-import 'package:taxi_app/screens/manegar.dart';
-import 'package:taxi_app/screens/office_manage/office_manager_dashboard.dart';
+import 'package:taxi_app/screens/office_manage/office_manager_dashboard.dart'; // صفحة مدير المكتب
 import 'package:taxi_app/screens/signup_screen.dart';
-import 'package:taxi_app/screens/user.dart';
-import 'package:taxi_app/widgets/CustomAppBar.dart';
+import 'package:taxi_app/screens/user.dart'; // صفحة المستخدم العادي
+import 'package:taxi_app/widgets/CustomAppBar.dart'; // تأكد من وجود هذا المسار والـ widget
 import 'components/custom_text_field.dart';
 import 'components/custom_button.dart';
-import 'components/social_button.dart';
+// import 'components/social_button.dart'; // ✅ تم إزالة هذا الاستيراد
 import 'forgot_password_screen.dart';
 import 'package:taxi_app/language/localization.dart';
 
@@ -28,216 +25,249 @@ class _SignInScreenState extends State<SignInScreen> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   bool isLoading = false;
+  bool _isPasswordVisible = false; // ✅ حالة جديدة للتحكم في رؤية كلمة المرور
+
+  @override
+  void dispose() {
+    emailController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
 
   Future<void> signIn(BuildContext context) async {
     setState(() => isLoading = true);
 
-    String? fcmToken;
-
-    // ✅ طلب إذن الإشعارات وتوليد التوكن
-    NotificationSettings settings =
-        await FirebaseMessaging.instance.requestPermission(
-      alert: true,
-      badge: true,
-      sound: true,
-    );
-
-    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-      if (kIsWeb) {
-        fcmToken = await FirebaseMessaging.instance.getToken(
-          vapidKey:
-              "BGZEIrp8Oc46VWd92gmyEdP3UnQkfOOmAMVpRKSey09EkKn66cKNPnApwTMA7j49E2y-0QggAzx1J2qhiY418xE",
-        );
-      } else {
-        fcmToken = await FirebaseMessaging.instance.getToken();
-      }
-
-      print("✅ FCM Token: $fcmToken");
-    } else {
-      print("❌ Notification permission not granted");
-      fcmToken = "";
-    }
-
     final String apiUrl = '${dotenv.env['BASE_URL']}/api/users/signin';
-    final response = await http.post(
-      Uri.parse(apiUrl),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'email': emailController.text.trim(),
-        'password': passwordController.text.trim(),
-        'fcmToken': fcmToken ?? "",
-      }),
-    );
+    try {
+      final response = await http.post(
+        Uri.parse(apiUrl),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'email': emailController.text.trim(),
+          'password': passwordController.text.trim(),
+        }),
+      );
 
-    setState(() => isLoading = false);
+      if (!mounted) return;
 
-    if (response.statusCode == 200) {
-      try {
+      setState(() => isLoading = false);
+
+      if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
 
-        // الوصول إلى بيانات المستخدم
-        final user = data['user']; // احصل على البيانات من مفتاح 'user'
+        final user = data['user'];
+        final String? token = data['token'];
 
-        if (user != null && user['role'] != null) {
-          String role = user['role']; // احصل على الدور من البيانات
+        if (user != null && user['role'] != null && token != null) {
+          String role = user['role'];
+          int userId = user['userId'];
+
+          Widget nextScreen;
           if (role == "User") {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                  builder: (_) => UserDashboard(
-                        userId: user['userId'],
-                        token: '',
-                      )),
-            );
+            nextScreen = UserDashboard(userId: userId, token: token);
           } else if (role == "Driver") {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                  builder: (_) => DriverDashboard(
-                        userId: user['userId'],
-                        token: '',
-                      )),
-            );
+            nextScreen = DriverDashboard(userId: userId, token: token);
           } else if (role == "Admin") {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                  builder: (_) => AdminDashboard(
-                        userId: user['userId'],
-                        token: 'token',
-                      )),
-            );
+            nextScreen = AdminDashboard(userId: userId, token: token);
           } else if (role == "Manager") {
-            Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                    builder: (_) => OfficeManagerDashboard(
-                          userId: user['userId'],
-                          token: '',
-                        )));
+            nextScreen = OfficeManagerDashboard(userId: userId, token: token);
           } else {
-            showError("Invalid role received!");
+            showError(AppLocalizations.of(context)
+                .translate("invalid_role_received"));
+            return;
           }
+
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => nextScreen),
+          );
         } else {
-          showError("Invalid data received from server.");
+          showError(AppLocalizations.of(context)
+              .translate("invalid_data_or_token_missing"));
         }
-      } catch (e) {
-        showError("Error parsing response data.");
+      } else {
+        String errorMessage = AppLocalizations.of(context)
+            .translate("login_failed_check_credentials");
+        try {
+          final responseBody = jsonDecode(response.body);
+          if (responseBody.containsKey('message')) {
+            errorMessage = responseBody['message'];
+          }
+        } catch (_) {
+          // If response body is not JSON, use default message
+        }
+        showError(errorMessage);
       }
-    } else {
-      showError("Login failed! Please check your credentials.");
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => isLoading = false);
+      showError(AppLocalizations.of(context).translate("connection_error"));
     }
-    return;
   }
 
   void showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(message, style: TextStyle(color: Colors.white)),
-        backgroundColor: Colors.red));
+      content: Text(message, style: const TextStyle(color: Colors.white)),
+      backgroundColor: Theme.of(context).colorScheme.error,
+    ));
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    String signInText = AppLocalizations.of(context).translate('sign_in');
-    String emailHintText =
-        AppLocalizations.of(context).translate('email_or_phone');
-    String passwordHintText =
-        AppLocalizations.of(context).translate('enter_password');
-    String forgetPasswordText =
-        AppLocalizations.of(context).translate('forget_password');
-    String signUpText =
-        AppLocalizations.of(context).translate('dont_have_account');
-    String signUpLinkText = AppLocalizations.of(context).translate('sign_up');
+    final local = AppLocalizations.of(context);
+
+    String signInText = local.translate('sign_in');
+    String emailHintText = local.translate('email_or_phone');
+    String passwordHintText = local.translate('enter_password');
+    String forgetPasswordText = local.translate('forget_password');
+    String signUpText = local.translate('dont_have_account');
+    String signUpLinkText = local.translate('sign_up');
+    // String orSignInWithText = local.translate('or_sign_in_with'); // ✅ تم إزالة هذا النص أيضاً
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: CustomAppBar(),
+      appBar: CustomAppBar(), // تم الاحتفاظ بها كما طلبت
       body: LayoutBuilder(
         builder: (context, constraints) {
           bool isWeb = constraints.maxWidth > 600;
+
           return Center(
-            child: Container(
-              width: isWeb ? 400 : double.infinity,
-              padding: EdgeInsets.symmetric(horizontal: 20.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(height: 20),
-                  Text(signInText,
-                      style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: theme.textTheme.bodyLarge?.color)),
-                  SizedBox(height: 20),
-                  CustomTextField(
-                    hintText: emailHintText,
-                    controller: emailController,
-                    width: double.infinity,
-                    hintTextColor: theme.hintColor,
-                    textColor: theme.textTheme.bodyLarge?.color ?? Colors.black,
+            child: SingleChildScrollView(
+              padding: EdgeInsets.symmetric(
+                horizontal: isWeb ? constraints.maxWidth * 0.15 : 20.0,
+                vertical: isWeb ? 40.0 : 20.0,
+              ),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(
+                  maxWidth: 450,
+                ),
+                child: Card(
+                  elevation: isWeb ? 8 : 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(isWeb ? 16 : 8),
                   ),
-                  SizedBox(height: 15),
-                  CustomTextField(
-                    hintText: passwordHintText,
-                    obscureText: true,
-                    suffixIcon: Icons.visibility_off,
-                    controller: passwordController,
-                    width: double.infinity,
-                    hintTextColor: theme.hintColor,
-                    textColor: theme.textTheme.bodyLarge?.color ?? Colors.black,
-                  ),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton(
-                      onPressed: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (_) => ForgotPasswordScreen())),
-                      child: Text(forgetPasswordText,
-                          style: TextStyle(color: theme.colorScheme.error)),
-                    ),
-                  ),
-                  SizedBox(height: 10),
-                  CustomButton(
-                    text: isLoading ? "Loading..." : signInText,
-                    width: double.infinity,
-                    onPressed: isLoading ? null : () => signIn(context),
-                  ),
-                  SizedBox(height: 20),
-                  Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                    SocialButton(
-                        assetPath: "assets/image-removebg-preview4.png"),
-                    SizedBox(width: 15),
-                    SocialButton(
-                        assetPath: "assets/image-removebg-preview4.png"),
-                    SizedBox(width: 15),
-                    SocialButton(
-                        assetPath: "assets/image-removebg-preview5.png"),
-                  ]),
-                  Spacer(),
-                  Center(
-                    child: TextButton(
-                      onPressed: () => Navigator.push(context,
-                          MaterialPageRoute(builder: (_) => SignUpScreen())),
-                      child: Text.rich(
-                        TextSpan(
-                          text: signUpText,
-                          style: TextStyle(
-                              color: theme.textTheme.bodyMedium?.color),
-                          children: [
-                            TextSpan(
-                              text: signUpLinkText,
-                              style: TextStyle(
-                                  color: theme.primaryColor,
-                                  fontWeight: FontWeight.bold),
-                            ),
-                          ],
+                  color: theme.cardColor,
+                  child: Padding(
+                    padding: const EdgeInsets.all(32.0),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          signInText,
+                          style: theme.textTheme.headlineMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: theme.colorScheme.primary,
+                          ),
                         ),
-                      ),
+                        const SizedBox(height: 30),
+                        CustomTextField(
+                          hintText: emailHintText,
+                          controller: emailController,
+                          width: double.infinity,
+                          hintTextColor: theme.hintColor,
+                          textColor: theme.textTheme.bodyLarge?.color ??
+                              theme.colorScheme.onSurface,
+                          keyboardType: TextInputType.emailAddress,
+                        ),
+                        const SizedBox(height: 20),
+                        CustomTextField(
+                          hintText: passwordHintText,
+                          obscureText:
+                              !_isPasswordVisible, // ✅ التحكم في رؤية النص
+                          suffixIcon:
+                              _isPasswordVisible // ✅ تغيير الأيقونة بناءً على الحالة
+                                  ? Icons.visibility
+                                  : Icons.visibility_off,
+                          onSuffixPressed: () {
+                            setState(() {
+                              _isPasswordVisible = !_isPasswordVisible;
+                            });
+                          },
+                          controller: passwordController,
+                          width: double.infinity,
+                          hintTextColor: theme.hintColor,
+                          textColor: theme.textTheme.bodyLarge?.color ??
+                              theme.colorScheme.onSurface,
+                        ),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton(
+                            onPressed: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (_) =>
+                                        const ForgotPasswordScreen())),
+                            child: Text(
+                              forgetPasswordText,
+                              style:
+                                  TextStyle(color: theme.colorScheme.secondary),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        CustomButton(
+                          text: isLoading
+                              ? "${local.translate('loading')}..."
+                              : signInText,
+                          width: double.infinity,
+                          onPressed: isLoading ? null : () => signIn(context),
+                          backgroundColor: theme.colorScheme.primary,
+                          textColor: theme.colorScheme.onPrimary,
+                        ),
+                        // ✅ تم حذف قسم Social Buttons بالكامل
+                        // const SizedBox(height: 30),
+                        // Center(
+                        //   child: Text(
+                        //     orSignInWithText,
+                        //     style: theme.textTheme.bodySmall?.copyWith(
+                        //       color: theme.colorScheme.onSurface.withOpacity(0.7),
+                        //     ),
+                        //   ),
+                        // ),
+                        // const SizedBox(height: 20),
+                        // Row(
+                        //   mainAxisAlignment: MainAxisAlignment.center,
+                        //   children: [
+                        //     SocialButton(assetPath: "assets/image-removebg-preview4.png"),
+                        //     const SizedBox(width: 15),
+                        //     SocialButton(assetPath: "assets/image-removebg-preview4.png"),
+                        //     const SizedBox(width: 15),
+                        //     SocialButton(assetPath: "assets/image-removebg-preview5.png"),
+                        //   ],
+                        // ),
+                        const SizedBox(
+                            height: 30), // ✅ تم تعديل المسافة بعد حذف الأزرار
+                        Center(
+                          child: TextButton(
+                            onPressed: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (_) => const SignUpScreen())),
+                            child: Text.rich(
+                              TextSpan(
+                                text: signUpText,
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: theme.colorScheme.onSurface,
+                                ),
+                                children: [
+                                  TextSpan(
+                                    text: signUpLinkText,
+                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                      color: theme.colorScheme.primary,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ],
+                ),
               ),
             ),
           );
