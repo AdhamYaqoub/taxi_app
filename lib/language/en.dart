@@ -441,5 +441,40 @@ const Map<String, String> en = {
   "email_invalid_validation": "Please enter a valid email address.",
   "send_reset_link_button": "Send Reset Link",
   "reset_link_sent_success": "Password reset link sent to your email.",
-  "no_account_found": "No account found with that email."
+  "no_account_found": "No account found with that email.",
+
+  "invalid_role_received": "Invalid role received from server.",
+  "invalid_data_or_token_missing":
+      "Invalid data received or authentication token missing.",
+  "login_failed_check_credentials":
+      "Login failed! Please check your credentials.",
+  "connection_error": "Connection error: {error}",
+  "or_sign_in_with": "Or sign in with",
+  "login_required_driver":
+      "You need to log in as a driver to access this page.",
+  "access_denied_general": "Access denied. Please contact support.",
+  "access_denied_not_driver":
+      "Access denied. You are not registered as a driver.",
+  "driver_details_not_found":
+      "Driver details could not be found. Please contact support.",
+  "driver_not_available":
+      "Driver is currently not available. Please change your status.",
+  "error_verifying_access":
+      "An error occurred while verifying access. Please try again.",
+  "verifying_access": "Verifying access...",
+  "please_wait": "Please wait...",
+  "chat": "Chat",
+  "ok": "OK",
+  "manage_office_drivers": "Manage Drivers",
+  "office_support": "Support",
+  "office_settings": "Settings",
+  "loading_office_manager_data": "Loading office manager data...",
+  "login_required_office_manager":
+      "You need to log in as an office manager to access this page.",
+  "office_manager": "Office Manager",
+  "level_manager": "Manager Level",
+  "collapse_sidebar": "Collapse Sidebar",
+  "expand_sidebar": "Expand Sidebar",
+  "office_manager_chat": "Office Chat",
+  "office_manager_system_version": "System Version 1.0.0"
 };

@@ -440,5 +440,5 @@ const Map<String, String> ar = {
   "send_reset_link_button": "إرسال رابط إعادة التعيين",
   "reset_link_sent_success":
       "تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني.",
-  "no_account_found": "لا يوجد حساب مرتبط بهذا البريد الإلكتروني."
+  "no_account_found": "لا يوجد حساب مرتبط بهذا البريد الإلكتروني.",
 };
