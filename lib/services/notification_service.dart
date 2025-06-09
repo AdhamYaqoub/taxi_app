@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 class NotificationService {
-   static final String _baseUrl = '${dotenv.env['BASE_URL']}/api/notifications';
+  static final String _baseUrl = '${dotenv.env['BASE_URL']}/api/notifications';
   static const Map<String, String> _headers = {
     'Content-Type': 'application/json',
     'Authorization':

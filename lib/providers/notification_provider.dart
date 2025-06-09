@@ -18,7 +18,8 @@ class NotificationProvider with ChangeNotifier {
 
   Future<void> fetchUnreadNotifications() async {
     try {
-      _notifications = await NotificationService.getUnreadNotifications(_userId!);
+      _notifications =
+          await NotificationService.getUnreadNotifications(_userId!);
       print('Fetched Notifications: $_notifications');
       _unreadCount = _notifications.length;
       notifyListeners();
@@ -38,14 +39,17 @@ class NotificationProvider with ChangeNotifier {
     }
   }
 
-  Future<void> markAsRead(int notificationId) async {
+  Future<void> markAsRead(int notificationId, int userid) async {
     try {
-      bool success = await NotificationService.markAsRead(notificationId, _userId!);
+      print(notificationId);
+      print(userid);
+      bool success =
+          await NotificationService.markAsRead(notificationId, userid);
       if (success) {
         await fetchAllNotifications(_userId!);
       }
     } catch (e) {
-      if (kDebugMode) print('Error fetching notifications: $e');
+      if (kDebugMode) print('Error fetching notifications mark as read: $e');
     }
   }
 

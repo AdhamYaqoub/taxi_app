@@ -100,8 +100,8 @@ class _NotificationIconState extends State<NotificationIcon> {
                     onTap: () async {
                       // 1. تحديث حالة الإشعار كمقروء
                       if (notification['status'] == 'unread') {
-                        await provider
-                            .markAsRead(notification['notificationId']);
+                        await provider.markAsRead(
+                            notification['notificationId'], widget.userId);
                       }
 
                       // 2. إغلاق صفحة الإشعارات
