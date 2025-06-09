@@ -441,4 +441,28 @@ const Map<String, String> ar = {
   "reset_link_sent_success":
       "تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني.",
   "no_account_found": "لا يوجد حساب مرتبط بهذا البريد الإلكتروني.",
+
+  // ar.dart
+
+  // ... المفاتيح الموجودة
+  'new_ride_request': 'طلب رحلة جديدة',
+  'failed_to_load_trips': 'فشل في تحميل الرحلات',
+  'trip_cancelled_successfully': 'تم إلغاء الرحلة بنجاح',
+  'failed_to_cancel_trip': 'فشل في إلغاء الرحلة',
+  'location_service_disabled': 'خدمة الموقع معطلة. يرجى تفعيلها.',
+  'location_permission_denied':
+      'تم رفض صلاحيات الموقع. يرجى السماح للوصول للموقع.',
+  'failed_to_get_location': 'فشل في الحصول على الموقع الحالي',
+  'unknown_location': 'موقع غير معروف',
+  'searching_for_location': 'البحث عن الموقع...',
+  'location_not_found': 'الموقع غير موجود. حاول بعبارة أخرى.',
+  'search_failed': 'فشل في البحث عن الموقع',
+  'getting_address': 'الحصول على العنوان...',
+  'failed_to_get_address': 'فشل في الحصول على العنوان',
+  'specify_start_end_location': 'يرجى تحديد موقع البداية والنهاية.',
+  'distance_fare_not_calculated': 'المسافة والأجرة لم يتم حسابها بعد.',
+  'trip_created_successfully': 'تم إنشاء الرحلة بنجاح!',
+  'failed_to_create_trip': 'فشل في إنشاء الرحلة',
+  'requesting_ride': 'جارٍ طلب الرحلة...',
+  'delete': 'حذف',
 };

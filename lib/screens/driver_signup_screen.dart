@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -29,27 +30,25 @@ class _DriverSignUpScreenState extends State<DriverSignUpScreen> {
   final TextEditingController carModelController = TextEditingController();
   final TextEditingController carColorController = TextEditingController();
   final TextEditingController taxiOfficeNumberController =
-      TextEditingController(); // حقل جديد لرقم مكتب التاكسي
+      TextEditingController();
 
   String selectedCountryCode = '+1';
   String selectedCountryFlag = '🇺🇸';
   String? selectedGender = 'Male';
-  // String? selectedTaxiOffice; // تم الاستغناء عنه
   bool isPrivacyAccepted = false;
   bool isPasswordVisible = false;
   bool isConfirmPasswordVisible = false;
   DateTime? selectedLicenseExpiry;
-  bool isLoading = false; // حالة التحميل للزر
+  bool isLoading = false;
 
-  // List<String> taxiOffices = ['Office 1', 'Office 2', 'Office 3']; // تم الاستغناء عنها
-
-  // دالة لعرض رسائل SnackBar
   void showSnackBarMessage(String message, {bool isError = false}) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: isError ? Colors.red : Colors.green,
+        backgroundColor: isError
+            ? Theme.of(context).colorScheme.error
+            : Theme.of(context).colorScheme.primary,
       ),
     );
   }
@@ -57,22 +56,19 @@ class _DriverSignUpScreenState extends State<DriverSignUpScreen> {
   Future<void> _selectLicenseExpiry(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: selectedLicenseExpiry ??
-          DateTime.now(), // استخدم التاريخ المحدد مسبقًا
+      initialDate: selectedLicenseExpiry ?? DateTime.now(),
       firstDate: DateTime.now(),
       lastDate: DateTime(2100),
       builder: (BuildContext context, Widget? child) {
         return Theme(
-          data: ThemeData.light().copyWith(
-            colorScheme: ColorScheme.light(
-              primary: Theme.of(context).primaryColor, // لون الثيم الأساسي
-              onPrimary: Colors.white, // لون النص على اللون الأساسي
-              surface: Theme.of(context).cardColor, // لون خلفية التقويم
-              onSurface: Theme.of(context).textTheme.bodyLarge?.color ??
-                  Colors.black, // لون النص على الخلفية
-            ),
-            dialogBackgroundColor:
-                Theme.of(context).cardColor, // لون خلفية الحوار
+          data: Theme.of(context).copyWith(
+            colorScheme: Theme.of(context).colorScheme.copyWith(
+                  primary: Theme.of(context).colorScheme.primary,
+                  onPrimary: Theme.of(context).colorScheme.onPrimary,
+                  surface: Theme.of(context).colorScheme.surface,
+                  onSurface: Theme.of(context).colorScheme.onSurface,
+                ),
+            dialogBackgroundColor: Theme.of(context).cardColor,
           ),
           child: child!,
         );
@@ -90,7 +86,6 @@ class _DriverSignUpScreenState extends State<DriverSignUpScreen> {
     if (!mounted) return;
     setState(() => isLoading = true);
 
-    // التحقق من الحقول الأساسية
     if (fullNameController.text.isEmpty ||
         phoneController.text.isEmpty ||
         emailController.text.isEmpty ||
@@ -102,7 +97,6 @@ class _DriverSignUpScreenState extends State<DriverSignUpScreen> {
         carModelController.text.isEmpty ||
         carColorController.text.isEmpty ||
         taxiOfficeNumberController.text.isEmpty) {
-      // التحقق من حقل رقم المكتب الجديد
       showSnackBarMessage(
           AppLocalizations.of(context).translate('fill_all_fields'),
           isError: true);
@@ -149,14 +143,13 @@ class _DriverSignUpScreenState extends State<DriverSignUpScreen> {
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'fullName': fullNameController.text,
-          'phone': selectedCountryCode + phoneController.text, // دمج رمز الدولة
+          'phone': selectedCountryCode + phoneController.text,
           'email': emailController.text,
           'password': passwordController.text,
           'confirmPassword': confirmPasswordController.text,
           'role': 'Driver',
           'gender': selectedGender,
-          'officeIdentifier':
-              taxiOfficeNumberController.text, // استخدام قيمة الحقل النصي
+          'officeIdentifier': taxiOfficeNumberController.text,
           'carModel': carModelController.text,
           'carPlateNumber': plateNumberController.text,
           'carColor': carColorController.text,
@@ -169,7 +162,7 @@ class _DriverSignUpScreenState extends State<DriverSignUpScreen> {
 
       if (response.statusCode == 201) {
         showSnackBarMessage(AppLocalizations.of(context)
-            .translate('account_created_success_driver')); // رسالة خاصة بالسائق
+            .translate('account_created_success_driver'));
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const SignInScreen()),
@@ -197,27 +190,24 @@ class _DriverSignUpScreenState extends State<DriverSignUpScreen> {
   Widget build(BuildContext context) {
     final localizations = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    Color textColor = theme.textTheme.bodyLarge?.color ?? Colors.black;
-    Color hintColor = theme.hintColor;
-    Color cardColor = theme.cardColor;
-    Color primaryColor = theme.primaryColor;
-    Color accentColor = theme.colorScheme.secondary;
+
+    // ✅ قيم الألوان التي سيتم سحبها من الثيم
+    final Color textColor = theme.textTheme.bodyLarge?.color ?? Colors.black;
+    final Color hintTextColor =
+        theme.inputDecorationTheme.hintStyle?.color ?? Colors.grey;
+    final Color primaryColor = theme.colorScheme.primary;
+    final Color accentColor = theme.colorScheme.secondary;
+    final Color cardColor = theme.cardColor;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor:
-            theme.appBarTheme.backgroundColor ?? theme.primaryColor,
-        foregroundColor: theme.appBarTheme.foregroundColor ??
-            Colors.white, // لون أيقونات ونصوص الـ AppBar
-        elevation: 0,
+        // هذه الخصائص يتم سحبها من theme.appBarTheme
         title: Text(localizations.translate('driver_sign_up')),
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: isLoading
-              ? null
-              : () => Navigator.pop(context), // تعطيل الزر أثناء التحميل
+          onPressed: isLoading ? null : () => Navigator.pop(context),
         ),
       ),
       body: LayoutBuilder(
@@ -231,10 +221,7 @@ class _DriverSignUpScreenState extends State<DriverSignUpScreen> {
             child: Center(
               child: ConstrainedBox(
                 constraints: BoxConstraints(
-                  maxWidth: isLargeScreen
-                      ? 800
-                      : double
-                          .infinity, // عرض أقصى أكبر قليلاً للسائقين بسبب الحقول الإضافية
+                  maxWidth: isLargeScreen ? 800 : double.infinity,
                 ),
                 child: Container(
                   padding: EdgeInsets.all(isLargeScreen ? 30 : 20),
@@ -243,7 +230,7 @@ class _DriverSignUpScreenState extends State<DriverSignUpScreen> {
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
+                        color: theme.colorScheme.onSurface.withOpacity(0.1),
                         blurRadius: 15,
                         offset: const Offset(0, 5),
                       ),
@@ -254,9 +241,7 @@ class _DriverSignUpScreenState extends State<DriverSignUpScreen> {
                     children: [
                       Text(
                         localizations.translate('driver_sign_up'),
-                        style: TextStyle(
-                          fontSize: isLargeScreen ? 32 : 28,
-                          fontWeight: FontWeight.bold,
+                        style: theme.textTheme.headlineMedium?.copyWith(
                           color: primaryColor,
                         ),
                       ),
@@ -269,9 +254,7 @@ class _DriverSignUpScreenState extends State<DriverSignUpScreen> {
                             : Alignment.centerLeft,
                         child: Text(
                           localizations.translate('basic_info'),
-                          style: TextStyle(
-                            fontSize: isLargeScreen ? 22 : 18,
-                            fontWeight: FontWeight.bold,
+                          style: theme.textTheme.titleLarge?.copyWith(
                             color: primaryColor,
                           ),
                         ),
@@ -282,8 +265,8 @@ class _DriverSignUpScreenState extends State<DriverSignUpScreen> {
                         hintText: localizations.translate('full_name'),
                         controller: fullNameController,
                         width: double.infinity,
-                        hintTextColor: hintColor,
-                        textColor: textColor,
+                        hintTextColor: hintTextColor, // ✅ تم إضافتها
+                        textColor: textColor, // ✅ تم إضافتها
                         prefixIcon: Icons.person,
                       ),
                       const SizedBox(height: 15),
@@ -302,7 +285,7 @@ class _DriverSignUpScreenState extends State<DriverSignUpScreen> {
                                     selectedCountryFlag = country.flagEmoji;
                                   });
                                 },
-                                countryFilter: [
+                                countryFilter: const [
                                   'US',
                                   'EG',
                                   'SA',
@@ -310,7 +293,7 @@ class _DriverSignUpScreenState extends State<DriverSignUpScreen> {
                                   'AE',
                                   'QA',
                                   'KW',
-                                  'PS', // فلسطين
+                                  'PS',
                                   'IL'
                                 ],
                               );
@@ -319,13 +302,12 @@ class _DriverSignUpScreenState extends State<DriverSignUpScreen> {
                               padding: const EdgeInsets.symmetric(
                                   vertical: 16, horizontal: 10),
                               decoration: BoxDecoration(
-                                color: Theme.of(context)
-                                        .inputDecorationTheme
-                                        .fillColor ??
-                                    Colors.grey[200],
+                                color: theme.inputDecorationTheme.fillColor,
                                 borderRadius: BorderRadius.circular(10),
                                 border: Border.all(
-                                    color: hintColor.withOpacity(0.5)),
+                                    color: theme.inputDecorationTheme.border
+                                            ?.borderSide.color ??
+                                        theme.hintColor.withOpacity(0.5)),
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
@@ -334,12 +316,12 @@ class _DriverSignUpScreenState extends State<DriverSignUpScreen> {
                                       style: const TextStyle(fontSize: 20)),
                                   const SizedBox(width: 8),
                                   Text(selectedCountryCode,
-                                      style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                          color: textColor)),
-                                  const Icon(Icons.arrow_drop_down,
-                                      size: 20, color: Colors.grey),
+                                      style: theme.textTheme.bodyLarge
+                                          ?.copyWith(
+                                              fontWeight: FontWeight.bold,
+                                              color: textColor)),
+                                  Icon(Icons.arrow_drop_down,
+                                      size: 20, color: theme.iconTheme.color),
                                 ],
                               ),
                             ),
@@ -350,8 +332,8 @@ class _DriverSignUpScreenState extends State<DriverSignUpScreen> {
                               hintText: localizations.translate('phone_number'),
                               controller: phoneController,
                               width: double.infinity,
-                              hintTextColor: hintColor,
-                              textColor: textColor,
+                              hintTextColor: hintTextColor, // ✅ تم إضافتها
+                              textColor: textColor, // ✅ تم إضافتها
                               keyboardType: TextInputType.phone,
                               prefixIcon: Icons.phone,
                             ),
@@ -363,8 +345,8 @@ class _DriverSignUpScreenState extends State<DriverSignUpScreen> {
                         hintText: localizations.translate('email'),
                         controller: emailController,
                         width: double.infinity,
-                        hintTextColor: hintColor,
-                        textColor: textColor,
+                        hintTextColor: hintTextColor, // ✅ تم إضافتها
+                        textColor: textColor, // ✅ تم إضافتها
                         keyboardType: TextInputType.emailAddress,
                         prefixIcon: Icons.email,
                       ),
@@ -382,8 +364,8 @@ class _DriverSignUpScreenState extends State<DriverSignUpScreen> {
                           });
                         },
                         width: double.infinity,
-                        hintTextColor: hintColor,
-                        textColor: textColor,
+                        hintTextColor: hintTextColor, // ✅ تم إضافتها
+                        textColor: textColor, // ✅ تم إضافتها
                         prefixIcon: Icons.lock,
                       ),
                       const SizedBox(height: 15),
@@ -401,20 +383,20 @@ class _DriverSignUpScreenState extends State<DriverSignUpScreen> {
                           });
                         },
                         width: double.infinity,
-                        hintTextColor: hintColor,
-                        textColor: textColor,
+                        hintTextColor: hintTextColor, // ✅ تم إضافتها
+                        textColor: textColor, // ✅ تم إضافتها
                         prefixIcon: Icons.lock,
                       ),
                       const SizedBox(height: 15),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12),
                         decoration: BoxDecoration(
-                          color: Theme.of(context)
-                                  .inputDecorationTheme
-                                  .fillColor ??
-                              Colors.grey[200],
+                          color: theme.inputDecorationTheme.fillColor,
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: hintColor.withOpacity(0.5)),
+                          border: Border.all(
+                              color: theme.inputDecorationTheme.border
+                                      ?.borderSide.color ??
+                                  theme.hintColor.withOpacity(0.5)),
                         ),
                         child: DropdownButtonHideUnderline(
                           child: DropdownButton<String>(
@@ -422,8 +404,10 @@ class _DriverSignUpScreenState extends State<DriverSignUpScreen> {
                             dropdownColor: cardColor,
                             isExpanded: true,
                             underline: const SizedBox(),
-                            icon: Icon(Icons.arrow_drop_down, color: textColor),
-                            style: TextStyle(color: textColor, fontSize: 16),
+                            icon: Icon(Icons.arrow_drop_down,
+                                color: theme.iconTheme.color),
+                            style: theme.textTheme.bodyLarge
+                                ?.copyWith(fontSize: 16),
                             onChanged: (String? newValue) {
                               setState(() {
                                 selectedGender = newValue;
@@ -461,9 +445,7 @@ class _DriverSignUpScreenState extends State<DriverSignUpScreen> {
                             : Alignment.centerLeft,
                         child: Text(
                           localizations.translate('driver_vehicle_info'),
-                          style: TextStyle(
-                            fontSize: isLargeScreen ? 22 : 18,
-                            fontWeight: FontWeight.bold,
+                          style: theme.textTheme.titleLarge?.copyWith(
                             color: primaryColor,
                           ),
                         ),
@@ -474,8 +456,8 @@ class _DriverSignUpScreenState extends State<DriverSignUpScreen> {
                         hintText: localizations.translate('license_number'),
                         controller: licenseNumberController,
                         width: double.infinity,
-                        hintTextColor: hintColor,
-                        textColor: textColor,
+                        hintTextColor: hintTextColor, // ✅ تم إضافتها
+                        textColor: textColor, // ✅ تم إضافتها
                         prefixIcon: Icons.credit_card,
                       ),
                       const SizedBox(height: 15),
@@ -487,8 +469,8 @@ class _DriverSignUpScreenState extends State<DriverSignUpScreen> {
                             controller: licenseExpiryController,
                             suffixIcon: Icons.calendar_today,
                             width: double.infinity,
-                            hintTextColor: hintColor,
-                            textColor: textColor,
+                            hintTextColor: hintTextColor, // ✅ تم إضافتها
+                            textColor: textColor, // ✅ تم إضافتها
                             prefixIcon: Icons.date_range,
                           ),
                         ),
@@ -498,8 +480,8 @@ class _DriverSignUpScreenState extends State<DriverSignUpScreen> {
                         hintText: localizations.translate('plate_number'),
                         controller: plateNumberController,
                         width: double.infinity,
-                        hintTextColor: hintColor,
-                        textColor: textColor,
+                        hintTextColor: hintTextColor, // ✅ تم إضافتها
+                        textColor: textColor, // ✅ تم إضافتها
                         prefixIcon: Icons.numbers,
                       ),
                       const SizedBox(height: 15),
@@ -507,8 +489,8 @@ class _DriverSignUpScreenState extends State<DriverSignUpScreen> {
                         hintText: localizations.translate('car_model'),
                         controller: carModelController,
                         width: double.infinity,
-                        hintTextColor: hintColor,
-                        textColor: textColor,
+                        hintTextColor: hintTextColor, // ✅ تم إضافتها
+                        textColor: textColor, // ✅ تم إضافتها
                         prefixIcon: Icons.directions_car,
                       ),
                       const SizedBox(height: 15),
@@ -516,21 +498,20 @@ class _DriverSignUpScreenState extends State<DriverSignUpScreen> {
                         hintText: localizations.translate('car_color'),
                         controller: carColorController,
                         width: double.infinity,
-                        hintTextColor: hintColor,
-                        textColor: textColor,
+                        hintTextColor: hintTextColor, // ✅ تم إضافتها
+                        textColor: textColor, // ✅ تم إضافتها
                         prefixIcon: Icons.color_lens,
                       ),
                       const SizedBox(height: 15),
 
-                      // حقل رقم مكتب التاكسي (بدلاً من القائمة المنسدلة)
                       CustomTextField(
                         hintText: localizations.translate('taxi_office_number'),
                         controller: taxiOfficeNumberController,
                         width: double.infinity,
-                        hintTextColor: hintColor,
-                        textColor: textColor,
-                        keyboardType: TextInputType.number, // لأنه رقم
-                        prefixIcon: Icons.business, // أيقونة مناسبة للمكتب
+                        hintTextColor: hintTextColor, // ✅ تم إضافتها
+                        textColor: textColor, // ✅ تم إضافتها
+                        keyboardType: TextInputType.number,
+                        prefixIcon: Icons.business,
                       ),
                       const SizedBox(height: 20),
 
@@ -542,7 +523,6 @@ class _DriverSignUpScreenState extends State<DriverSignUpScreen> {
                             onChanged: isLoading
                                 ? null
                                 : (bool? value) {
-                                    // تعطيل الـ checkbox أثناء التحميل
                                     setState(() {
                                       isPrivacyAccepted = value!;
                                     });
@@ -552,22 +532,22 @@ class _DriverSignUpScreenState extends State<DriverSignUpScreen> {
                           Expanded(
                             child: GestureDetector(
                               onTap: () {
-                                if (isLoading)
-                                  return; // تعطيل النقر أثناء التحميل
+                                if (isLoading) return;
                                 showSnackBarMessage(localizations
                                     .translate('privacy_policy_clicked'));
-                                // يمكنك إضافة منطق لفتح سياسة الخصوصية هنا
                               },
                               child: Text.rich(
                                 TextSpan(
                                   text: localizations.translate('i_agree_to'),
-                                  style:
-                                      TextStyle(color: textColor, fontSize: 13),
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    color: textColor,
+                                  ),
                                   children: [
                                     TextSpan(
                                       text: localizations
                                           .translate('privacy_policy_link'),
-                                      style: TextStyle(
+                                      style:
+                                          theme.textTheme.bodyMedium?.copyWith(
                                         color: primaryColor,
                                         fontWeight: FontWeight.bold,
                                         decoration: TextDecoration.underline,
@@ -596,7 +576,6 @@ class _DriverSignUpScreenState extends State<DriverSignUpScreen> {
                           onPressed: isLoading
                               ? null
                               : () {
-                                  // تعطيل الزر أثناء التحميل
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
@@ -608,11 +587,13 @@ class _DriverSignUpScreenState extends State<DriverSignUpScreen> {
                             TextSpan(
                               text:
                                   "${localizations.translate('already_have_account')} ",
-                              style: TextStyle(color: textColor),
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: textColor,
+                              ),
                               children: [
                                 TextSpan(
                                   text: localizations.translate('sign_in'),
-                                  style: TextStyle(
+                                  style: theme.textTheme.bodyMedium?.copyWith(
                                     color: accentColor,
                                     fontWeight: FontWeight.bold,
                                   ),

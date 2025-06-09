@@ -476,5 +476,29 @@ const Map<String, String> en = {
   "collapse_sidebar": "Collapse Sidebar",
   "expand_sidebar": "Expand Sidebar",
   "office_manager_chat": "Office Chat",
-  "office_manager_system_version": "System Version 1.0.0"
+  "office_manager_system_version": "System Version 1.0.0",
+  // en.dart
+
+  // ... existing keys
+  'new_ride_request': 'New Ride Request',
+  'failed_to_load_trips': 'Failed to load trips',
+  'trip_cancelled_successfully': 'Trip cancelled successfully',
+  'failed_to_cancel_trip': 'Failed to cancel trip',
+  'location_service_disabled':
+      'Location service is disabled. Please enable it.',
+  'location_permission_denied':
+      'Location permissions are denied. Please grant access.',
+  'failed_to_get_location': 'Failed to get current location',
+  'unknown_location': 'Unknown Location',
+  'searching_for_location': 'Searching for location...',
+  'location_not_found': 'Location not found. Try another query.',
+  'search_failed': 'Location search failed',
+  'getting_address': 'Getting address...',
+  'failed_to_get_address': 'Failed to get address',
+  'specify_start_end_location': 'Please specify both start and end locations.',
+  'distance_fare_not_calculated': 'Distance and fare not calculated yet.',
+  'trip_created_successfully': 'Trip created successfully!',
+  'failed_to_create_trip': 'Failed to create trip',
+  'requesting_ride': 'Requesting ride...',
+  'delete': 'Delete',
 };
