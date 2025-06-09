@@ -3,7 +3,7 @@ const router = express.Router();
 const messageController = require('../controllers/messageController');
 
 // إرسال رسالة
-router.post('/', messageController.sendMessage);
+// router.post('/', messageController.sendMessage);
 
 // جلب الرسائل بين المستخدم والسائق
 router.get('/', messageController.getMessages);
