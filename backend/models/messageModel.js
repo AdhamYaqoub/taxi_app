@@ -3,17 +3,17 @@ const mongoose = require('mongoose');
 
 // إنشاء المخطط (Schema) للرسالة
 const messageSchema = new mongoose.Schema({
-  sender: { type: String, required: true },
-  receiver: { type: String, required: true },
+  sender: { type: Number, required: true },
+  receiver: { type: Number, required: true },
   senderType: { 
     type: String, 
     required: true,
-    enum: ['driver', 'office_manager', 'user', 'admin']
+    enum: ['Driver', 'Manager', 'User', 'Admin']
   },
   receiverType: { 
     type: String, 
     required: true,
-    enum: ['driver', 'office_manager', 'user', 'admin']
+    enum: ['Driver', 'Manager', 'User', 'Admin']
   },
   message: { type: String, required: false },
   image: { type: String, required: false },

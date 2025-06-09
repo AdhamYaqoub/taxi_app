@@ -18,6 +18,7 @@ router.get('/', driverController.getAllDrivers);
 router.get('/available', driverController.getAvailableDrivers);
 
 router.get('/:id', driverController.getDriverById);
+router.post('/get-manager', driverController.getManagerForDriver);
 
 
 // في ملف routes/drivers.js

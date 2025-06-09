@@ -650,8 +650,9 @@ class _OfficeManagerDashboardState extends State<OfficeManagerDashboard> {
             context,
             MaterialPageRoute(
               builder: (context) => ChatScreen(
-                userId: widget.userId.toString(),
-                userType: 'office_manager',
+                userId: widget.userId,
+                userType: 'Manager',
+                token: widget.token, // Pass token if needed
               ),
             ),
           );
@@ -699,8 +700,9 @@ class _OfficeManagerDashboardState extends State<OfficeManagerDashboard> {
               context,
               MaterialPageRoute(
                 builder: (context) => ChatScreen(
-                  userId: widget.userId.toString(),
-                  userType: 'office_manager',
+                  userId: widget.userId,
+                  userType: 'Manager',
+                  token: widget.token, // Pass token if needed
                 ),
               ),
             );

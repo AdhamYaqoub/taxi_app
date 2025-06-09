@@ -528,8 +528,9 @@ class _DriverDashboardState extends State<DriverDashboard> {
             context,
             MaterialPageRoute(
               builder: (context) => ChatScreen(
-                userId: widget.userId.toString(),
-                userType: 'driver',
+                userId: widget.userId,
+                userType: 'Driver',
+                token: widget.token,
               ),
             ),
           );

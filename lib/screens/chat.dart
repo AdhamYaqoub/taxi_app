@@ -1,37 +1,33 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_sound/flutter_sound.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:socket_io_client/socket_io_client.dart' as IO;
+import 'package:taxi_app/services/drivers_api.dart';
 import 'package:taxi_app/services/taxi_office_api.dart';
 
-void main() => runApp(MyApp());
-
-class MyApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Taxi App with Google Maps',
-      theme: ThemeData(primarySwatch: Colors.blue),
-      home: ChatScreen(userId: '', userType: '', selectedDriverId: null, officeId: null),
-    );
-  }
+String _idToString(dynamic id) {
+  if (id == null) return '';
+  if (id is String) return id;
+  if (id is int) return id.toString();
+  return id.toString();
 }
 
 class ChatScreen extends StatefulWidget {
-  final String userId;
-  final String userType; // 'user', 'driver', 'office_manager', or 'admin'
-  final String? selectedDriverId;
-  final int? officeId; // Add officeId for office managers
+  final int userId;
+  final String token;
+  final String userType;
+  final int? selectedDriverId;
 
   ChatScreen({
-    required this.userId, 
+    required this.userId,
+    required this.token,
     required this.userType,
     this.selectedDriverId,
-    this.officeId,
   });
 
   @override
@@ -41,7 +37,7 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   List<Map<String, dynamic>> contacts = [];
   List<Map<String, dynamic>> messages = [];
-  String? selectedContact;
+  int? selectedContactId;
   TextEditingController _controller = TextEditingController();
   final ImagePicker _picker = ImagePicker();
   final FlutterSoundRecorder _recorder = FlutterSoundRecorder();
@@ -49,46 +45,49 @@ class _ChatScreenState extends State<ChatScreen> {
   bool _isRecording = false;
   String? _audioPath;
   late IO.Socket socket;
-  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
     _initSocket();
     _loadContacts();
-    _initAudio();
-    
+
     if (widget.selectedDriverId != null) {
-      selectedContact = widget.selectedDriverId;
+      selectedContactId = widget.selectedDriverId;
       _loadMessages();
     }
   }
 
   void _initSocket() {
-    socket = IO.io('http://localhost:5000', <String, dynamic>{
+    final String socketBaseUrl = dotenv.env['BASE_URL'] ?? 'http://localhost:5000';
+
+    socket = IO.io(socketBaseUrl, <String, dynamic>{
       'transports': ['websocket'],
       'autoConnect': false,
     });
 
     socket.connect();
 
-    if (widget.userType == 'office_manager') {
-      socket.emit('join_office_manager', {
-        'managerId': widget.userId,
-        'officeId': widget.officeId
-      });
-    } else if (widget.userType == 'driver') {
+    if (widget.userType == 'User') {
+      socket.emit('join_user', {'userId': widget.userId});
+    } else if (widget.userType == 'Driver') {
       socket.emit('join_driver', {'driverId': widget.userId});
+    } else if (widget.userType == 'Manager') {
+      socket.emit('join_manager', {'managerId': widget.userId});
     }
 
     socket.on('new_message', (data) {
-      if (mounted) {
+      if (_idToString(data['sender']) == _idToString(selectedContactId) ||
+          _idToString(data['receiver']) == _idToString(selectedContactId)) {
         setState(() {
-          messages.add({
-            'senderId': data['senderId'],
-            'senderType': data['senderType'],
+          messages.insert(0, {
+            'sender': _idToString(data['sender']),
+            'receiver': _idToString(data['receiver']),
             'message': data['message'],
+            'image': data['image'],
+            'audio': data['audio'],
             'timestamp': data['timestamp'],
+            'read': data['read'],
           });
         });
       }
@@ -97,189 +96,210 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Future<void> _loadContacts() async {
     try {
-      setState(() => _isLoading = true);
-      
-      if (widget.userType == 'office_manager' && widget.officeId != null) {
-        // Load only drivers from the same office
-        final drivers = await TaxiOfficeApi.getOfficeDrivers(widget.officeId!, widget.userId);
+      if (widget.userType == 'Manager') {
+        final drivers = await TaxiOfficeApi.getOfficeDrivers(widget.userId, widget.token);
         setState(() {
           contacts = drivers.map((driver) {
             return {
-              'id': driver.driverUserId.toString(),
+              'id': driver.driverUserId,
               'name': driver.fullName,
               'image': driver.profileImageUrl ?? '',
-              'role': 'driver',
+              'type': 'Driver',
+              'officeId': driver.taxiOfficeId,
             };
           }).toList();
         });
-      } else if (widget.userType == 'driver') {
-        // Load only the office manager responsible for this driver
-        final response = await http.get(
-          Uri.parse('http://localhost:5000/api/drivers/${widget.userId}/manager'),
-        );
-        
-        if (response.statusCode == 200) {
-          final managerData = json.decode(response.body);
+      } else if (widget.userType == 'Driver') {
+        final manager = await DriversApi.getDriverManagerForDriver(widget.userId, widget.token);
+        if (manager != null) {
           setState(() {
-            contacts = [{
-              'id': managerData['id'].toString(),
-              'name': managerData['fullName'],
-              'image': managerData['profileImage'] ?? '',
-              'role': 'office_manager',
-              'officeId': managerData['officeId'],
-            }];
-            selectedContact = managerData['id'].toString();
-            _loadMessages();
+            contacts = [
+              {
+                'id': manager.id,
+                'name': manager.fullName,
+                'image': manager.profileImageUrl ?? 'https://example.com/default.jpg',
+                'type': 'Manager',
+                'officeId': manager.officeId,
+              }
+            ];
+            if (contacts.isNotEmpty) {
+              selectedContactId = contacts.first['id'];
+              _loadMessages();
+            }
           });
         }
       }
-      
-      setState(() => _isLoading = false);
-    } catch (e) {
-      print('Error loading contacts: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to load contacts')),
-        );
+
+      if (widget.selectedDriverId != null) {
+        selectedContactId = widget.selectedDriverId;
+        _loadMessages();
       }
-      setState(() => _isLoading = false);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load contacts: $e')),
+      );
     }
   }
 
   Future<void> _loadMessages() async {
-    if (selectedContact != null) {
-      try {
-        final response = await http.get(
-          Uri.parse('http://localhost:5000/messages?receiver=$selectedContact'),
-        );
-        if (response.statusCode == 200) {
-          final List<dynamic> data = json.decode(response.body);
-          if (mounted) {
-            setState(() {
-              messages = List<Map<String, dynamic>>.from(data);
-            });
-          }
-        }
-      } catch (e) {
-        print('Error loading messages: $e');
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to load messages')),
-          );
-        }
+    if (selectedContactId == null) return;
+    try {
+      final String apiBaseUrl = dotenv.env['BASE_URL'] ?? 'http://localhost:5000';
+      final response = await http.get(
+        Uri.parse('$apiBaseUrl/messages?user1=${_idToString(widget.userId)}&user2=${_idToString(selectedContactId)}'),
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        setState(() {
+          messages = data.map<Map<String, dynamic>>((msg) {
+            return {
+              'sender': _idToString(msg['sender']),
+              'receiver': _idToString(msg['receiver']),
+              'message': msg['message'],
+              'image': msg['image'],
+              'audio': msg['audio'],
+              'timestamp': msg['timestamp'],
+              'read': msg['read'],
+            };
+          }).toList();
+        });
+      } else {
+        throw Exception('Failed to load messages');
       }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not load conversation: $e')),
+      );
     }
   }
 
-  void _sendMessage(String message, {String? imagePath, String? audioPath}) {
-    if (message.isNotEmpty || imagePath != null || audioPath != null) {
-      final selectedContactData = contacts.firstWhere(
-        (contact) => contact['id'] == selectedContact,
-      );
+  Future<void> _sendMessage(String message, {String? imagePath, String? audioPath}) async {
+    if (message.isEmpty && imagePath == null && audioPath == null) return;
+    if (selectedContactId == null) return;
 
-      String eventName = widget.userType == 'office_manager' 
-          ? 'office_manager_driver_message'
-          : 'driver_office_manager_message';
+    try {
+      final contact = contacts.firstWhere((c) => c['id'] == selectedContactId);
 
-      socket.emit(eventName, {
-        'senderId': widget.userId,
-        'receiverId': selectedContact,
+      final newMessage = {
+        'sender': _idToString(widget.userId),
+        'receiver': _idToString(selectedContactId),
+        'senderType': widget.userType,
+        'receiverType': contact['type'],
         'message': message,
         'image': imagePath,
         'audio': audioPath,
-        'officeId': widget.userType == 'office_manager' ? widget.officeId : selectedContactData['officeId'],
-        'senderType': widget.userType,
-        'receiverType': widget.userType == 'office_manager' ? 'driver' : 'office_manager',
-      });
+        'timestamp': DateTime.now().toIso8601String(),
+        'read': false,
+        'officeId': contact['officeId'],
+      };
 
-      // Save to database
-      http.post(
-        Uri.parse('http://localhost:5000/messages'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({
-          'sender': widget.userId,
-          'receiver': selectedContact,
+      setState(() {
+        messages.insert(0, {
+          'sender': _idToString(widget.userId),
+          'receiver': _idToString(selectedContactId),
           'message': message,
           'image': imagePath,
           'audio': audioPath,
-          'officeId': widget.userType == 'office_manager' ? widget.officeId : selectedContactData['officeId'],
-          'senderType': widget.userType,
-          'receiverType': widget.userType == 'office_manager' ? 'driver' : 'office_manager',
-        }),
+          'timestamp': DateTime.now().toIso8601String(),
+          'read': false,
+        });
+      });
+
+      socket.emit('new_message', newMessage);
+
+      final response = await http.post(
+        Uri.parse('${dotenv.env['BASE_URL']}/messages'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(newMessage),
       );
 
       _controller.clear();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to send message: $e')),
+      );
     }
   }
 
-  Future<void> _initAudio() async {
-    await Permission.microphone.request();
-    await _recorder.openRecorder();
-    await _player.openPlayer();
-  }
-
-  Future<void> _pickImage(ImageSource source) async {
-    final XFile? pickedFile = await _picker.pickImage(source: source);
-    if (pickedFile != null) {
-      setState(() {
-        _sendMessage('', imagePath: pickedFile.path);
-      });
-    }
-  }
-
-  Future<void> _startRecording() async {
-    setState(() => _isRecording = true);
-    await _recorder.startRecorder(toFile: 'audio.aac');
-    _audioPath = 'audio.aac';
-  }
-
-  Future<void> _stopRecording() async {
-    String? path = await _recorder.stopRecorder();
-    setState(() {
-      _isRecording = false;
-      if (path != null) {
-        _sendMessage('', audioPath: path);
-      }
-    });
-  }
-
-  Future<void> _playAudio(String path) async {
-    await _player.startPlayer(fromURI: path);
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          "TaxiGo Chat",
+          style: TextStyle(
+            color: Colors.black,
+            fontWeight: FontWeight.bold,
+            fontSize: 22,
+            letterSpacing: 1.2,
+          ),
+        ),
+        backgroundColor: Color(0xFFFFC107),
+        elevation: 4,
+        iconTheme: IconThemeData(color: Colors.black),
+      ),
+      body: widget.selectedDriverId != null
+          ? _buildChatUI()
+          : Row(
+              children: [
+                _buildContactsList(),
+                Expanded(
+                  child: selectedContactId == null
+                      ? Center(
+                          child: Text(
+                            "اختر جهة اتصال لبدء المحادثة",
+                            style: TextStyle(fontSize: 18, color: Colors.grey[600], fontWeight: FontWeight.w500),
+                          ),
+                        )
+                      : _buildChatUI(),
+                ),
+              ],
+            ),
+    );
   }
 
   Widget _buildMessageInput() {
     return Container(
-      padding: EdgeInsets.all(8),
-      color: Colors.yellow[50],
+      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+      color: Color(0xFFF8F9FA),
       child: Row(
         children: [
           IconButton(
-            icon: Icon(Icons.image, color: Colors.yellow[700]),
+            icon: Icon(Icons.image, color: Color(0xFFFFC107), size: 28),
             onPressed: () => _pickImage(ImageSource.gallery),
           ),
           IconButton(
-            icon: Icon(Icons.camera_alt, color: Colors.yellow[700]),
+            icon: Icon(Icons.camera_alt, color: Color(0xFFFFC107), size: 28),
             onPressed: () => _pickImage(ImageSource.camera),
           ),
           Expanded(
             child: TextField(
               controller: _controller,
+              style: TextStyle(color: Colors.black),
               decoration: InputDecoration(
                 hintText: "اكتب رسالة...",
+                hintStyle: TextStyle(color: Colors.grey[500]),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(24),
+                  borderSide: BorderSide.none,
                 ),
+                filled: true,
+                fillColor: Colors.white,
+                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 0),
               ),
             ),
           ),
           IconButton(
-            icon: Icon(Icons.send, color: Colors.yellow[700]),
-            onPressed: () {
-              _sendMessage(_controller.text);
-            },
+            icon: Icon(Icons.send, color: Color(0xFFFFC107), size: 28),
+            onPressed: () => _sendMessage(_controller.text),
           ),
           IconButton(
-            icon: Icon(_isRecording ? Icons.stop : Icons.mic, color: Colors.red),
+            icon: Icon(
+              _isRecording ? Icons.stop : Icons.mic,
+              color: _isRecording ? Colors.red : Color(0xFFFFC107),
+              size: 28,
+            ),
             onPressed: _isRecording ? _stopRecording : _startRecording,
           ),
         ],
@@ -289,91 +309,83 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Widget _buildContactsList() {
     return Container(
-      width: 250,
-      color: Colors.yellow[100],
-      child: ListView(
+      width: 280,
+      color: Color(0xFF263238),
+      child: Column(
         children: [
-          for (var contact in contacts)
-            ListTile(
-              selected: selectedContact == contact['id'],
-              selectedTileColor: Colors.yellow[200],
-              leading: CircleAvatar(
-                backgroundImage: contact['image'] != ''
-                    ? NetworkImage(contact['image'])
-                    : AssetImage('assets/default_avatar.png') as ImageProvider,
-              ),
-              title: Text(
-                contact['name'],
-                style: TextStyle(
-                  color: selectedContact == contact['id'] ? Colors.black : Colors.black87,
-                  fontWeight: selectedContact == contact['id'] ? FontWeight.bold : FontWeight.normal,
-                ),
-              ),
-              subtitle: Text(
-                contact['role'],
-                style: TextStyle(
-                  color: selectedContact == contact['id'] ? Colors.black54 : Colors.grey,
-                ),
-              ),
-              onTap: () {
-                setState(() {
-                  selectedContact = contact['id'];
-                  _loadMessages();
-                });
+          Container(
+            padding: EdgeInsets.all(12),
+            alignment: Alignment.center,
+            child: Text(
+              "جهات الاتصال",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+            ),
+          ),
+          Expanded(
+            child: ListView.builder(
+              itemCount: contacts.length,
+              itemBuilder: (context, index) {
+                final contact = contacts[index];
+                final isSelected = contact['id'] == selectedContactId;
+
+                return Container(
+                  color: isSelected ? Color(0xFFFFC107) : Colors.transparent,
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      radius: 25,
+                      backgroundImage: contact['image'] != ''
+                          ? NetworkImage(contact['image'])
+                          : AssetImage('assets/default_avatar.png') as ImageProvider,
+                    ),
+                    title: Text(
+                      contact['name'],
+                      style: TextStyle(
+                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                        color: Colors.white,
+                      ),
+                    ),
+                    subtitle: Text(
+                      contact['type'],
+                      style: TextStyle(color: Colors.grey[400]),
+                    ),
+                    onTap: () {
+                      setState(() {
+                        selectedContactId = contact['id'];
+                        _loadMessages();
+                      });
+                    },
+                  ),
+                );
               },
             ),
+          ),
         ],
       ),
     );
   }
 
   Widget _buildChatUI() {
-    final selectedContactData = contacts.firstWhere(
-      (contact) => contact['id'] == selectedContact,
-      orElse: () => {'name': 'Unknown', 'image': ''},
-    );
-
     return Column(
       children: [
-        Container(
-          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          color: Colors.yellow[50],
-          child: Row(
-            children: [
-              CircleAvatar(
-                backgroundImage: selectedContactData['image'] != ''
-                    ? NetworkImage(selectedContactData['image'])
-                    : AssetImage('assets/default_avatar.png') as ImageProvider,
-              ),
-              SizedBox(width: 12),
-              Text(
-                selectedContactData['name'],
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
-              ),
-            ],
-          ),
-        ),
         Expanded(
           child: ListView.builder(
             reverse: true,
             itemCount: messages.length,
             itemBuilder: (context, index) {
-              final isMe = messages[index]['senderId'] == widget.userId;
+              final msg = messages[index];
+              final isMe = msg['sender'] == _idToString(widget.userId);
+
               return Align(
                 alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
                 child: Container(
-                  padding: EdgeInsets.all(10),
-                  margin: EdgeInsets.symmetric(vertical: 5, horizontal: 10),
+                  margin: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                   decoration: BoxDecoration(
-                    color: isMe ? Colors.yellow[200] : Colors.grey[200],
-                    borderRadius: BorderRadius.circular(8),
+                    color: isMe ? Color(0xFFFFC107) : Colors.grey[300],
+                    borderRadius: BorderRadius.circular(16),
                   ),
                   child: Text(
-                    messages[index]['message'] ?? "No message",
+                    msg['message'] ?? '',
                     style: TextStyle(color: Colors.black),
                   ),
                 ),
@@ -386,52 +398,42 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    if (_isLoading) {
-      return Scaffold(
-        appBar: AppBar(
-          title: Text("الدردشة"),
-          backgroundColor: Colors.yellow[700],
-        ),
-        body: Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
+  Future<void> _pickImage(ImageSource source) async {
+    final pickedFile = await _picker.pickImage(source: source);
+    if (pickedFile != null) {
+      _sendMessage('', imagePath: pickedFile.path);
+    }
+  }
+
+  Future<void> _startRecording() async {
+    var status = await Permission.microphone.request();
+    if (status != PermissionStatus.granted) {
+      return;
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text("الدردشة"),
-        backgroundColor: Colors.yellow[700],
-      ),
-      body: widget.userType == 'driver'
-          ? _buildChatUI() // For drivers, show chat directly with their manager
-          : widget.selectedDriverId != null
-              ? _buildChatUI()
-              : Row(
-                  children: [
-                    _buildContactsList(),
-                    Expanded(
-                      child: selectedContact == null
-                          ? Center(
-                              child: Text(
-                                "اختر جهة اتصال لبدء المحادثة",
-                                style: TextStyle(color: Colors.black),
-                              ),
-                            )
-                          : _buildChatUI(),
-                    ),
-                  ],
-                ),
-    );
+    await _recorder.openRecorder();
+    _audioPath = '/tmp/flutter_sound_example.aac';
+    await _recorder.startRecorder(toFile: _audioPath);
+    setState(() {
+      _isRecording = true;
+    });
+  }
+
+  Future<void> _stopRecording() async {
+    await _recorder.stopRecorder();
+    await _recorder.closeRecorder();
+    setState(() {
+      _isRecording = false;
+    });
+    if (_audioPath != null) {
+      _sendMessage('', audioPath: _audioPath);
+    }
   }
 
   @override
   void dispose() {
-    socket.disconnect();
-    _recorder.closeRecorder();
-    _player.closePlayer();
+    socket.dispose();
+    _controller.dispose();
     super.dispose();
   }
 }

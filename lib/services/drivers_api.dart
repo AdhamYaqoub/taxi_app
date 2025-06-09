@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:taxi_app/models/driver.dart'; // استيراد النموذج
+import 'package:taxi_app/models/taxi_office.dart'; // استيراد النموذج
 
 class DriversApi {
   // استبدل هذا بالـ URL الفعلي للـ API الخاص بك
@@ -104,5 +105,54 @@ class DriversApi {
       print('Error updating driver profile image: $e');
       throw Exception('Failed to update driver profile image');
     }
+  }
+
+   // ✅ الدالة الجديدة لجلب مدير السائق
+  static Future<OfficeManager?> getDriverManagerForDriver(int driverId, String token) async {
+    final response = await http.post(
+      Uri.parse('$_baseUrl/drivers/get-manager'),
+      headers: {
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $token',
+      },
+      body: json.encode({
+        'driverUserId': driverId, // إرسال المعرف في الـ body
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      return OfficeManager.fromJson(json.decode(response.body));
+    } else {
+      // يمكنك معالجة الأخطاء هنا بشكل أفضل
+      print('Failed to load driver manager: ${response.body}');
+      return null;
+    }
+  }
+
+}
+
+
+class OfficeManager {
+  final int id;
+  final String fullName;
+  final String? profileImageUrl;
+  final int officeId; // ✅ أضف هذا الحقل
+
+  OfficeManager({
+    required this.id,
+    required this.fullName,
+    this.profileImageUrl,
+    required this.officeId, // ✅ أضفه للمُنشئ
+
+  });
+
+  factory OfficeManager.fromJson(Map<String, dynamic> json) {
+    return OfficeManager(
+      id: json['id'],
+      fullName: json['fullName'],
+      profileImageUrl: json['profileImageUrl'],
+      officeId: json['officeId'], // ✅ اقرأه من الـ JSON
+
+    );
   }
 }

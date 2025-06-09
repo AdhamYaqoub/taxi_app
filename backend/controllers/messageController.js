@@ -4,50 +4,94 @@ const Message = require('../models/messageModel');
 // إرسال رسالة
 exports.sendMessage = async (req, res) => {
   try {
-    const { sender, receiver, senderType, receiverType, message, image, audio, officeId } = req.body;
+    console.log('Request body:', req.body);
     
+    // التحقق من الحقول المطلوبة
+    const requiredFields = ['sender', 'receiver', 'senderType', 'receiverType'];
+    for (const field of requiredFields) {
+      if (!req.body[field]) {
+        return res.status(400).json({ 
+          error: `Missing required field: ${field}` 
+        });
+      }
+    }
+
     // إنشاء رسالة جديدة
     const newMessage = new Message({
-      sender,
-      receiver,
-      senderType,
-      receiverType,
-      message,
-      image,
-      audio,
-      officeId
+      sender: req.body.sender,
+      receiver: req.body.receiver,
+      senderType: req.body.senderType,
+      receiverType: req.body.receiverType,
+      message: req.body.message || null,
+      image: req.body.image || null,
+      audio: req.body.audio || null,
+      officeId: req.body.officeId || null,
+      timestamp: req.body.timestamp || new Date(),
+      read: false
     });
 
-    // حفظ الرسالة في قاعدة البيانات
     await newMessage.save();
-    res.status(201).json({ message: 'Message sent successfully' });
+    
+    console.log('Message saved:', newMessage);
+    res.status(201).json({ 
+      success: true,
+      message: 'Message sent successfully',
+      data: newMessage 
+    });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to send message' });
+    console.error('Error saving message:', err);
+    res.status(500).json({ 
+      success: false,
+      error: err.message || 'Failed to send message' 
+    });
   }
 };
 
 // الحصول على الرسائل لمستخدم معين
+// In controllers/messageController.js
 exports.getMessages = async (req, res) => {
   try {
-    const { receiver, officeId } = req.query;
-    
-    let query = { receiver };
-    
-    // إذا كان هناك officeId، أضفه إلى الاستعلام
-    if (officeId) {
-      query.officeId = officeId;
+    const { user1, user2 } = req.query;
+
+    // --- طباعة للتحقق ---
+    console.log("--- New Request to Get Messages ---");
+    console.log(`Received userId: ${user1} (type: ${typeof user1})`);
+    console.log(`Received otherUserId: ${user2} (type: ${typeof user2})`);
+
+    if (!user1 || !user2) {
+      return res.status(400).json({ error: "user1 و user2 مطلوبين." });
     }
-    
-    // جلب الرسائل الخاصة بالمستقبل
+
+    const query = {
+      $or: [
+        { sender: user1, receiver: user2 },
+        { sender: user2, receiver: user1 }
+      ]
+    };
+
+    // --- طباعة للتحقق ---
+    console.log("Executing Mongoose Query:", JSON.stringify(query, null, 2));
+
     const messages = await Message.find(query)
       .sort({ timestamp: -1 })
-      .limit(50); // Limit to last 50 messages for performance
+      .limit(50);
     
+    // --- طباعة للتحقق ---
+    console.log(`Query finished. Found ${messages.length} messages.`);
+    if (messages.length > 0) {
+        // اطبع أول رسالة تم العثور عليها لمقارنة البيانات
+        console.log("Example found message:", messages[0]);
+    }
+    console.log("------------------------------------");
+
     res.status(200).json(messages);
+
   } catch (err) {
-    res.status(500).json({ error: 'Failed to load messages' });
+    console.error('Error fetching messages:', err);
+    res.status(500).json({ error: 'فشل في جلب الرسائل' });
   }
 };
+
 
 // تحديث حالة القراءة للرسائل
 exports.markMessagesAsRead = async (req, res) => {

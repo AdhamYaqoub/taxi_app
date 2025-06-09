@@ -138,10 +138,10 @@ class SupportPage extends StatelessWidget {
                 color: Colors.orange,
                 title: local.translate("chat_with_support"),
                 onTap: () {
-                   Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => ChatScreen(userId: '', userType: '',)),
-    );
+    //                Navigator.push(
+    //   context,
+    //   MaterialPageRoute(builder: (context) => ChatScreen(userId:, userType: '',)),
+    // );
                 },
               ),
             ],

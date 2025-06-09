@@ -3,6 +3,7 @@ const Driver = require('../models/Driver');
 const User = require('../models/User');
 const cloudinary = require('../utils/cloudinary');
 
+const TaxiOffice = require('../models/TaxiOffice');
 
 exports.getAllDrivers = async (req, res) => {
   try {
@@ -267,5 +268,54 @@ exports.updateDriverProfile = async (req, res) => {
   } catch (error) {
     console.error("Error fetching driver status by user ID:", error);
     res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// ✅ الدالة الجديدة: جلب مدير المكتب لسائق معين
+exports.getManagerForDriver = async (req, res) => {
+  try {
+    const { driverUserId } = req.body;
+console.log('تم استلام طلب جلب مدير المكتب للسائق:', driverUserId);
+    if (!driverUserId) {
+      return res.status(400).json({ message: 'Driver user ID is required in the body' });
+    }
+
+    // 1. البحث عن السائق باستخدام driverUserId
+    const driver = await Driver.findOne({ driverUserId: driverUserId });
+    if (!driver) {
+      return res.status(404).json({ message: 'Driver not found' });
+    }
+
+    // 2. البحث عن مكتب التاكسي و "ملء" بيانات المدير المرتبط به، ثم "ملء" بيانات المستخدم للمدير
+    //    هنا نستخدم populate المتعدد المستويات للحصول على كل البيانات المطلوبة في استعلام واحد
+    const office = await TaxiOffice.findById(driver.office).populate({
+      path: 'manager', // اسم الحقل في TaxiOffice schema
+      model: 'Manager',
+      populate: {
+        path: 'user', // اسم الحقل في Manager schema
+        model: 'User',
+        select: 'fullName profileImageUrl' // نختار فقط الاسم والصورة لتخفيف حجم الاستجابة
+      }
+    });
+console.log('تم العثور على المكتب:', office);
+    if (!office || !office.manager || !office.manager.user) {
+      return res.status(404).json({ message: 'Manager information for this driver could not be found.' });
+    }
+    
+    // 3. تجهيز بيانات المدير لإرسالها
+    const managerInfo = {
+      id: office.manager.userId, // الـ ID الرقمي من جدول Manager
+      fullName: office.manager.user.fullName, // الاسم من جدول User
+      profileImageUrl: office.manager.user.profileImageUrl, // الصورة من جدول User
+      role: 'Manager', // تحديد الدور ليكون واضحًا في الـ frontend
+      officeId: office.officeId // ✅ أضف هذه المعلومة المهمة
+
+    };
+
+    res.status(200).json(managerInfo);
+
+  } catch (error) {
+    console.error('Error fetching driver manager:', error);
+    res.status(500).json({ message: 'Server error while fetching manager data.' });
   }
 };
