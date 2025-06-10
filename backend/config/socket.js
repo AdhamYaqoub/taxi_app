@@ -43,61 +43,69 @@ module.exports = {
       });
 
       // ✅ معالجة حدث 'send_message' القادم من Flutter
-      socket.on('send_message', async (messageData) => {
-        try {
-          // يمكن هنا إضافة منطق للتحقق من المصادقة (authMiddleware)
-          // باستخدام socket.request.headers.authorization مثلاً
-          // ولكن هذا يتطلب إعداد middleware في Socket.IO
+socket.on('send_message', async (messageData) => {
+  try {
+    // حفظ الرسالة في قاعدة البيانات
+    const newMessage = new Message({
+      sender: messageData.sender,
+      receiver: messageData.receiver,
+      senderType: messageData.senderType,
+      receiverType: messageData.receiverType,
+      message: messageData.message || null,
+      image: messageData.image || null,
+      audio: messageData.audio || null,
+      officeId: messageData.officeId || null,
+      timestamp: messageData.timestamp || new Date(),
+      read: false
+    });
+    await newMessage.save();
 
-          // حفظ الرسالة في قاعدة البيانات
-          const newMessage = new Message({
-            sender: messageData.sender,
-            receiver: messageData.receiver,
-            senderType: messageData.senderType,
-            receiverType: messageData.receiverType,
-            message: messageData.message || null,
-            image: messageData.image || null,
-            audio: messageData.audio || null,
-            officeId: messageData.officeId || null,
-            timestamp: messageData.timestamp || new Date(), // استخدم التاريخ من العميل أو تاريخ الخادم
-            read: false
-          });
-          await newMessage.save();
+    // إرسال إشعار للمستقبل (notification)
+    const notificationController = require('../controllers/notificationController');
+    await notificationController.createNotification({
+      recipient: messageData.receiver, // يجب أن يكون userId أو driverId
+      recipientType: messageData.receiverType, // 'User' أو 'Driver' أو 'Manager'
+      title: 'رسالة جديدة',
+      message: `لديك رسالة جديدة من ${messageData.senderType}`,
+      type: 'system', // أو 'chat_message' إذا أضفته في الموديل
+      data: {
+        sender: messageData.sender,
+        messageId: newMessage._id.toString()
+      }
+    });
 
-          // الآن قم ببث الرسالة إلى المرسل والمستقبل
-          // استخدم to().emit() لإرسال الرسالة إلى غرف محددة
+    // تحديد الغرف التي يجب أن تستقبل الرسالة
+    const senderRoom = `${messageData.senderType.toLowerCase()}-${messageData.sender}`;
+    const receiverRoom = `${messageData.receiverType.toLowerCase()}-${messageData.receiver}`;
 
-          // تحديد الغرف التي يجب أن تستقبل الرسالة
-          const senderRoom = `${messageData.senderType.toLowerCase()}-${messageData.sender}`;
-          const receiverRoom = `${messageData.receiverType.toLowerCase()}-${messageData.receiver}`;
-          
-          // تحويل الـ newMessage إلى كائن JSON مناسب للبث
-          const broadcastData = {
-            sender: newMessage.sender,
-            receiver: newMessage.receiver,
-            message: newMessage.message,
-            image: newMessage.image,
-            audio: newMessage.audio,
-            timestamp: newMessage.timestamp.toISOString(), // ✅ تحويل التاريخ إلى ISO String
-            read: newMessage.read,
-            // يمكنك إضافة _id: newMessage._id.toString() هنا إذا أردت
-          };
+    // تحويل الـ newMessage إلى كائن JSON مناسب للبث
+    const broadcastData = {
+      sender: newMessage.sender,
+      receiver: newMessage.receiver,
+      message: newMessage.message,
+      image: newMessage.image,
+      audio: newMessage.audio,
+      timestamp: newMessage.timestamp.toISOString(),
+      read: newMessage.read,
+      _id: newMessage._id.toString()
+    };
 
-          // إرسال الرسالة إلى غرفة المرسل (ليراها المرسل فوراً)
-          io.to(senderRoom).emit('new_message', broadcastData);
-          
-          // إرسال الرسالة إلى غرفة المستقبل (إذا كان المستقبل ليس المرسل نفسه)
-          if (senderRoom !== receiverRoom) {
-            io.to(receiverRoom).emit('new_message', broadcastData);
-          }
+    // إرسال الرسالة إلى غرفة المرسل
+    io.to(senderRoom).emit('new_message', broadcastData);
 
-          console.log('Message broadcasted via socket:', broadcastData);
+    // إرسال الرسالة إلى غرفة المستقبل (إذا كان المستقبل ليس المرسل نفسه)
+    if (senderRoom !== receiverRoom) {
+      io.to(receiverRoom).emit('new_message', broadcastData);
+    }
 
-        } catch (error) {
-          console.error('Error handling send_message via socket:', error);
-          // يمكنك إرسال إشعار خطأ إلى العميل إذا أردت (مثلاً socket.emit('message_error', 'Failed to send message'))
-        }
-      });
+    console.log('Message broadcasted via socket:', broadcastData);
+
+  } catch (error) {
+    console.error('Error handling send_message via socket:', error);
+    // يمكنك إرسال إشعار خطأ إلى العميل إذا أردت
+    // socket.emit('message_error', 'Failed to send message');
+  }
+});
 
       socket.on('disconnect', () => {
         console.log('A user disconnected from Socket.IO. Socket ID:', socket.id);
