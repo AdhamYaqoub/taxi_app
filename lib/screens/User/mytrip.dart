@@ -28,279 +28,120 @@ class _ClientTripsPageState extends State<ClientTripsPage> {
   void _loadTrips() {
     setState(() {
       _isLoading = true;
-
-      _acceptedTripsFuture = TripsApi.getClientTripsWithStatus(
-        widget.userId,
-        status: 'accepted',
-      );
-
-      _inProgressTripsFuture = TripsApi.getClientTripsWithStatus(
-        widget.userId,
-        status: 'in_progress',
-      );
-
-      _completedTripsFuture = TripsApi.getClientTripsWithStatus(
-        widget.userId,
-        status: 'completed',
-      );
-
-      Future.wait([
-        _acceptedTripsFuture,
-        _inProgressTripsFuture,
-        _completedTripsFuture,
-      ]).then((_) {
-        setState(() => _isLoading = false);
-      }).catchError((_) {
-        setState(() => _isLoading = false);
-      });
+      _acceptedTripsFuture = TripsApi.getClientTripsWithStatus(widget.userId, status: 'accepted');
+      _inProgressTripsFuture = TripsApi.getClientTripsWithStatus(widget.userId, status: 'in_progress');
+      _completedTripsFuture = TripsApi.getClientTripsWithStatus(widget.userId, status: 'completed');
+      
+      Future.wait([_acceptedTripsFuture, _inProgressTripsFuture, _completedTripsFuture])
+          .then((_) => setState(() => _isLoading = false))
+          .catchError((_) => setState(() => _isLoading = false));
     });
   }
 
-  @override
-  Widget build(BuildContext context) {
+  void _showTripDetails(BuildContext context, Trip trip) {
+    final theme = Theme.of(context);
     final local = AppLocalizations.of(context);
     final isDesktop = MediaQuery.of(context).size.width > 768;
 
-    return Scaffold(
-      appBar: isDesktop
-          ? null
-          : AppBar(
-              title: Text(local.translate('my_trips')),
-            ),
-      body: RefreshIndicator(
-        onRefresh: () async => _loadTrips(),
-        child: _isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: isDesktop ? 32 : 16,
-                  vertical: 16,
-                ),
-                child: SingleChildScrollView(
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      minHeight: MediaQuery.of(context).size.height -
-                          (isDesktop
-                              ? 0
-                              : kToolbarHeight +
-                                  MediaQuery.of(context).padding.top +
-                                  32),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // قسم الرحلات الموافق عليها
-                        _buildSectionHeader(
-                          context,
-                          title: local.translate('accepted_trips'),
-                          icon: LucideIcons.check,
-                        ),
-                        const SizedBox(height: 8),
-                        _buildTripsList(
-                          context,
-                          future: _acceptedTripsFuture,
-                          emptyMessage: local.translate('no_accepted_trips'),
-                        ),
-                        const SizedBox(height: 24),
-
-                        // قسم الرحلات قيد التنفيذ
-                        _buildSectionHeader(
-                          context,
-                          title: local.translate('in_progress_trips'),
-                          icon: LucideIcons.clock,
-                        ),
-                        const SizedBox(height: 8),
-                        _buildTripsList(
-                          context,
-                          future: _inProgressTripsFuture,
-                          emptyMessage: local.translate('no_in_progress_trips'),
-                        ),
-                        const SizedBox(height: 24),
-
-                        // قسم الرحلات المكتملة
-                        _buildSectionHeader(
-                          context,
-                          title: local.translate('completed_trips'),
-                          icon: LucideIcons.checkCircle,
-                        ),
-                        const SizedBox(height: 8),
-                        _buildTripsList(
-                          context,
-                          future: _completedTripsFuture,
-                          emptyMessage: local.translate('no_completed_trips'),
-                        ),
-                        const SizedBox(height: 16),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-      ),
-    );
-  }
-
-  Widget _buildSectionHeader(BuildContext context,
-      {required String title, required IconData icon}) {
-    final theme = Theme.of(context);
-
-    return Row(
-      children: [
-        Icon(icon, size: 24, color: theme.colorScheme.primary),
-        const SizedBox(width: 8),
-        Text(
-          title,
-          style: theme.textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        insetPadding: EdgeInsets.all(isDesktop ? 100 : 20),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
         ),
-      ],
-    );
-  }
-
-  Widget _buildTripsList(
-    BuildContext context, {
-    required Future<List<Trip>> future,
-    required String emptyMessage,
-  }) {
-    final theme = Theme.of(context);
-    final local = AppLocalizations.of(context);
-    final isDesktop = MediaQuery.of(context).size.width > 768;
-
-    return FutureBuilder<List<Trip>>(
-      future: future,
-      builder: (context, snapshot) {
-        if (snapshot.hasError) {
-          return _buildErrorWidget(theme, local);
-        }
-
-        final trips = snapshot.data ?? [];
-
-        if (trips.isEmpty) {
-          return _buildEmptyState(theme, emptyMessage);
-        }
-
-        if (isDesktop) {
-          return GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
-              childAspectRatio:
-                  MediaQuery.of(context).size.width > 1024 ? 2 : 1.5,
+        child: SingleChildScrollView(
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            constraints: BoxConstraints(
+              maxWidth: isDesktop ? 700 : double.infinity,
             ),
-            itemCount: trips.length,
-            itemBuilder: (context, index) =>
-                _buildTripCard(context, trips[index]),
-          );
-        }
-
-        return Column(
-          children: trips.map((trip) => _buildTripCard(context, trip)).toList(),
-        );
-      },
-    );
-  }
-
-  Widget _buildTripCard(BuildContext context, Trip trip) {
-    final theme = Theme.of(context);
-    final local = AppLocalizations.of(context);
-    final isCompleted = trip.status == 'completed';
-    final isAccepted = trip.status == 'accepted';
-    final isDesktop = MediaQuery.of(context).size.width > 768;
-
-    return Card(
-      margin: EdgeInsets.only(bottom: isDesktop ? 16 : 12),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      elevation: 4,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: () {
-          // يمكنك إضافة تفاصيل الرحلة هنا
-        },
-        child: Padding(
-          padding: EdgeInsets.all(isDesktop ? 20 : 16),
-          child: ConstrainedBox(
-            constraints: BoxConstraints(minWidth: double.infinity),
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Flexible(
-                      child: Text(
-                        "${local.translate('trip')} #${trip.tripId}",
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                        overflow: TextOverflow.ellipsis,
+                    Text(
+                      "${local.translate('trip_details')} #${trip.tripId}",
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.primary,
                       ),
                     ),
-                    Flexible(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isCompleted
-                              ? Colors.green.withOpacity(0.2)
-                              : isAccepted
-                                  ? Colors.blue.withOpacity(0.2)
-                                  : Colors.orange.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          isCompleted
-                              ? local.translate('completed')
-                              : isAccepted
-                                  ? local.translate('accepted')
-                                  : local.translate('in_progress'),
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            color: isCompleted
-                                ? Colors.green
-                                : isAccepted
-                                    ? Colors.blue
-                                    : Colors.orange,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
+                    IconButton(
+                      icon: Icon(Icons.close, color: theme.colorScheme.onSurface.withOpacity(0.6)),
+                      onPressed: () => Navigator.pop(context),
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
-                _buildTripDetailRow(
+                const SizedBox(height: 16),
+                _buildDetailRow(
+                  icon: _getStatusIcon(trip.status),
+                  label: local.translate('status'),
+                  value: _getStatusText(trip.status, local),
+                  color: _getStatusColor(trip.status),
+                  theme: theme,
+                ),
+                const Divider(height: 32),
+                _buildDetailRow(
                   icon: LucideIcons.mapPin,
-                  label: local.translate('from'),
+                  label: local.translate('pickup_location'),
                   value: trip.startLocation.address,
+                  theme: theme,
                 ),
-                _buildTripDetailRow(
+                const SizedBox(height: 12),
+                _buildDetailRow(
                   icon: LucideIcons.mapPin,
-                  label: local.translate('to'),
+                  label: local.translate('dropoff_location'),
                   value: trip.endLocation.address,
+                  theme: theme,
                 ),
-                _buildTripDetailRow(
+                const Divider(height: 32),
+                _buildDetailRow(
+                  icon: LucideIcons.calendar,
+                  label: local.translate('date'),
+                  value: _formatDate(trip.startTime ?? DateTime.now()),
+                  theme: theme,
+                ),
+                const SizedBox(height: 12),
+                _buildDetailRow(
                   icon: LucideIcons.clock,
-                  label: isCompleted
-                      ? local.translate('completed_on')
-                      : isAccepted
-                          ? local.translate('accepted_on')
-                          : local.translate('started_on'),
-                  value: _formatDateTime(
-                    isCompleted ? trip.endTime : trip.startTime,
+                  label: local.translate('time'),
+                  value: _formatTime(trip.startTime ?? DateTime.now()),
+                  theme: theme,
+                ),
+                if (trip.endTime != null && trip.status == 'completed') ...[
+                  const SizedBox(height: 12),
+                  _buildDetailRow(
+                    icon: LucideIcons.clock,
+                    label: local.translate('end_time'),
+                    value: _formatTime(trip.endTime!),
+                    theme: theme,
+                  ),
+                ],
+                const Divider(height: 32),
+                _buildDetailRow(
+                  icon: LucideIcons.dollarSign,
+                  label: local.translate('fare'),
+                  value: "\$${trip.actualFare?.toStringAsFixed(2) ?? '--'}",
+                  theme: theme,
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    onPressed: () => Navigator.pop(context),
+                    child: Text(local.translate('close')),
                   ),
                 ),
-                if (isCompleted || isAccepted)
-                  _buildTripDetailRow(
-                    icon: LucideIcons.dollarSign,
-                    label: local.translate('fare'),
-                    value: "\$${trip.actualFare.toStringAsFixed(2)}",
-                  ),
               ],
             ),
           ),
@@ -309,23 +150,530 @@ class _ClientTripsPageState extends State<ClientTripsPage> {
     );
   }
 
-  Widget _buildErrorWidget(ThemeData theme, AppLocalizations local) {
+  Widget _buildDetailRow({
+    required IconData icon,
+    required String label,
+    required String value,
+    Color? color,
+    required ThemeData theme,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(
+          icon,
+          size: 20,
+          color: color ?? theme.colorScheme.primary.withOpacity(0.8),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurface.withOpacity(0.6),
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                value,
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  fontWeight: FontWeight.w500,
+                  color: color ?? theme.colorScheme.onSurface,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final local = AppLocalizations.of(context);
+    final isDesktop = MediaQuery.of(context).size.width > 768;
+    final theme = Theme.of(context);
+
+    return Scaffold(
+      appBar: isDesktop ? null : AppBar(
+        title: Text(local.translate('my_trips')),
+        elevation: 0,
+        backgroundColor: theme.colorScheme.surface,
+      ),
+      body: _isLoading 
+          ? Center(child: CircularProgressIndicator(color: theme.colorScheme.primary))
+          : Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: isDesktop ? 0 : 16,
+                vertical: 32,
+              ),
+              child: RefreshIndicator(
+                onRefresh: () async => _loadTrips(),
+                color: theme.colorScheme.primary,
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (isDesktop) _buildDesktopHeader(local, theme),
+                      if (!isDesktop) _buildMobileSections(context, local, theme),
+                      if (isDesktop) _buildDesktopTable(local, theme),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+    );
+  }
+
+  Widget _buildDesktopHeader(AppLocalizations local, ThemeData theme) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 32, top: 16, bottom: 24),
+      child: Text(
+        local.translate('my_trips'),
+        style: theme.textTheme.headlineSmall?.copyWith(
+          fontWeight: FontWeight.bold,
+          color: theme.colorScheme.primary,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMobileSections(BuildContext context, AppLocalizations local, ThemeData theme) {
+    return Column(
+      children: [
+        _buildTripSection(
+          context,
+          title: local.translate('accepted_trips'),
+          icon: LucideIcons.check,
+          future: _acceptedTripsFuture,
+          emptyMessage: local.translate('no_accepted_trips'),
+        ),
+        const SizedBox(height: 24),
+        _buildTripSection(
+          context,
+          title: local.translate('in_progress_trips'),
+          icon: LucideIcons.clock,
+          future: _inProgressTripsFuture,
+          emptyMessage: local.translate('no_in_progress_trips'),
+        ),
+        const SizedBox(height: 24),
+        _buildTripSection(
+          context,
+          title: local.translate('completed_trips'),
+          icon: LucideIcons.checkCircle,
+          future: _completedTripsFuture,
+          emptyMessage: local.translate('no_completed_trips'),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDesktopTable(AppLocalizations local, ThemeData theme) {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+      child: Container(
+        constraints: const BoxConstraints(maxWidth: 1000),
+        padding: const EdgeInsets.symmetric(horizontal: 32),
+        child: Column(
+          children: [
+            _buildTableHeader(local, theme),
+            const SizedBox(height: 12),
+            FutureBuilder(
+              future: Future.wait([_acceptedTripsFuture, _inProgressTripsFuture, _completedTripsFuture]),
+              builder: (context, snapshot) {
+                if (snapshot.hasError) return _buildErrorWidget(theme, local);
+                
+                final allTrips = [
+                  ...snapshot.data?[0] ?? [],
+                  ...snapshot.data?[1] ?? [],
+                  ...snapshot.data?[2] ?? [],
+                ];
+                
+                if (allTrips.isEmpty) return _buildEmptyState(theme, local.translate('no_trips_found'));
+                
+                return Table(
+                  columnWidths: const {
+                    0: FixedColumnWidth(120),
+                    1: FixedColumnWidth(200),
+                    2: FixedColumnWidth(160),
+                    3: FixedColumnWidth(120),
+                    4: FixedColumnWidth(140),
+                  },
+                  border: TableBorder(
+                    horizontalInside: BorderSide(
+                      color: theme.dividerColor.withOpacity(0.1),
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  children: [
+                    for (final trip in allTrips)
+                      TableRow(
+                        decoration: BoxDecoration(
+                          color: _getStatusColor(trip.status).withOpacity(0.03),
+                        ),
+                        children: [
+                          InkWell(
+                            onTap: () => _showTripDetails(context, trip),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 20),
+                              child: Text(
+                                "#${trip.tripId}",
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: theme.colorScheme.primary,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ),
+                          InkWell(
+                            onTap: () => _showTripDetails(context, trip),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 8),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    trip.startLocation.address.split(',').first,
+                                    style: theme.textTheme.bodyMedium,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Icon(LucideIcons.arrowDown, size: 16, color: theme.colorScheme.primary),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    trip.endLocation.address.split(',').first,
+                                    style: theme.textTheme.bodyMedium,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          InkWell(
+                            onTap: () => _showTripDetails(context, trip),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 20),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    _formatDate(trip.startTime ?? DateTime.now()),
+                                    style: theme.textTheme.bodyMedium,
+                                  ),
+                                  Text(
+                                    _formatTime(trip.startTime ?? DateTime.now()),
+                                    style: theme.textTheme.bodySmall,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          InkWell(
+                            onTap: () => _showTripDetails(context, trip),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 20),
+                              child: Text(
+                                "\$${trip.actualFare?.toStringAsFixed(2) ?? '--'}",
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ),
+                          InkWell(
+                            onTap: () => _showTripDetails(context, trip),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 20),
+                              child: Center(
+                                child: _buildStatusBadge(trip.status, local, theme),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                  ],
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatusBadge(String status, AppLocalizations local, ThemeData theme) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: _getStatusColor(status).withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: _getStatusColor(status).withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.error, color: theme.colorScheme.error, size: 40),
-          const SizedBox(height: 16),
+          Icon(
+            _getStatusIcon(status),
+            size: 14,
+            color: _getStatusColor(status),
+          ),
+          const SizedBox(width: 6),
           Text(
-            local.translate('error_loading_trips'),
-            style: theme.textTheme.bodyLarge?.copyWith(
-              color: theme.colorScheme.error,
+            _getStatusText(status, local),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: _getStatusColor(status),
+              fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 8),
-          ElevatedButton(
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTableHeader(AppLocalizations local, ThemeData theme) {
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primary.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Table(
+        columnWidths: const {
+          0: FixedColumnWidth(120),
+          1: FixedColumnWidth(200),
+          2: FixedColumnWidth(160),
+          3: FixedColumnWidth(120),
+          4: FixedColumnWidth(140),
+        },
+        children: [
+          TableRow(
+            children: [
+              _buildHeaderCell(local.translate('trip_id'), theme),
+              _buildHeaderCell(local.translate('route'), theme),
+              _buildHeaderCell(local.translate('date'), theme),
+              _buildHeaderCell(local.translate('fare'), theme),
+              _buildHeaderCell(local.translate('status'), theme),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeaderCell(String text, ThemeData theme) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+      child: Text(
+        text,
+        style: theme.textTheme.bodyMedium?.copyWith(
+          fontWeight: FontWeight.bold,
+          color: theme.colorScheme.primary,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTripSection(
+    BuildContext context, {
+    required String title,
+    required IconData icon,
+    required Future<List<Trip>> future,
+    required String emptyMessage,
+  }) {
+    final theme = Theme.of(context);
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(icon, size: 22, color: theme.colorScheme.primary),
+            const SizedBox(width: 10),
+            Text(
+              title,
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        FutureBuilder<List<Trip>>(
+          future: future,
+          builder: (context, snapshot) {
+            if (snapshot.hasError) return _buildErrorWidget(theme, AppLocalizations.of(context));
+            
+            final trips = snapshot.data ?? [];
+            
+            if (trips.isEmpty) return _buildEmptyState(theme, emptyMessage);
+            
+            return ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: trips.length,
+              separatorBuilder: (context, index) => const SizedBox(height: 16),
+              itemBuilder: (context, index) => _buildMobileTripCard(trips[index], theme),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMobileTripCard(Trip trip, ThemeData theme) {
+    final local = AppLocalizations.of(context);
+    
+    return InkWell(
+      onTap: () => _showTripDetails(context, trip),
+      borderRadius: BorderRadius.circular(12),
+      child: Card(
+        elevation: 0,
+        margin: EdgeInsets.zero,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(
+            color: theme.dividerColor.withOpacity(0.2),
+            width: 1,
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "${local.translate('trip')} #${trip.tripId}",
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  _buildStatusBadge(trip.status, local, theme),
+                ],
+              ),
+              const SizedBox(height: 16),
+              _buildMobileTripDetail(
+                icon: LucideIcons.mapPin,
+                label: local.translate('from'),
+                value: trip.startLocation.address,
+                theme: theme,
+              ),
+              const SizedBox(height: 12),
+              _buildMobileTripDetail(
+                icon: LucideIcons.mapPin,
+                label: local.translate('to'),
+                value: trip.endLocation.address,
+                theme: theme,
+              ),
+              const SizedBox(height: 12),
+              _buildMobileTripDetail(
+                icon: LucideIcons.clock,
+                label: trip.status == 'completed' 
+                    ? local.translate('completed_on')
+                    : trip.status == 'accepted'
+                        ? local.translate('accepted_on')
+                        : local.translate('started_on'),
+                value: _formatDateTime(trip.startTime ?? DateTime.now()),
+                theme: theme,
+              ),
+              if (trip.status != 'in_progress') ...[
+                const SizedBox(height: 12),
+                _buildMobileTripDetail(
+                  icon: LucideIcons.dollarSign,
+                  label: local.translate('fare'),
+                  value: "\$${trip.actualFare?.toStringAsFixed(2) ?? '--'}",
+                  theme: theme,
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMobileTripDetail({
+    required IconData icon,
+    required String label,
+    required String value,
+    required ThemeData theme,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(
+          icon,
+          size: 20,
+          color: theme.colorScheme.primary.withOpacity(0.7),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurface.withOpacity(0.6),
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                value,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w500,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildErrorWidget(ThemeData theme, AppLocalizations local) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.error.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: theme.colorScheme.error.withOpacity(0.1),
+        ),
+      ),
+      child: Column(
+        children: [
+          Icon(Icons.error_outline, size: 40, color: theme.colorScheme.error),
+          const SizedBox(height: 12),
+          Text(
+            local.translate('error_loading_trips'),
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.error,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 12),
+          ElevatedButton.icon(
             onPressed: _loadTrips,
-            child: Text(local.translate('retry')),
+            icon: Icon(Icons.refresh, size: 18),
+            label: Text(local.translate('retry')),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: theme.colorScheme.error,
+              foregroundColor: theme.colorScheme.onError,
+            ),
           ),
         ],
       ),
@@ -333,66 +681,83 @@ class _ClientTripsPageState extends State<ClientTripsPage> {
   }
 
   Widget _buildEmptyState(ThemeData theme, String message) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            LucideIcons.list,
-            size: 40,
-            color: theme.colorScheme.primary.withOpacity(0.5),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            message,
-            style: theme.textTheme.bodyLarge,
-          ),
-        ],
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceVariant.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(12),
       ),
-    );
-  }
-
-  Widget _buildTripDetailRow({
-    required IconData icon,
-    required String label,
-    required String value,
-  }) {
-    final isDesktop = MediaQuery.of(context).size.width > 768;
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, size: isDesktop ? 20 : 18, color: Colors.grey),
-          const SizedBox(width: 8),
-          Flexible(
-            child: RichText(
-              text: TextSpan(
-                style: TextStyle(
-                  fontSize: isDesktop ? 16 : 14,
-                  color: theme.textTheme.bodyLarge?.color,
-                ),
-                children: [
-                  TextSpan(
-                    text: "$label: ",
-                    style: const TextStyle(fontWeight: FontWeight.normal),
-                  ),
-                  TextSpan(
-                    text: value,
-                    style: const TextStyle(fontWeight: FontWeight.w500),
-                  ),
-                ],
-              ),
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              LucideIcons.list,
+              size: 40,
+              color: theme.colorScheme.onSurface.withOpacity(0.3),
             ),
-          ),
-        ],
+            const SizedBox(height: 12),
+            Text(
+              message,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurface.withOpacity(0.6),
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  String _formatDateTime(DateTime? dateTime) {
-    if (dateTime == null) return '--';
+  IconData _getStatusIcon(String status) {
+    switch (status) {
+      case 'completed':
+        return LucideIcons.checkCircle;
+      case 'accepted':
+        return LucideIcons.check;
+      case 'in_progress':
+        return LucideIcons.clock;
+      default:
+        return LucideIcons.hourglass;
+    }
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status) {
+      case 'completed':
+        return Colors.green;
+      case 'accepted':
+        return Colors.blue;
+      case 'in_progress':
+        return Colors.orange;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  String _getStatusText(String status, AppLocalizations local) {
+    switch (status) {
+      case 'completed':
+        return local.translate('completed');
+      case 'accepted':
+        return local.translate('accepted');
+      case 'in_progress':
+        return local.translate('in_progress');
+      default:
+        return local.translate('pending');
+    }
+  }
+
+  String _formatDateTime(DateTime dateTime) {
     return '${dateTime.day}/${dateTime.month}/${dateTime.year} ${dateTime.hour}:${dateTime.minute.toString().padLeft(2, '0')}';
+  }
+
+  String _formatDate(DateTime dateTime) {
+    return '${dateTime.day}/${dateTime.month}/${dateTime.year}';
+  }
+
+  String _formatTime(DateTime dateTime) {
+    return '${dateTime.hour}:${dateTime.minute.toString().padLeft(2, '0')}';
   }
 }

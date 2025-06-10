@@ -8,7 +8,7 @@ import 'package:taxi_app/screens/User/drivers_list_page.dart';
 import 'package:taxi_app/screens/components/NotificationIcon.dart';
 import 'User/user_home.dart';
 import 'User/mytrip.dart';
-import 'User/payment_page.dart';
+// import 'User/payment_page.dart';
 import 'User/offers_page.dart';
 import 'User/settings_page.dart';
 import 'User/support_page.dart';
@@ -43,7 +43,7 @@ class _UserDashboardState extends State<UserDashboard> {
       HomePage(userId: widget.userId),
       ClientTripsPage(userId: widget.userId),
       const DriversListPage(),
-      const PaymentPage(),
+      // const PaymentPage(),
       SettingsPage(userId: widget.userId, token: widget.token),
       const SupportPage(),
       const OffersPage(),
@@ -189,7 +189,7 @@ class _UserDashboardState extends State<UserDashboard> {
             const SizedBox(width: 16),
             IconButton(
               icon: const Icon(Icons.settings),
-              onPressed: () => _navigateToPage(4), // الانتقال لصفحة الإعدادات
+              onPressed: () => _navigateToPage(3), // الانتقال لصفحة الإعدادات
             ),
           ] else ...[
             NotificationIcon(userId: widget.userId),
@@ -224,10 +224,10 @@ class _UserDashboardState extends State<UserDashboard> {
                     icon: Icon(LucideIcons.list),
                     label:
                         AppLocalizations.of(context).translate('drivers_list')),
-                BottomNavigationBarItem(
-                    icon: Icon(LucideIcons.creditCard),
-                    label: AppLocalizations.of(context)
-                        .translate('payment_methods')),
+                // BottomNavigationBarItem(
+                //     icon: Icon(LucideIcons.creditCard),
+                //     label: AppLocalizations.of(context)
+                //         .translate('payment_methods')),
                 BottomNavigationBarItem(
                     icon: Icon(LucideIcons.settings),
                     label: AppLocalizations.of(context).translate('settings')),
@@ -277,15 +277,15 @@ class _UserDashboardState extends State<UserDashboard> {
               LucideIcons.list,
               2,
               theme),
-          _buildSidebarItem(
-              AppLocalizations.of(context).translate('payment_methods'),
-              LucideIcons.creditCard,
-              3,
-              theme),
+          // _buildSidebarItem(
+          //     AppLocalizations.of(context).translate('payment_methods'),
+          //     LucideIcons.creditCard,
+          //     3,
+          //     theme),
           _buildSidebarItem(AppLocalizations.of(context).translate('settings'),
-              LucideIcons.settings, 4, theme),
+              LucideIcons.settings, 3, theme),
           _buildSidebarItem(AppLocalizations.of(context).translate('support'),
-              LucideIcons.helpCircle, 5, theme),
+              LucideIcons.helpCircle, 4, theme),
         ],
       ),
     );
