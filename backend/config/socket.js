@@ -60,25 +60,10 @@ socket.on('send_message', async (messageData) => {
     });
     await newMessage.save();
 
-    // إرسال إشعار للمستقبل (notification)
-    const notificationController = require('../controllers/notificationController');
-    await notificationController.createNotification({
-      recipient: messageData.receiver, // يجب أن يكون userId أو driverId
-      recipientType: messageData.receiverType, // 'User' أو 'Driver' أو 'Manager'
-      title: 'رسالة جديدة',
-      message: `لديك رسالة جديدة من ${messageData.senderType}`,
-      type: 'system', // أو 'chat_message' إذا أضفته في الموديل
-      data: {
-        sender: messageData.sender,
-        messageId: newMessage._id.toString()
-      }
-    });
-
-    // تحديد الغرف التي يجب أن تستقبل الرسالة
-    const senderRoom = `${messageData.senderType.toLowerCase()}-${messageData.sender}`;
+    // تحديد غرفة المستقبل فقط
     const receiverRoom = `${messageData.receiverType.toLowerCase()}-${messageData.receiver}`;
 
-    // تحويل الـ newMessage إلى كائن JSON مناسب للبث
+    // تجهيز البيانات للبث
     const broadcastData = {
       sender: newMessage.sender,
       receiver: newMessage.receiver,
@@ -90,19 +75,27 @@ socket.on('send_message', async (messageData) => {
       _id: newMessage._id.toString()
     };
 
-    // إرسال الرسالة إلى غرفة المرسل
-    io.to(senderRoom).emit('new_message', broadcastData);
+    // إرسال الرسالة فقط لغرفة المستقبل
+    io.to(receiverRoom).emit('new_message', broadcastData);
 
-    // إرسال الرسالة إلى غرفة المستقبل (إذا كان المستقبل ليس المرسل نفسه)
-    if (senderRoom !== receiverRoom) {
-      io.to(receiverRoom).emit('new_message', broadcastData);
-    }
+    // إرسال إشعار فقط للطرف المستقبل (وليس المرسل)
+    const notificationController = require('../controllers/notificationController');
+    await notificationController.createNotification({
+      recipient: messageData.receiver,
+      recipientType: messageData.receiverType,
+      title: 'رسالة جديدة',
+      message: `لديك رسالة جديدة من ${messageData.senderType}`,
+      type: 'system',
+      data: {
+        sender: messageData.sender,
+        messageId: newMessage._id.toString()
+      }
+    });
 
-    console.log('Message broadcasted via socket:', broadcastData);
+    console.log('Message sent to', receiverRoom, 'with data:', broadcastData);
 
   } catch (error) {
     console.error('Error handling send_message via socket:', error);
-    // يمكنك إرسال إشعار خطأ إلى العميل إذا أردت
     // socket.emit('message_error', 'Failed to send message');
   }
 });
