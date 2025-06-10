@@ -213,7 +213,7 @@ const Map<String, String> en = {
   "car_info": "🚗 Car: Toyota Corolla - White",
   "arrival_time": "⏳ Estimated arrival time: 5 minutes",
   "emergency": "🚨 Emergency - Share location",
-  "currency": "Currency",
+  "currency": "NIS",
   "offers_title": "🎁 Offers & Discounts",
   "current_offers": "Current Offers",
   "first_ride_offer": "10% off on first ride",
@@ -520,5 +520,61 @@ const Map<String, String> en = {
   "chat_failed_to_stop_recording": "Failed to stop recording: {error}",
   "chat_failed_to_play_audio": "Failed to play audio: {error}",
   "chat_failed_to_save_message": "Failed to save message to database.",
-  "chat_network_error_sending_message": "Network error while sending message."
+  "chat_network_error_sending_message": "Network error while sending message.",
+
+  "calculating_route_and_location": "Calculating route and location...",
+  "current_trip": "Current Trip",
+  "road_status": "Road Status",
+  "blocked_roads_info": "Blocked Roads Info",
+  "no_blocked_roads": "No blocked roads currently.",
+  "trip_completed_success": "Trip completed successfully",
+  "end_trip": "End Trip",
+  "completing_trip": "Completing trip...",
+  "error_completing_trip": "An error occurred while completing the trip",
+  "error_loading_map_data": "Error loading map data",
+  "ors_api_key_missing": "ORS API key is missing",
+  "telegram_bot_token_missing": "Telegram bot token is missing",
+  "invalid_destination_coordinates": "Invalid destination coordinates",
+  "no_routes_found_ors_response": "No routes found in ORS response",
+  "failed_to_get_route_from_ors": "Failed to get route from ORS",
+  "route_calculation_timeout": "Route calculation timeout",
+  "error_calculating_route_using_direct_path":
+      "Error calculating route, using direct path",
+
+  "explore_offices": "Explore Taxi Offices",
+  "select_location": "Select Location",
+  "search_for_place": "Search for a place",
+  "select": "Select",
+  "Roads": "Roads",
+  "admin": "Admin",
+  "user": "User",
+  "manegar": "Office Manager",
+  "about": "About",
+  "base_fare_distance": "Base fare & distance",
+  "night_surge": "Night surge",
+  "weekend_surge": "Weekend surge",
+  "all_fields_required_error": "Please fill all required fields",
+  "price_details": "Price Details",
+
+  "map_title": "Roads Map",
+  "closed_roads_title": "Closed Roads",
+  "ok_button": "Okay",
+  "search_hint": "Search for your destination...",
+  "info_icon_tooltip": "View Closed Roads Information",
+  "my_location_tooltip": "Show My Current Location",
+
+  "feature1_new": "Easy & Fast Booking: Order your ride with just a few taps.",
+  "feature2_new":
+      "Professional & Reliable Drivers: All our drivers are qualified and trained for a safe journey.",
+  "feature3_new":
+      "Real-time Tracking: Follow your car on the map in real-time until its arrival.",
+  "feature4_new":
+      "24/7 Support: Our support team is ready to assist you anytime.",
+  "feature5_new":
+      "Multiple Payment Options: Pay with cash or through electronic payment methods.",
+  "why_choose_title_new": "Our Commitment to You",
+  "why_choose_description_new":
+      "At TaxiGo, we are committed to providing the best transportation experience for travelers. We combine advanced technology with personalized service to ensure smooth and reliable journeys. Your satisfaction is our top priority.",
+  "developer_bio":
+      "Ensures the smooth operation and continuous improvement of the app's performance, a pioneer in technical solutions."
 };

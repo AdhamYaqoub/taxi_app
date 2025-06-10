@@ -36,7 +36,12 @@ class _AdminDashboardState extends State<AdminDashboard> {
   bool _isSidebarExpanded = true;
 
   // تعريف الصفحات التي ستظهر في الشريط السفلي على الموبايل
-  final List<int> _bottomNavIndices = [0, 1, 2, 8]; // Home, Drivers, Users, Settings
+  final List<int> _bottomNavIndices = [
+    0,
+    1,
+    2,
+    8
+  ]; // Home, Drivers, Users, Settings
 
   @override
   void initState() {
@@ -50,7 +55,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
       const DashboardHome(),
       const DriversPage(),
       const UsersPage(),
-      const TripsManagementPage(), // تم تغيير اسم الصفحة للاسم الصحيح
+      const DriverTripsPage(), // تم تغيير اسم الصفحة للاسم الصحيح
       const PaymentsManagementPage(),
       const SecurityMonitoringPage(),
       const AnalyticsReportsPage(),
@@ -116,7 +121,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
         barrierDismissible: false,
         builder: (context) => AlertDialog(
           title: Text(AppLocalizations.of(context).translate('access_denied')),
-          content: Text(AppLocalizations.of(context).translate('no_permission')),
+          content:
+              Text(AppLocalizations.of(context).translate('no_permission')),
           actions: [
             TextButton(
               onPressed: () {
@@ -169,7 +175,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
               child: AnimatedSwitcher(
                 duration: const Duration(milliseconds: 300),
                 child: _pages[_selectedIndex],
-                transitionBuilder: (child, animation) => FadeTransition(opacity: animation, child: child),
+                transitionBuilder: (child, animation) =>
+                    FadeTransition(opacity: animation, child: child),
               ),
             ),
           ),
@@ -211,16 +218,25 @@ class _AdminDashboardState extends State<AdminDashboard> {
   Widget _buildSidebarContent(ThemeData theme, {required bool isDrawer}) {
     final local = AppLocalizations.of(context);
     final sidebarItems = [
-      _buildSidebarItem(local.translate('home'), LucideIcons.layoutDashboard, 0, theme, isDrawer),
-      _buildSidebarItem(local.translate('drivers'), LucideIcons.userCheck, 1, theme, isDrawer),
-      _buildSidebarItem(local.translate('users'), LucideIcons.users, 2, theme, isDrawer),
-      _buildSidebarItem(local.translate('trips_management'), LucideIcons.router, 3, theme, isDrawer),
-      _buildSidebarItem(local.translate('taxi_offices'), LucideIcons.building, 9, theme, isDrawer),
+      _buildSidebarItem(local.translate('home'), LucideIcons.layoutDashboard, 0,
+          theme, isDrawer),
+      _buildSidebarItem(local.translate('drivers'), LucideIcons.userCheck, 1,
+          theme, isDrawer),
+      _buildSidebarItem(
+          local.translate('users'), LucideIcons.users, 2, theme, isDrawer),
+      _buildSidebarItem(local.translate('trips_management'), LucideIcons.router,
+          3, theme, isDrawer),
+      _buildSidebarItem(local.translate('taxi_offices'), LucideIcons.building,
+          9, theme, isDrawer),
       const Divider(height: 24, thickness: 1, indent: 16, endIndent: 16),
-      _buildSidebarItem(local.translate('payments_management'), LucideIcons.dollarSign, 4, theme, isDrawer),
-      _buildSidebarItem(local.translate('security_monitoring'), LucideIcons.shieldCheck, 5, theme, isDrawer),
-      _buildSidebarItem(local.translate('analytics_reports'), LucideIcons.barChart, 6, theme, isDrawer),
-      _buildSidebarItem(local.translate('vip_corporate'), LucideIcons.star, 7, theme, isDrawer),
+      _buildSidebarItem(local.translate('payments_management'),
+          LucideIcons.dollarSign, 4, theme, isDrawer),
+      _buildSidebarItem(local.translate('security_monitoring'),
+          LucideIcons.shieldCheck, 5, theme, isDrawer),
+      _buildSidebarItem(local.translate('analytics_reports'),
+          LucideIcons.barChart, 6, theme, isDrawer),
+      _buildSidebarItem(local.translate('vip_corporate'), LucideIcons.star, 7,
+          theme, isDrawer),
     ];
 
     return Column(
@@ -235,28 +251,39 @@ class _AdminDashboardState extends State<AdminDashboard> {
         ),
         if (!isDrawer)
           IconButton(
-            icon: Icon(_isSidebarExpanded ? LucideIcons.chevronLeft : LucideIcons.chevronRight, color: theme.colorScheme.onPrimary),
-            onPressed: () => setState(() => _isSidebarExpanded = !_isSidebarExpanded),
+            icon: Icon(
+                _isSidebarExpanded
+                    ? LucideIcons.chevronLeft
+                    : LucideIcons.chevronRight,
+                color: theme.colorScheme.onPrimary),
+            onPressed: () =>
+                setState(() => _isSidebarExpanded = !_isSidebarExpanded),
           ),
         const SizedBox(height: 10),
       ],
     );
   }
-  
+
   Widget _buildSidebarHeader(ThemeData theme) {
     final showText = _isSidebarExpanded;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 20.0),
       child: Column(
         children: [
-          Icon(LucideIcons.shield, size: showText ? 50 : 30, color: theme.colorScheme.onPrimary),
+          Icon(LucideIcons.shield,
+              size: showText ? 50 : 30, color: theme.colorScheme.onPrimary),
           if (showText) const SizedBox(height: 12),
           if (showText)
-            Text("Admin Panel", style: theme.textTheme.headlineSmall?.copyWith(color: theme.colorScheme.onPrimary, fontWeight: FontWeight.bold)),
+            Text("Admin Panel",
+                style: theme.textTheme.headlineSmall?.copyWith(
+                    color: theme.colorScheme.onPrimary,
+                    fontWeight: FontWeight.bold)),
           if (showText && _fullName != null)
             Padding(
               padding: const EdgeInsets.only(top: 4.0),
-              child: Text(_fullName!, style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onPrimary.withOpacity(0.8))),
+              child: Text(_fullName!,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onPrimary.withOpacity(0.8))),
             ),
         ],
       ),
@@ -269,21 +296,32 @@ class _AdminDashboardState extends State<AdminDashboard> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(LucideIcons.shield, size: 50, color: theme.colorScheme.onPrimary),
+          Icon(LucideIcons.shield,
+              size: 50, color: theme.colorScheme.onPrimary),
           const SizedBox(height: 12),
-          Text("Admin Panel", style: theme.textTheme.titleLarge?.copyWith(color: theme.colorScheme.onPrimary)),
+          Text("Admin Panel",
+              style: theme.textTheme.titleLarge
+                  ?.copyWith(color: theme.colorScheme.onPrimary)),
           if (_fullName != null)
-            Text(_fullName!, style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onPrimary.withOpacity(0.8))),
+            Text(_fullName!,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onPrimary.withOpacity(0.8))),
         ],
       ),
     );
   }
-  
-  Widget _buildSidebarItem(String title, IconData icon, int index, ThemeData theme, bool isDrawer) {
+
+  Widget _buildSidebarItem(
+      String title, IconData icon, int index, ThemeData theme, bool isDrawer) {
     final bool isSelected = _selectedIndex == index;
-    final Color selectedColor = isDrawer ? theme.colorScheme.primary : theme.colorScheme.onPrimary;
-    final Color unselectedColor = isDrawer ? theme.colorScheme.onSurfaceVariant : theme.colorScheme.onPrimary.withOpacity(0.7);
-    final Color? selectedBgColor = isDrawer ? theme.colorScheme.primary.withOpacity(0.12) : theme.colorScheme.onPrimary.withOpacity(0.15);
+    final Color selectedColor =
+        isDrawer ? theme.colorScheme.primary : theme.colorScheme.onPrimary;
+    final Color unselectedColor = isDrawer
+        ? theme.colorScheme.onSurfaceVariant
+        : theme.colorScheme.onPrimary.withOpacity(0.7);
+    final Color? selectedBgColor = isDrawer
+        ? theme.colorScheme.primary.withOpacity(0.12)
+        : theme.colorScheme.onPrimary.withOpacity(0.15);
 
     return Tooltip(
       message: !_isSidebarExpanded && !isDrawer ? title : '',
@@ -295,23 +333,28 @@ class _AdminDashboardState extends State<AdminDashboard> {
             if (isDrawer) Navigator.of(context).pop();
           },
           child: Container(
-            margin: EdgeInsets.symmetric(horizontal: isDrawer ? 12 : 8, vertical: 4),
+            margin: EdgeInsets.symmetric(
+                horizontal: isDrawer ? 12 : 8, vertical: 4),
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
             decoration: BoxDecoration(
               color: isSelected ? selectedBgColor : Colors.transparent,
               borderRadius: BorderRadius.circular(10),
             ),
             child: Row(
-              mainAxisAlignment: !_isSidebarExpanded && !isDrawer ? MainAxisAlignment.center : MainAxisAlignment.start,
+              mainAxisAlignment: !_isSidebarExpanded && !isDrawer
+                  ? MainAxisAlignment.center
+                  : MainAxisAlignment.start,
               children: [
                 Icon(icon, color: isSelected ? selectedColor : unselectedColor),
                 if (_isSidebarExpanded || isDrawer) ...[
                   const SizedBox(width: 16),
                   Expanded(
-                    child: Text(title, style: theme.textTheme.bodyLarge?.copyWith(
-                      color: isSelected ? selectedColor : unselectedColor,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal
-                    )),
+                    child: Text(title,
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                            color: isSelected ? selectedColor : unselectedColor,
+                            fontWeight: isSelected
+                                ? FontWeight.bold
+                                : FontWeight.normal)),
                   ),
                 ],
               ],
@@ -324,16 +367,21 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
   Widget _buildMobileBottomNav(ThemeData theme) {
     final currentBottomNavIndex = _bottomNavIndices.indexOf(_selectedIndex);
-    
+
     return BottomNavigationBar(
       currentIndex: currentBottomNavIndex == -1 ? 0 : currentBottomNavIndex,
       onTap: (index) => _navigateToPage(_bottomNavIndices[index]),
       type: BottomNavigationBarType.fixed,
       items: [
-        BottomNavigationBarItem(icon: const Icon(LucideIcons.layoutDashboard), label: _pageTitles[0]),
-        BottomNavigationBarItem(icon: const Icon(LucideIcons.userCheck), label: _pageTitles[1]),
-        BottomNavigationBarItem(icon: const Icon(LucideIcons.users), label: _pageTitles[2]),
-        BottomNavigationBarItem(icon: const Icon(LucideIcons.settings), label: _pageTitles[8]),
+        BottomNavigationBarItem(
+            icon: const Icon(LucideIcons.layoutDashboard),
+            label: _pageTitles[0]),
+        BottomNavigationBarItem(
+            icon: const Icon(LucideIcons.userCheck), label: _pageTitles[1]),
+        BottomNavigationBarItem(
+            icon: const Icon(LucideIcons.users), label: _pageTitles[2]),
+        BottomNavigationBarItem(
+            icon: const Icon(LucideIcons.settings), label: _pageTitles[8]),
       ],
     );
   }
@@ -342,15 +390,5 @@ class _AdminDashboardState extends State<AdminDashboard> {
     setState(() {
       _selectedIndex = index;
     });
-  }
-}
-
-// Dummy page for TripsManagementPage until you have the real one
-class TripsManagementPage extends StatelessWidget {
-  const TripsManagementPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const Center(child: Text("Trips Management Page"));
   }
 }
