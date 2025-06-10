@@ -41,27 +41,24 @@ class _SignInScreenState extends State<SignInScreen> {
 
     String? fcmToken;
 
-    // ✅ طلب إذن الإشعارات وتوليد التوكن
-    NotificationSettings settings =
-        await FirebaseMessaging.instance.requestPermission(
-      alert: true,
-      badge: true,
-      sound: true,
-    );
+    if (!kIsWeb) {
+      NotificationSettings settings =
+          await FirebaseMessaging.instance.requestPermission(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
 
-    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-      if (!kIsWeb) {
+      if (settings.authorizationStatus == AuthorizationStatus.authorized) {
         fcmToken = await FirebaseMessaging.instance.getToken();
-        // fcmToken = await FirebaseMessaging.instance.getToken(
-        //   vapidKey:
-        //       "BGZEIrp8Oc46VWd92gmyEdP3UnQkfOOmAMVpRKSey09EkKn66cKNPnApwTMA7j49E2y-0QggAzx1J2qhiY418xE",
-        // );
+        print("✅ FCM Token: $fcmToken");
+      } else {
+        print("❌ Notification permission not granted");
+        fcmToken = "";
       }
-
-      print("✅ FCM Token: $fcmToken");
     } else {
-      print("❌ Notification permission not granted");
-      fcmToken = "";
+      // في الويب لا داعي لاستخدام fcmToken أو يمكن توليد قيمة افتراضية
+      fcmToken = "web-token-placeholder";
     }
 
     final String apiUrl = '${dotenv.env['BASE_URL']}/api/users/signin';

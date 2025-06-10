@@ -1,9 +1,16 @@
 const Notification = require('../models/Notification');
 const User = require('../models/User');
-const admin = require("firebase-admin");
-
+const admin = require("../../firebase/servicefire");
 const sendPushNotification = async (fcmToken, title, body, data = {}) => {
   if (!fcmToken) return;
+
+  // تحويل جميع القيم في data إلى نصوص
+  const stringData = {};
+  for (const key in data) {
+    if (data.hasOwnProperty(key)) {
+      stringData[key] = String(data[key]);
+    }
+  }
 
   const message = {
     token: fcmToken,
@@ -11,9 +18,7 @@ const sendPushNotification = async (fcmToken, title, body, data = {}) => {
       title,
       body,
     },
-    data: {
-      ...data,
-    },
+    data: stringData,
   };
 
   try {
@@ -32,14 +37,14 @@ exports.createNotification = async (data) => {
     const notification = new Notification(data);
     await notification.save();
 
-    // إرسال إشعار FCM
-    const recipient = await User.findById(data.recipient);
+    // ابحث عن المستخدم عبر userId (رقم)
+    const recipient = await User.findOne({ userId: data.recipient });
     if (recipient?.fcmToken) {
       await sendPushNotification(
         recipient.fcmToken,
         data.title,
         data.message,
-        data.data || {} // ممكن تمرر tripId وغيره هنا
+        data.data || {}
       );
     }
 
