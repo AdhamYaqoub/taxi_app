@@ -70,9 +70,9 @@ class _TripMapPageState extends State<TripMapPage> {
     });
 
     _initMapAndRoute();
-    if (_telegramBotToken.isNotEmpty) {
-      _startRoadStatusChecker();
-    }
+    // if (_telegramBotToken.isNotEmpty) {
+    //   _startRoadStatusChecker();
+    // }
     _startLocationTracking();
   }
 
@@ -241,20 +241,20 @@ class _TripMapPageState extends State<TripMapPage> {
     }
   }
 
-  void _startRoadStatusChecker() {
-    if (_telegramBotToken.isEmpty) return;
+  // void _startRoadStatusChecker() {
+  //   if (_telegramBotToken.isEmpty) return;
 
-    _fetchRoadStatusFromTelegram();
-    _roadStatusTimer =
-        Timer.periodic(const Duration(minutes: 1), (timer) async {
-      await _fetchRoadStatusFromTelegram();
-      if (_driverCurrentLocation != null &&
-          _currentRoutePoints.isNotEmpty &&
-          _orsApiKey.isNotEmpty) {
-        await _getActualRoute();
-      }
-    });
-  }
+  //   _fetchRoadStatusFromTelegram();
+  //   _roadStatusTimer =
+  //       Timer.periodic(const Duration(minutes: 1), (timer) async {
+  //     await _fetchRoadStatusFromTelegram();
+  //     if (_driverCurrentLocation != null &&
+  //         _currentRoutePoints.isNotEmpty &&
+  //         _orsApiKey.isNotEmpty) {
+  //       await _getActualRoute();
+  //     }
+  //   });
+  // }
 
   Future<void> _fetchRoadStatusFromTelegram() async {
     if (_telegramBotToken.isEmpty) return;
@@ -819,9 +819,8 @@ class _TripMapPageState extends State<TripMapPage> {
                     initialCenter: initialCenter,
                     initialZoom: initialZoom,
                     onMapReady: () {
-                      if (mounted) {
+                      if (mounted && !_isMapReady) {
                         setState(() => _isMapReady = true);
-                        // تأخير جلب المسار لضمان جاهزية الخريطة
                         Future.delayed(const Duration(milliseconds: 500), () {
                           if (_orsApiKey.isNotEmpty) {
                             _getActualRoute();
