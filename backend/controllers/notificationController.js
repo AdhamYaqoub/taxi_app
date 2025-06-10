@@ -1,10 +1,48 @@
 const Notification = require('../models/Notification');
+const User = require('../models/User');
+const admin = require("firebase-admin");
+
+const sendPushNotification = async (fcmToken, title, body, data = {}) => {
+  if (!fcmToken) return;
+
+  const message = {
+    token: fcmToken,
+    notification: {
+      title,
+      body,
+    },
+    data: {
+      ...data,
+    },
+  };
+
+  try {
+    await admin.messaging().send(message);
+    console.log("[FCM] Notification sent successfully.");
+  } catch (error) {
+    console.error("[FCM ERROR]", error.message);
+  }
+};
+
+
 
 // إنشاء إشعار جديد
 exports.createNotification = async (data) => {
   try {
     const notification = new Notification(data);
     await notification.save();
+
+    // إرسال إشعار FCM
+    const recipient = await User.findById(data.recipient);
+    if (recipient?.fcmToken) {
+      await sendPushNotification(
+        recipient.fcmToken,
+        data.title,
+        data.message,
+        data.data || {} // ممكن تمرر tripId وغيره هنا
+      );
+    }
+
     return notification;
   } catch (error) {
     throw new Error('Failed to create notification');
