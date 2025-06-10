@@ -16,7 +16,7 @@ const notificationSchema = new mongoose.Schema({
   recipientType: {
     type: String,
     required: true,
-    enum: ['Driver', 'Client']
+    enum: ['Driver', 'Client', 'Manager']
   },
   
   // عنوان الإشعار

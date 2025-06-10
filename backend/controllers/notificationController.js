@@ -34,22 +34,29 @@ const sendPushNotification = async (fcmToken, title, body, data = {}) => {
 // إنشاء إشعار جديد
 exports.createNotification = async (data) => {
   try {
+    console.log('Notification data:', data);
+
     const notification = new Notification(data);
     await notification.save();
 
-    // ابحث عن المستخدم عبر userId (رقم)
+    // ابحث عن المستقبل في جدول User
     const recipient = await User.findOne({ userId: data.recipient });
-    if (recipient?.fcmToken) {
+    console.log('Recipient found:', recipient);
+
+    if (recipient && recipient.fcmToken) {
       await sendPushNotification(
         recipient.fcmToken,
         data.title,
         data.message,
         data.data || {}
       );
+    } else {
+      console.warn('No recipient found or recipient has no fcmToken');
     }
 
     return notification;
   } catch (error) {
+    console.error('Notification error:', error);
     throw new Error('Failed to create notification');
   }
 };
