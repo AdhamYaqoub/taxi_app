@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:flutter_dotenv/flutter_dotenv.dart'; // استيراد dotenv
-import 'package:taxi_app/language/localization.dart'; // مسار ملف AppLocalizations الخاص بك
-import 'package:taxi_app/widgets/CustomAppBar.dart'; // تأكد من وجود هذا الـ widget
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:taxi_app/language/localization.dart';
+import 'package:taxi_app/widgets/CustomAppBar.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -15,7 +15,7 @@ class ForgotPasswordScreen extends StatefulWidget {
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _emailController = TextEditingController();
-  bool _isLoading = false; // حالة تحميل لتشغيل مؤشر التحميل
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -24,32 +24,30 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   }
 
   void _sendResetLink() async {
-    final local = AppLocalizations.of(context);
+    final localizations =
+        AppLocalizations.of(context); // استخدام AppLocalizations هنا
 
     if (!_formKey.currentState!.validate()) {
-      return; // توقف إذا كان هناك أخطاء في التحقق من صحة النموذج
+      return;
     }
 
     setState(() {
-      _isLoading = true; // ابدأ التحميل
+      _isLoading = true;
     });
 
     try {
       final String? baseUrl = dotenv.env['BASE_URL'];
       if (baseUrl == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('خطأ في تهيئة عنوان الـ API.')),
+          SnackBar(content: Text(localizations.translate('api_error_config'))),
         );
         return;
       }
 
       final response = await http.post(
-        Uri.parse(
-            '$baseUrl/api/users/forgot-password'), // نقطة نهاية الـ API لنسيان كلمة المرور
+        Uri.parse('$baseUrl/api/users/forgot-password'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'email': _emailController.text.trim()
-        }), // trim لإزالة المسافات البيضاء
+        body: jsonEncode({'email': _emailController.text.trim()}),
       );
 
       if (response.statusCode == 200) {
@@ -57,40 +55,39 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
               content: Text(responseData['message'] ??
-                  local.translate('reset_link_sent_success'))),
+                  localizations.translate('reset_link_sent_success'))),
         );
-        // يمكنك مسح حقل البريد الإلكتروني بعد النجاح
         _emailController.clear();
-        // أو يمكنك العودة للصفحة السابقة
-        // Navigator.pop(context);
       } else {
-        // التعامل مع الأخطاء من الـ Backend
         final Map<String, dynamic> errorData = jsonDecode(response.body);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
               content: Text(errorData['message'] ??
-                  local.translate('something_went_wrong'))),
+                  localizations.translate('something_went_wrong'))),
         );
       }
     } catch (e) {
-      // التعامل مع أخطاء الشبكة (مثل عدم الاتصال بالإنترنت)
       print('Error sending reset link: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(local.translate('something_went_wrong'))),
+        SnackBar(
+            content: Text(localizations.translate('something_went_wrong'))),
       );
     } finally {
       setState(() {
-        _isLoading = false; // إنهاء التحميل بغض النظر عن النتيجة
+        _isLoading = false;
       });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final local = AppLocalizations.of(context);
+    final theme = Theme.of(context); // الوصول إلى الثيم
+    final localizations = AppLocalizations.of(context); // الوصول إلى الترجمة
 
     return Scaffold(
-      appBar: CustomAppBar(),
+      // ScaffoldBackgroundColor يتم تطبيقه تلقائياً من الثيم
+      appBar:
+          const CustomAppBar(), // الـ CustomAppBar يستمد الثيم من الـ ThemeData تلقائياً
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),
@@ -98,6 +95,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             constraints: const BoxConstraints(
                 maxWidth: 500), // لتحديد عرض أقصى للشاشات الكبيرة
             child: Card(
+              color: theme.cardColor, // تطبيق لون الكارد من الثيم
               elevation: 8,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(15),
@@ -108,23 +106,24 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   key: _formKey,
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment:
-                        CrossAxisAlignment.stretch, // لجعل العناصر تمتد عرضياً
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       Text(
-                        local.translate('forgot_password_title'),
-                        style: TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            color:
-                                Theme.of(context).primaryColorDark // لون داكن
-                            ),
+                        localizations.translate('forgot_password_title'),
+                        style: theme.textTheme.headlineMedium?.copyWith(
+                          color: theme.colorScheme
+                              .onSurface, // لون النص على الكارد (surface)
+                          // الـ fontSize والـ fontWeight موجودين أصلاً في headlineMedium
+                        ),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 15),
                       Text(
-                        local.translate('forgot_password_instruction'),
-                        style: TextStyle(fontSize: 16, color: Colors.grey[700]),
+                        localizations.translate('forgot_password_instruction'),
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          color: theme.colorScheme
+                              .onSurfaceVariant, // لون ثانوي للنص الإرشادي
+                        ),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 30),
@@ -132,59 +131,58 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
                         decoration: InputDecoration(
-                          labelText: local.translate('email_address'),
+                          // Input Decoration Theme يتم تطبيقه تلقائياً
+                          labelText: localizations.translate('email_address'),
                           hintText: 'example@email.com',
-                          prefixIcon:
-                              const Icon(Icons.email, color: Colors.grey),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10.0),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10.0),
-                            borderSide: BorderSide(
-                                color: Theme.of(context).primaryColor,
-                                width: 2.0),
-                          ),
+                          prefixIcon: Icon(Icons.email,
+                              color: theme
+                                  .iconTheme.color), // لون الأيقونة من الثيم
+                          // تم إزالة border, focusedBorder, fillColor, filled, hintStyle
+                          // لأنها تُطبق من inputDecorationTheme في Theme.of(context)
+                        ),
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          color: theme
+                              .colorScheme.onSurface, // لون النص داخل الحقل
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return local.translate('email_empty_validation');
+                            return localizations
+                                .translate('email_empty_validation');
                           }
-                          // Regular expression for email validation
                           if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
-                            return local.translate('email_invalid_validation');
+                            return localizations
+                                .translate('email_invalid_validation');
                           }
                           return null;
                         },
                       ),
                       const SizedBox(height: 30),
                       ElevatedButton(
-                        onPressed: _isLoading
-                            ? null
-                            : _sendResetLink, // تعطيل الزر أثناء التحميل
+                        onPressed: _isLoading ? null : _sendResetLink,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              Theme.of(context).primaryColor, // اللون الأصفر
-                          foregroundColor: Colors.black87, // لون النص
+                          // ElevatedButtonThemeData يتم تطبيقه تلقائياً هنا
+                          // لذلك لا داعي لتحديد backgroundColor, foregroundColor, shape
                           padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
                           elevation: 5,
                         ),
                         child: _isLoading
-                            ? const SizedBox(
+                            ? SizedBox(
                                 width: 24,
                                 height: 24,
                                 child: CircularProgressIndicator(
-                                  color: Colors.black87,
+                                  color: theme.colorScheme
+                                      .onPrimary, // لون مؤشر التحميل متناسق مع لون النص على الزر
                                   strokeWidth: 2,
                                 ),
                               )
                             : Text(
-                                local.translate('send_reset_link_button'),
-                                style: const TextStyle(
-                                    fontSize: 18, fontWeight: FontWeight.bold),
+                                localizations
+                                    .translate('send_reset_link_button'),
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  color: theme.colorScheme
+                                      .onPrimary, // لون النص على الزر (primary)
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                       ),
                     ],
