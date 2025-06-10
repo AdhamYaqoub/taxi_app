@@ -60,6 +60,7 @@ dependencies:
   firebase_messaging: ^15.2.6
   flutter_local_notifications: ^19.2.1
   shimmer: ^3.0.0
+  js: ^0.6.7
 
 
   

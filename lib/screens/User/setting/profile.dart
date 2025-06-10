@@ -7,6 +7,7 @@ import 'dart:typed_data';
 import 'package:http_parser/http_parser.dart';
 import 'package:taxi_app/language/localization.dart';
 import 'package:taxi_app/models/client.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 
 class EditClientProfilePage extends StatefulWidget {
   final int clientId;
@@ -41,11 +42,10 @@ class _EditClientProfilePageState extends State<EditClientProfilePage> {
       final response = await http.get(
         Uri.parse('${dotenv.env['BASE_URL']}/api/clients/${widget.clientId}'),
       );
-      print('Response status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         final clientData = json.decode(response.body);
-        final client = Client.fromJson(clientData); // استخدم driverData هنا
+        final client = Client.fromJson(clientData);
 
         setState(() {
           fullNameController.text = client.fullName;
@@ -55,13 +55,11 @@ class _EditClientProfilePageState extends State<EditClientProfilePage> {
           isLoading = false;
         });
       } else {
-        throw Exception('فشل في تحميل بيانات العميل');
+        throw Exception('Failed to load client data');
       }
     } catch (e) {
       setState(() => isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('خطأ: ${e.toString()}')),
-      );
+      _showErrorSnackbar(context, 'Error loading data: ${e.toString()}');
     }
   }
 
@@ -73,9 +71,7 @@ class _EditClientProfilePageState extends State<EditClientProfilePage> {
         setState(() => _selectedImageBytes = bytes);
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('خطأ في اختيار الصورة: ${e.toString()}')),
-      );
+      _showErrorSnackbar(context, 'Image selection error: ${e.toString()}');
     }
   }
 
@@ -121,20 +117,34 @@ class _EditClientProfilePageState extends State<EditClientProfilePage> {
       );
 
       if (response.statusCode == 200) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("تم حفظ التغييرات بنجاح")),
-        );
+        _showSuccessSnackbar(context, 'Changes saved successfully');
         Navigator.pop(context, true);
       } else {
-        throw Exception('فشل في تحديث البيانات');
+        throw Exception('Failed to update data');
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("فشل في الحفظ: ${e.toString()}")),
-      );
+      _showErrorSnackbar(context, 'Failed to save: ${e.toString()}');
     } finally {
       setState(() => isUploading = false);
     }
+  }
+
+  void _showErrorSnackbar(BuildContext context, String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Theme.of(context).colorScheme.error,
+      ),
+    );
+  }
+
+  void _showSuccessSnackbar(BuildContext context, String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Theme.of(context).colorScheme.primary,
+      ),
+    );
   }
 
   Widget _buildProfileImage(BuildContext context) {
@@ -143,7 +153,7 @@ class _EditClientProfilePageState extends State<EditClientProfilePage> {
 
     if (_selectedImageBytes != null) {
       imageProvider = MemoryImage(_selectedImageBytes!);
-    } else if (_currentProfileImageUrl != null &&
+    } else if (_currentProfileImageUrl != null && 
         _currentProfileImageUrl!.isNotEmpty) {
       imageProvider = NetworkImage(_currentProfileImageUrl!);
     }
@@ -153,38 +163,52 @@ class _EditClientProfilePageState extends State<EditClientProfilePage> {
         alignment: Alignment.bottomRight,
         children: [
           Container(
-            width: 120,
-            height: 120,
+            width: 150,
+            height: 150,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(
                 color: theme.colorScheme.primary.withOpacity(0.3),
                 width: 3,
               ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 10,
+                  spreadRadius: 2,
+                ),
+              ],
             ),
-            child: CircleAvatar(
-              radius: 55,
-              backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
-              backgroundImage: imageProvider,
-              child: imageProvider == null
-                  ? Icon(Icons.person,
-                      size: 50, color: theme.colorScheme.primary)
-                  : null,
+            child: ClipOval(
+              child: imageProvider != null
+                  ? Image(image: imageProvider, fit: BoxFit.cover)
+                  : Icon(
+                      LucideIcons.user,
+                      size: 60,
+                      color: theme.colorScheme.onSurface.withOpacity(0.6),
+                    ),
             ),
           ),
           Positioned(
-            right: 0,
-            bottom: 0,
-            child: Container(
-              decoration: BoxDecoration(
-                color: theme.colorScheme.primary,
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 2),
-              ),
-              child: IconButton(
-                icon:
-                    const Icon(Icons.camera_alt, size: 20, color: Colors.white),
-                onPressed: pickImage,
+            right: 8,
+            bottom: 8,
+            child: GestureDetector(
+              onTap: pickImage,
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: theme.colorScheme.surface,
+                    width: 2,
+                  ),
+                ),
+                child: Icon(
+                  LucideIcons.camera,
+                  size: 20,
+                  color: theme.colorScheme.onPrimary,
+                ),
               ),
             ),
           ),
@@ -199,37 +223,46 @@ class _EditClientProfilePageState extends State<EditClientProfilePage> {
     required String labelKey,
     required IconData icon,
     bool isRequired = true,
+    TextInputType? keyboardType,
   }) {
     final theme = Theme.of(context);
     final local = AppLocalizations.of(context);
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: 12),
       child: TextFormField(
         controller: controller,
+        keyboardType: keyboardType,
         decoration: InputDecoration(
           labelText: local.translate(labelKey),
           prefixIcon: Icon(icon, color: theme.colorScheme.primary),
           filled: true,
-          fillColor: Colors.grey[50],
+          fillColor: theme.cardTheme.color,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide.none,
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.grey[300]!),
+            borderSide: BorderSide(
+              color: theme.dividerColor.withOpacity(0.5),
+            ),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: theme.colorScheme.primary, width: 2),
+            borderSide: BorderSide(
+              color: theme.colorScheme.primary,
+              width: 2,
+            ),
           ),
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 16,
+          ),
+          floatingLabelBehavior: FloatingLabelBehavior.auto,
         ),
         validator: isRequired
-            ? (value) =>
-                value!.isEmpty ? local.translate('field_required') : null
+            ? (value) => value!.isEmpty ? local.translate('field_required') : null
             : null,
       ),
     );
@@ -239,24 +272,24 @@ class _EditClientProfilePageState extends State<EditClientProfilePage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final local = AppLocalizations.of(context);
-    final isSmallScreen = MediaQuery.of(context).size.width < 600;
+    final isDesktop = MediaQuery.of(context).size.width > 768;
 
     return Scaffold(
       appBar: AppBar(
         title: Text(local.translate('edit_profile')),
         centerTitle: true,
         elevation: 0,
-        backgroundColor: theme.scaffoldBackgroundColor,
-        foregroundColor: theme.colorScheme.primary,
+        backgroundColor: theme.appBarTheme.backgroundColor,
+        foregroundColor: theme.appBarTheme.foregroundColor,
       ),
       body: isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator.adaptive())
           : SingleChildScrollView(
               padding: EdgeInsets.symmetric(
-                horizontal: isSmallScreen
-                    ? 20
-                    : MediaQuery.of(context).size.width * 0.2,
-                vertical: 20,
+                horizontal: isDesktop
+                    ? MediaQuery.of(context).size.width * 0.25
+                    : 24,
+                vertical: 24,
               ),
               child: Form(
                 key: _formKey,
@@ -264,39 +297,40 @@ class _EditClientProfilePageState extends State<EditClientProfilePage> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     _buildProfileImage(context),
-                    const SizedBox(height: 30),
+                    const SizedBox(height: 32),
                     _buildTextField(
                       context: context,
                       controller: fullNameController,
                       labelKey: 'full_name',
-                      icon: Icons.person_outline,
+                      icon: LucideIcons.user,
                     ),
-                    const SizedBox(height: 16),
                     _buildTextField(
                       context: context,
                       controller: phoneController,
                       labelKey: 'phone_number',
-                      icon: Icons.phone_android_outlined,
+                      icon: LucideIcons.phone,
+                      keyboardType: TextInputType.phone,
                     ),
-                    const SizedBox(height: 16),
                     _buildTextField(
                       context: context,
                       controller: emailController,
                       labelKey: 'email',
-                      icon: Icons.email_outlined,
+                      icon: LucideIcons.mail,
+                      keyboardType: TextInputType.emailAddress,
                       isRequired: false,
                     ),
-                    const SizedBox(height: 30),
+                    const SizedBox(height: 32),
                     ElevatedButton(
                       onPressed: isUploading ? null : saveProfile,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: theme.colorScheme.primary,
-                        foregroundColor: Colors.white,
+                        foregroundColor: theme.colorScheme.onPrimary,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        elevation: 2,
+                        elevation: 0,
+                        shadowColor: Colors.transparent,
                       ),
                       child: isUploading
                           ? const SizedBox(
@@ -304,17 +338,40 @@ class _EditClientProfilePageState extends State<EditClientProfilePage> {
                               height: 24,
                               child: CircularProgressIndicator(
                                 color: Colors.white,
-                                strokeWidth: 2,
+                                strokeWidth: 3,
                               ),
                             )
-                          : Text(
-                              local.translate('save_changes'),
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
+                          : Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(LucideIcons.save, size: 20),
+                                const SizedBox(width: 8),
+                                Text(
+                                  local.translate('save_changes'),
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
                             ),
                     ),
+                    if (isDesktop) ...[
+                      const SizedBox(height: 24),
+                      OutlinedButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          side: BorderSide(
+                            color: theme.colorScheme.primary,
+                          ),
+                        ),
+                        child: Text(local.translate('cancel')),
+                      ),
+                    ],
                   ],
                 ),
               ),
