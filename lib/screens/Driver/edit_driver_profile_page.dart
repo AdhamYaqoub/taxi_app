@@ -267,25 +267,24 @@ class _EditDriverProfilePageState extends State<EditDriverProfilePage> {
         controller: controller,
         keyboardType: keyboardType,
         decoration: InputDecoration(
-          labelText: local.translate(labelKey),
-          prefixIcon: Icon(icon, color: theme.colorScheme.primary),
-          filled: true,
-          fillColor: Colors.grey[50],
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none,
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.grey[300]!),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: theme.colorScheme.primary, width: 2),
-          ),
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        ),
+  labelText: local.translate(labelKey),
+  prefixIcon: Icon(icon, color: theme.colorScheme.primary),
+  filled: true,
+  fillColor: theme.inputDecorationTheme.fillColor ?? theme.colorScheme.surface, // متوافق مع الثيم
+  border: OutlineInputBorder(
+    borderRadius: BorderRadius.circular(12),
+    borderSide: BorderSide.none,
+  ),
+  enabledBorder: OutlineInputBorder(
+    borderRadius: BorderRadius.circular(12),
+    borderSide: BorderSide(color: theme.dividerColor), // من الثيم
+  ),
+  focusedBorder: OutlineInputBorder(
+    borderRadius: BorderRadius.circular(12),
+    borderSide: BorderSide(color: theme.colorScheme.primary, width: 2),
+  ),
+  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+),
         validator: isRequired
             ? (value) => value!.isEmpty
                 ? local.translate('validation_field_required')
@@ -361,68 +360,67 @@ class _EditDriverProfilePageState extends State<EditDriverProfilePage> {
       ),
     ];
 
-    return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        title: Text(local.translate('title_edit_driver_profile')),
-        centerTitle: true,
-        elevation: 0,
-        backgroundColor: theme.scaffoldBackgroundColor,
-        foregroundColor: theme.colorScheme.primary,
-      ),
-      body: isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: EdgeInsets.symmetric(
-                horizontal: horizontalPagePadding,
-                vertical: 20,
-              ),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _buildProfileImage(context),
-                    const SizedBox(height: 24),
-                    if (useTwoColumns) // <--- بناء الواجهة بناءً على عرض الشاشة
-                      ..._buildTwoColumnLayout(context, formFields)
-                    else
-                      ..._buildSingleColumnLayout(context, formFields),
-                    const SizedBox(height: 24),
-                    ElevatedButton(
-                      onPressed: isUploading ? null : saveProfile,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: theme.colorScheme.primary,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        elevation: 2,
-                      ),
-                      child: isUploading
-                          ? const SizedBox(
-                              width: 24,
-                              height: 24,
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 2,
-                              ),
-                            )
-                          : Text(
-                              local.translate('button_save_changes'),
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
+   return Scaffold(
+  appBar: AppBar(
+    title: Text(local.translate('title_edit_driver_profile')),
+    centerTitle: true,
+    elevation: 0,
+    backgroundColor: theme.appBarTheme.backgroundColor,
+        foregroundColor: theme.appBarTheme.foregroundColor,
+  ),
+  body: isLoading
+      ? const Center(child: CircularProgressIndicator())
+      : SingleChildScrollView(
+          padding: EdgeInsets.symmetric(
+            horizontal: horizontalPagePadding,
+            vertical: 20,
+          ),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _buildProfileImage(context),
+                const SizedBox(height: 24),
+                if (useTwoColumns)
+                  ..._buildTwoColumnLayout(context, formFields)
+                else
+                  ..._buildSingleColumnLayout(context, formFields),
+                const SizedBox(height: 24),
+                ElevatedButton(
+                  onPressed: isUploading ? null : saveProfile,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: theme.colorScheme.primary,
+                    foregroundColor: theme.colorScheme.onPrimary,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    const SizedBox(height: 10),
-                  ],
+                    elevation: 2,
+                  ),
+                  child: isUploading
+                      ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : Text(
+                          local.translate('button_save_changes'),
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                 ),
-              ),
+                const SizedBox(height: 10),
+              ],
             ),
-    );
+          ),
+        ),
+);
   }
 
   // دالة لبناء تخطيط العمود الواحد

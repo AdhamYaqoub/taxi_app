@@ -11,7 +11,6 @@ import 'Driver/driver_home.dart';
 import 'Driver/driver_trips.dart';
 import 'Driver/earnings.dart';
 import 'Driver/driver_settings.dart';
-import 'Driver/support.dart';
 import 'chat.dart'; // Ensure this path is correct
 
 class DriverDashboard extends StatefulWidget {
@@ -34,13 +33,13 @@ class _DriverDashboardState extends State<DriverDashboard> {
   String? _fullName;
   bool _isLoading = true;
   bool _accessGranted = false;
-
+final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   static const double _kWebBreakpoint = 800.0;
 
   late List<String> _pageTitles;
 
   // Pages that are included in the bottom navigation bar
-  final List<int> _bottomNavBarPagesIndices = [0, 1, 2, 3, 4];
+  final List<int> _bottomNavBarPagesIndices = [0, 1, 2, 3];
 
   @override
   void initState() {
@@ -55,7 +54,6 @@ class _DriverDashboardState extends State<DriverDashboard> {
       DriverRequestsPage(driverId: widget.userId),
       DriverTripsPage(driverId: widget.userId),
       EarningsPage(driverId: widget.userId),
-      SupportPage(),
       DriverSettingsPage(
         driverId: widget.userId,
         onAvailabilityChanged: (bool value) {},
@@ -71,7 +69,6 @@ class _DriverDashboardState extends State<DriverDashboard> {
       local.translate('trip_requests'),
       local.translate('my_trips'),
       local.translate('earnings'),
-      local.translate('support'),
       local.translate('settings'),
     ];
   }
@@ -210,8 +207,10 @@ class _DriverDashboardState extends State<DriverDashboard> {
     final local = AppLocalizations.of(context);
 
     return Scaffold(
+      key: _scaffoldKey,
       backgroundColor: theme.colorScheme.background,
       appBar: AppBar(
+           automaticallyImplyLeading: false,
         // Theming is now handled by app_theme.dart
         elevation: isLargeScreen ? 0 : 4,
         title: Text(_pageTitles[_selectedIndex]),
@@ -222,7 +221,7 @@ class _DriverDashboardState extends State<DriverDashboard> {
           IconButton(
             icon: const Icon(LucideIcons.settings),
             tooltip: local.translate('settings'),
-            onPressed: () => _navigateToPage(5),
+            onPressed: () => _navigateToPage(4),
           ),
           const SizedBox(width: 8),
         ],
@@ -270,10 +269,7 @@ class _DriverDashboardState extends State<DriverDashboard> {
                 local.translate('earnings'), LucideIcons.dollarSign, 3, theme,
                 isDrawer: true),
             _buildSidebarItem(
-                local.translate('support'), LucideIcons.headphones, 4, theme,
-                isDrawer: true),
-            _buildSidebarItem(
-                local.translate('settings'), LucideIcons.settings, 5, theme,
+                local.translate('settings'), LucideIcons.settings, 4, theme,
                 isDrawer: true),
             Divider(color: theme.dividerColor.withOpacity(0.5), height: 1),
             _buildChatListItem(theme, local, isDrawer: true),
@@ -302,8 +298,7 @@ class _DriverDashboardState extends State<DriverDashboard> {
                   _buildSidebarItem(local.translate('trip_requests'), LucideIcons.list, 1, theme),
                   _buildSidebarItem(local.translate('my_trips'), LucideIcons.car, 2, theme),
                   _buildSidebarItem(local.translate('earnings'), LucideIcons.dollarSign, 3, theme),
-                  _buildSidebarItem(local.translate('support'), LucideIcons.headphones, 4, theme),
-                  _buildSidebarItem(local.translate('settings'), LucideIcons.settings, 5, theme),
+                  _buildSidebarItem(local.translate('settings'), LucideIcons.settings, 4, theme),
                   Divider(color: theme.colorScheme.onPrimary.withOpacity(0.2), height: 1),
                   _buildChatListItem(theme, local),
                 ],
@@ -472,10 +467,6 @@ class _DriverDashboardState extends State<DriverDashboard> {
         BottomNavigationBarItem(
           icon: const Icon(LucideIcons.dollarSign),
           label: local.translate('earnings'),
-        ),
-        BottomNavigationBarItem(
-          icon: const Icon(LucideIcons.headphones),
-          label: local.translate('support'),
         ),
       ],
     );

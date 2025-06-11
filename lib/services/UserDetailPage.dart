@@ -7,36 +7,30 @@ class ClientDetailPageWeb extends StatelessWidget {
 
   const ClientDetailPageWeb({super.key, required this.client});
 
-  // لا تزال هذه الدالة موجودة ولكن يمكن تغييرها لاستقبال مفتاح الترجمة بدلاً من النص المباشر
   Widget _buildDetailRow(BuildContext context, String labelKey, String value) {
+    final theme = Theme.of(context);
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
             flex: 2,
             child: Text(
-              "${AppLocalizations.of(context).translate(labelKey)}:", // استخدام الترجمة
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: Colors.black87,
+              "${AppLocalizations.of(context).translate(labelKey)}:",
+              style: theme.textTheme.bodyLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: theme.colorScheme.onSurface,
               ),
-              textAlign: TextAlign.start,
             ),
           ),
-          const SizedBox(width: 8),
           Expanded(
             flex: 3,
             child: Text(
               value,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w400,
-                color: Colors.black54,
-              ),
               textAlign: TextAlign.end,
+              style: theme.textTheme.bodyLarge?.copyWith(
+                color: theme.colorScheme.onSurface.withOpacity(0.7),
+              ),
             ),
           ),
         ],
@@ -44,135 +38,115 @@ class ClientDetailPageWeb extends StatelessWidget {
     );
   }
 
-  // يمكن إضافة دالة عنوان قسم إذا أردت تقسيم المحتوى مثل صفحة السائق
-  // Widget _buildSectionTitle(BuildContext context, String titleKey) {
-  //   return Align(
-  //     alignment: Alignment.centerRight,
-  //     child: Padding(
-  //       padding: const EdgeInsets.only(top: 24.0, bottom: 12.0),
-  //       child: Text(
-  //         AppLocalizations.of(context).translate(titleKey),
-  //         style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-  //               fontWeight: FontWeight.bold,
-  //               color: Theme.of(context).colorScheme.primary,
-  //             ),
-  //       ),
-  //     ),
-  //   );
-  // }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final screenSize = MediaQuery.of(context).size;
 
     return Scaffold(
       appBar: AppBar(
         title: Text(AppLocalizations.of(context)
-            .translate('client_detail_page_title_prefix')), // عنوان ثابت
+            .translate('client_detail_page_title_prefix')),
         backgroundColor: theme.colorScheme.primary,
-        elevation: 4,
       ),
-      body: SingleChildScrollView(
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(32.0),
-            child: Card(
-              elevation: 10,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final isWide = constraints.maxWidth > 800;
+          final contentWidth = isWide ? 700.0 : double.infinity;
+
+          return Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
               child: Container(
-                // تحديد عرض الـ Card ليكون متجاوبًا ولكنه ليس كبيراً جداً
-                width: MediaQuery.of(context).size.width > 900
-                    ? 800 // أقصى عرض 800 بكسل للشاشات الكبيرة جداً
-                    : screenSize.width * 0.7, // 70% من عرض الشاشة الافتراضي
+                width: contentWidth,
                 padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surface,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: theme.brightness == Brightness.dark
+                          ? Colors.black.withOpacity(0.3)
+                          : Colors.grey.withOpacity(0.2),
+                      blurRadius: 12,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment
-                      .center, // تركها Center هنا كما في الكود الأصلي
                   children: [
                     CircleAvatar(
-                      radius: 100,
-                      backgroundImage: NetworkImage(client.profileImageUrl ??
-                          'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSrUfiySJr8Org5W-oE2v3_i7VqufglYtSdqw&s'),
-                      backgroundColor: Colors.grey[200],
-                      onBackgroundImageError: (exception, stackTrace) {
-                        print(
-                            'Error loading client image: $exception'); // سجل خطأ تحميل الصورة
-                      },
+                      radius: 80,
+                      backgroundImage: NetworkImage(
+                        client.profileImageUrl ??
+                            'https://via.placeholder.com/150',
+                      ),
+                      backgroundColor: theme.colorScheme.background,
+                      onBackgroundImageError: (error, stackTrace) =>
+                          debugPrint('Image error: $error'),
                     ),
                     const SizedBox(height: 20),
                     Text(
-                      client.fullName, // اسم العميل ديناميكي
-                      style: TextStyle(
-                        fontSize: 32,
+                      client.fullName,
+                      style: theme.textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: theme.colorScheme.primary,
                       ),
                       textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 10),
-
-                    // يمكن إضافة _buildSectionTitle هنا إذا أردت فصل المحتوى
-                    // _buildSectionTitle(context, 'client_detail_personal_info_title'),
-
-                    _buildDetailRow(context, 'client_detail_phone_label',
-                        client.phone), // استخدام مفتاح الترجمة
-                    _buildDetailRow(context, 'client_detail_email_label',
-                        client.email), // استخدام مفتاح الترجمة
-                    _buildDetailRow(
-                        context,
-                        'client_detail_total_spending_label',
-                        "${client.totalSpending.toStringAsFixed(2)}"), // استخدام مفتاح الترجمة مع تنسيق
+                    const SizedBox(height: 24),
+                    _buildDetailRow(context, 'client_detail_phone_label', client.phone),
+                    _buildDetailRow(context, 'client_detail_email_label', client.email),
+                    _buildDetailRow(context, 'client_detail_total_spending_label',
+                        "${client.totalSpending.toStringAsFixed(2)}"),
                     _buildDetailRow(context, 'client_detail_trips_number_label',
-                        "${client.tripsNumber}"), // استخدام مفتاح الترجمة
+                        "${client.tripsNumber}"),
                     _buildDetailRow(
                       context,
-                      'client_detail_availability_status_label', // استخدام مفتاح الترجمة
+                      'client_detail_availability_status_label',
                       client.isAvailable
-                          ? AppLocalizations.of(context).translate(
-                              'client_detail_status_available') // استخدام الترجمة
-                          : AppLocalizations.of(context).translate(
-                              'client_detail_status_unavailable'), // استخدام الترجمة
+                          ? AppLocalizations.of(context).translate('client_detail_status_available')
+                          : AppLocalizations.of(context).translate('client_detail_status_unavailable'),
                     ),
                     _buildDetailRow(
-                        context,
-                        'client_detail_type_label', // استخدام مفتاح الترجمة
-                        AppLocalizations.of(context).translate(
-                            'client_detail_type_client')), // استخدام الترجمة للنوع
-                    const SizedBox(height: 20),
+                      context,
+                      'client_detail_type_label',
+                      AppLocalizations.of(context).translate('client_detail_type_client'),
+                    ),
+                    const SizedBox(height: 30),
                     ElevatedButton.icon(
                       onPressed: () {
-                        // تنفيذ الإجراء مثل الاتصال بالعميل
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                              content: Text(
-                                  '${AppLocalizations.of(context).translate('client_detail_call_client_snackbar_prefix')} ${client.fullName} ${AppLocalizations.of(context).translate('client_detail_call_client_snackbar_suffix')} ${client.phone}')), // استخدام الترجمة
+                            content: Text(
+                              '${AppLocalizations.of(context).translate('client_detail_call_client_snackbar_prefix')} ${client.fullName} ${AppLocalizations.of(context).translate('client_detail_call_client_snackbar_suffix')} ${client.phone}',
+                            ),
+                          ),
                         );
                       },
                       icon: const Icon(Icons.phone),
-                      label: Text(AppLocalizations.of(context).translate(
-                          'client_detail_call_client_button')), // استخدام الترجمة
+                      label: Text(
+                        AppLocalizations.of(context).translate(
+                            'client_detail_call_client_button'),
+                      ),
                       style: ElevatedButton.styleFrom(
-                        foregroundColor: Colors.white,
                         backgroundColor: theme.colorScheme.primary,
+                        foregroundColor: theme.colorScheme.onPrimary,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 16,
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 24,
-                            vertical: 16), // زيادة حجم الزر قليلاً
-                        textStyle: const TextStyle(fontSize: 18),
-                        elevation: 4,
+                        elevation: 6,
                       ),
                     ),
                   ],
                 ),
               ),
             ),
-          ),
-        ),
+          );
+        },
       ),
     );
   }

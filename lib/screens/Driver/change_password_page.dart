@@ -123,7 +123,6 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
 
     return Scaffold(
       appBar: AppBar(
-        automaticallyImplyLeading: false,
         title: Text(local.translate('change_password_title')),
       ),
       body: Center(

@@ -8,56 +8,40 @@ class DriverDetailPageWeb extends StatelessWidget {
 
   const DriverDetailPageWeb({super.key, required this.driver});
 
-  // دالة مساعدة لإنشاء عنوان قسم
   Widget _buildSectionTitle(BuildContext context, String titleKey) {
-    // تم تغييرها لاستقبال مفتاح الترجمة
-    return Align(
-      alignment: Alignment.centerRight,
-      child: Padding(
-        padding: const EdgeInsets.only(top: 24.0, bottom: 12.0),
-        child: Text(
-          AppLocalizations.of(context).translate(titleKey), // استخدام الترجمة
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.primary,
-              ),
-        ),
+    return Padding(
+      padding: const EdgeInsets.only(top: 24.0, bottom: 12.0),
+      child: Text(
+        AppLocalizations.of(context).translate(titleKey),
+        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).colorScheme.primary,
+            ),
       ),
     );
   }
 
-  // دالة مساعدة لبناء صف تفصيلي (Label: Value)
   Widget _buildDetailRow(BuildContext context, String labelKey, String value) {
-    // تم تغييرها لاستقبال مفتاح الترجمة و context
+    final labelStyle = Theme.of(context).textTheme.bodyLarge?.copyWith(
+          fontWeight: FontWeight.bold,
+          color: Theme.of(context).colorScheme.onSurface,
+        );
+    final valueStyle = Theme.of(context).textTheme.bodyLarge?.copyWith(
+          fontWeight: FontWeight.normal,
+          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+        );
+
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
             flex: 2,
-            child: Text(
-              "${AppLocalizations.of(context).translate(labelKey)}:", // استخدام الترجمة
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: Colors.black87,
-              ),
-              textAlign: TextAlign.start,
-            ),
+            child: Text("${AppLocalizations.of(context).translate(labelKey)}:", style: labelStyle),
           ),
-          const SizedBox(width: 8),
           Expanded(
             flex: 3,
-            child: Text(
-              value,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w400,
-                color: Colors.black54,
-              ),
-              textAlign: TextAlign.end,
-            ),
+            child: Text(value, textAlign: TextAlign.end, style: valueStyle),
           ),
         ],
       ),
@@ -67,153 +51,139 @@ class DriverDetailPageWeb extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final screenSize = MediaQuery.of(context).size;
-    print(
-        "DriverDetailPageWeb: Building driver detail page for ${driver.profileImageUrl}");
+    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-            driver.fullName), // اسم السائق ديناميكي، لا يحتاج ترجمة مباشرة هنا
+        title: Text(driver.fullName),
         backgroundColor: theme.colorScheme.primary,
-        elevation: 4,
       ),
-      body: SingleChildScrollView(
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(32.0),
-            child: Card(
-              elevation: 10,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final isWide = constraints.maxWidth > 800;
+          final contentWidth = isWide ? 700.0 : double.infinity;
+
+          return Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
               child: Container(
-                width: MediaQuery.of(context).size.width > 900
-                    ? 800
-                    : screenSize.width * 0.7,
+                width: contentWidth,
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surface,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: isDark
+                          ? Colors.black.withOpacity(0.3)
+                          : Colors.grey.withOpacity(0.2),
+                      blurRadius: 12,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
                 padding: const EdgeInsets.all(24),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Align(
-                      alignment: Alignment.center,
-                      child: Column(
-                        children: [
-                          CircleAvatar(
-                            radius: 100,
-                            backgroundImage: NetworkImage(driver
-                                    .profileImageUrl ??
-                                'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSrUfiySJr8Org5W-oE2v3_i7VqufglYtSdqw&s'),
-                            backgroundColor: Colors.grey[200],
-                            onBackgroundImageError: (exception, stackTrace) {
-                              print('Error loading image: $exception');
-                            },
+                    Column(
+                      children: [
+                        CircleAvatar(
+                          radius: 80,
+                          backgroundImage: NetworkImage(
+                            driver.profileImageUrl ??
+                                'https://via.placeholder.com/150',
                           ),
-                          const SizedBox(height: 20),
-                          Text(
-                            driver.fullName,
-                            style: TextStyle(
-                              fontSize: 32,
-                              fontWeight: FontWeight.bold,
-                              color: theme.colorScheme.primary,
-                            ),
-                            textAlign: TextAlign.center,
+                          backgroundColor: theme.colorScheme.background,
+                          onBackgroundImageError: (exception, stackTrace) =>
+                              debugPrint('Image load error: $exception'),
+                        ),
+                        const SizedBox(height: 20),
+                        Text(
+                          driver.fullName,
+                          style: theme.textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: theme.colorScheme.primary,
                           ),
-                          const SizedBox(height: 10),
-                        ],
-                      ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
                     ),
+                    const SizedBox(height: 20),
 
-                    // **معلومات شخصية**
-                    _buildSectionTitle(context,
-                        'driver_detail_personal_info_title'), // استخدام مفتاح الترجمة
-                    _buildDetailRow(context, 'driver_detail_phone_label',
-                        driver.phone), // استخدام مفتاح الترجمة
-                    _buildDetailRow(context, 'driver_detail_email_label',
-                        driver.email), // استخدام مفتاح الترجمة
+                    // Personal Info
+                    _buildSectionTitle(context, 'driver_detail_personal_info_title'),
+                    _buildDetailRow(context, 'driver_detail_phone_label', driver.phone),
+                    _buildDetailRow(context, 'driver_detail_email_label', driver.email),
                     _buildDetailRow(
                       context,
-                      'driver_detail_rating_label', // استخدام مفتاح الترجمة
-                      "${driver.rating.toStringAsFixed(1)} ★ (${driver.numberOfRatings} ${AppLocalizations.of(context).translate('driver_detail_ratings_suffix')})", // استخدام الترجمة
+                      'driver_detail_rating_label',
+                      "${driver.rating.toStringAsFixed(1)} ★ (${driver.numberOfRatings} ${AppLocalizations.of(context).translate('driver_detail_ratings_suffix')})",
                     ),
-                    _buildDetailRow(context, 'driver_detail_earnings_label',
-                        "${driver.earnings.toStringAsFixed(2)}"), // استخدام مفتاح الترجمة
                     _buildDetailRow(
                       context,
-                      'driver_detail_availability_status_label', // استخدام مفتاح الترجمة
+                      'driver_detail_earnings_label',
+                      "${driver.earnings.toStringAsFixed(2)}",
+                    ),
+                    _buildDetailRow(
+                      context,
+                      'driver_detail_availability_status_label',
                       driver.isAvailable
-                          ? AppLocalizations.of(context).translate(
-                              'driver_detail_status_available') // استخدام الترجمة
-                          : AppLocalizations.of(context).translate(
-                              'driver_detail_status_unavailable'), // استخدام الترجمة
+                          ? AppLocalizations.of(context).translate('driver_detail_status_available')
+                          : AppLocalizations.of(context).translate('driver_detail_status_unavailable'),
                     ),
                     _buildDetailRow(
-                        context,
-                        'driver_detail_joined_date_label', // استخدام مفتاح الترجمة
-                        DateFormat('dd/MM/yyyy').format(driver.joinedAt)),
+                      context,
+                      'driver_detail_joined_date_label',
+                      DateFormat('dd/MM/yyyy').format(driver.joinedAt),
+                    ),
 
-                    // **معلومات السيارة**
-                    _buildSectionTitle(context,
-                        'driver_detail_car_info_title'), // استخدام مفتاح الترجمة
-                    _buildDetailRow(context, 'driver_detail_car_model_label',
-                        driver.carModel), // استخدام مفتاح الترجمة
-                    _buildDetailRow(context, 'driver_detail_car_color_label',
-                        driver.carColor), // استخدام مفتاح الترجمة
-                    _buildDetailRow(context, 'driver_detail_car_plate_label',
-                        driver.carPlateNumber), // استخدام مفتاح الترجمة
-                    _buildDetailRow(
-                        context,
-                        'driver_detail_car_year_label', // استخدام مفتاح الترجمة
-                        driver.carYear?.toString() ??
-                            AppLocalizations.of(context).translate(
-                                'driver_detail_car_year_not_specified')), // استخدام الترجمة
-
-                    // **معلومات الرخصة**
-                    _buildSectionTitle(context,
-                        'driver_detail_license_info_title'), // استخدام مفتاح الترجمة
-                    _buildDetailRow(
-                        context,
-                        'driver_detail_license_number_label',
-                        driver.licenseNumber), // استخدام مفتاح الترجمة
+                    // Car Info
+                    _buildSectionTitle(context, 'driver_detail_car_info_title'),
+                    _buildDetailRow(context, 'driver_detail_car_model_label', driver.carModel),
+                    _buildDetailRow(context, 'driver_detail_car_color_label', driver.carColor),
+                    _buildDetailRow(context, 'driver_detail_car_plate_label', driver.carPlateNumber),
                     _buildDetailRow(
                       context,
-                      'driver_detail_license_expiry_label', // استخدام مفتاح الترجمة
+                      'driver_detail_car_year_label',
+                      driver.carYear?.toString() ??
+                          AppLocalizations.of(context).translate('driver_detail_car_year_not_specified'),
+                    ),
+
+                    // License Info
+                    _buildSectionTitle(context, 'driver_detail_license_info_title'),
+                    _buildDetailRow(context, 'driver_detail_license_number_label', driver.licenseNumber),
+                    _buildDetailRow(
+                      context,
+                      'driver_detail_license_expiry_label',
                       DateFormat('dd/MM/yyyy').format(driver.licenseExpiry),
                     ),
 
                     const SizedBox(height: 30),
-                    Align(
-                      alignment: Alignment.center,
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                                content: Text(
-                                    '${AppLocalizations.of(context).translate('driver_detail_call_driver_snackbar_prefix')} ${driver.fullName} ${AppLocalizations.of(context).translate('driver_detail_call_driver_snackbar_suffix')} ${driver.phone}')), // استخدام الترجمة
-                          );
-                        },
-                        icon: const Icon(Icons.phone),
-                        label: Text(AppLocalizations.of(context).translate(
-                            'driver_detail_call_driver_button')), // استخدام الترجمة
-                        style: ElevatedButton.styleFrom(
-                          foregroundColor: Colors.white,
-                          backgroundColor: theme.colorScheme.primary,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              '${AppLocalizations.of(context).translate('driver_detail_call_driver_snackbar_prefix')} ${driver.fullName} ${AppLocalizations.of(context).translate('driver_detail_call_driver_snackbar_suffix')} ${driver.phone}',
+                            ),
                           ),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 24, vertical: 16),
-                          textStyle: const TextStyle(fontSize: 18),
-                          elevation: 4,
-                        ),
+                        );
+                      },
+                      icon: const Icon(Icons.phone),
+                      label: Text(AppLocalizations.of(context).translate('driver_detail_call_driver_button')),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: theme.colorScheme.primary,
+                        foregroundColor: theme.colorScheme.onPrimary,
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        elevation: 6,
                       ),
                     ),
                   ],
                 ),
               ),
             ),
-          ),
-        ),
+          );
+        },
       ),
     );
   }

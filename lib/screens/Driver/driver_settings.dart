@@ -59,18 +59,7 @@ class _DriverSettingsPageState extends State<DriverSettingsPage> {
     final local = AppLocalizations.of(context);
 
     return Scaffold(
-      appBar: isWeb
-          ? null
-          : AppBar(
-            automaticallyImplyLeading: false,
-              backgroundColor: theme.colorScheme.primary,
-              title: Text(
-                local.translate('driver_settings_title'),
-                style: theme.textTheme.titleLarge?.copyWith(
-                  color: theme.colorScheme.onPrimary,
-                ),
-              ),
-            ),
+      
       body: Center(
         child: Container(
           constraints: const BoxConstraints(maxWidth: 600),
@@ -160,14 +149,7 @@ class _DriverSettingsPageState extends State<DriverSettingsPage> {
 
               // Security Section
               _buildSettingsSection(context, 'security_settings', [
-                _buildSettingsItem(
-                  context,
-                  'security_settings', // Assuming this is a placeholder for a security page
-                  LucideIcons.shieldCheck,
-                  () {
-                    // TODO: Implement navigation to driver security settings
-                  },
-                ),
+              
                 _buildSettingsItem(
                   context,
                   'change_password',

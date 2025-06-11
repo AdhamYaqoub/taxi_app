@@ -52,12 +52,7 @@ class _PaymentsManagementPageState extends State<PaymentsManagementPage> {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        backgroundColor: theme.colorScheme.primary,
-        title:
-            Text(AppLocalizations.of(context).translate('payments_management')),
-      ),
+     
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(

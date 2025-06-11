@@ -91,18 +91,7 @@ class _UsersPageState extends State<UsersPage> {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        title: Text(local.translate('users_management')),
-        backgroundColor: theme.colorScheme.primary,
-        actions: [
-          IconButton(
-            icon: const Icon(LucideIcons.refreshCw),
-            onPressed: _loadUsers,
-            tooltip: local.translate('refresh'),
-          ),
-        ],
-      ),
+     
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
