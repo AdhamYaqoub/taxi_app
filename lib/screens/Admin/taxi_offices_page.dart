@@ -237,11 +237,12 @@ class _TaxiOfficesPageState extends State<TaxiOfficesPage> {
     );
   }
 
-     Widget _buildDesktopTable(AppLocalizations local, ThemeData theme) {
+  Widget _buildDesktopTable(AppLocalizations local, ThemeData theme) {
     // We removed the horizontal SingleChildScrollView.
     // The table will now shrink/grow with the screen width.
     return Container(
-      constraints: const BoxConstraints(maxWidth: 1200), // Keeps it from getting too wide
+      constraints: const BoxConstraints(
+          maxWidth: 1200), // Keeps it from getting too wide
       padding: const EdgeInsets.symmetric(horizontal: 32),
       // This Column separates the fixed header from the scrollable body.
       child: Column(
@@ -256,8 +257,7 @@ class _TaxiOfficesPageState extends State<TaxiOfficesPage> {
           Expanded(
             child: SingleChildScrollView(
               child: _offices.isEmpty
-                  ? _buildEmptyState(
-                      theme, local.translate('no_offices_found'))
+                  ? _buildEmptyState(theme, local.translate('no_offices_found'))
                   : Table(
                       // IMPORTANT: Use the same columnWidths as the header for alignment.
                       columnWidths: const {
@@ -275,8 +275,7 @@ class _TaxiOfficesPageState extends State<TaxiOfficesPage> {
                         for (final office in _offices)
                           TableRow(
                             decoration: BoxDecoration(
-                              color:
-                                  theme.colorScheme.surface.withOpacity(0.5),
+                              color: theme.colorScheme.surface.withOpacity(0.5),
                             ),
                             children: [
                               // Cell 1: ID
@@ -288,8 +287,7 @@ class _TaxiOfficesPageState extends State<TaxiOfficesPage> {
                                       const EdgeInsets.symmetric(vertical: 20),
                                   child: Text(
                                     "#${office.officeId}",
-                                    style: theme.textTheme.bodyMedium
-                                        ?.copyWith(
+                                    style: theme.textTheme.bodyMedium?.copyWith(
                                       fontWeight: FontWeight.bold,
                                       color: theme.colorScheme.primary,
                                     ),
@@ -323,7 +321,8 @@ class _TaxiOfficesPageState extends State<TaxiOfficesPage> {
                                     style: theme.textTheme.bodyMedium,
                                     maxLines: 3, // Allow more lines for address
                                     overflow: TextOverflow.ellipsis,
-                                    textAlign: TextAlign.start, // Better for multi-line text
+                                    textAlign: TextAlign
+                                        .start, // Better for multi-line text
                                   ),
                                 ),
                               ),
@@ -353,39 +352,7 @@ class _TaxiOfficesPageState extends State<TaxiOfficesPage> {
     );
   }
 
-  Widget _buildManagerBadge(AppLocalizations local, ThemeData theme) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: Colors.green.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: Colors.green.withOpacity(0.3),
-          width: 1,
-        ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            LucideIcons.userCheck,
-            size: 14,
-            color: Colors.green,
-          ),
-          const SizedBox(width: 6),
-          Text(
-            local.translate('has_manager'),
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: Colors.green,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-    Widget _buildTableHeader(AppLocalizations local, ThemeData theme) {
+  Widget _buildTableHeader(AppLocalizations local, ThemeData theme) {
     return Container(
       decoration: BoxDecoration(
         color: theme.colorScheme.primary.withOpacity(0.05),
@@ -644,7 +611,9 @@ class _TaxiOfficesPageState extends State<TaxiOfficesPage> {
         child: const Icon(LucideIcons.plus),
       ),
       body: _isLoading
-          ? Center(child: CircularProgressIndicator(color: theme.colorScheme.primary))
+          ? Center(
+              child:
+                  CircularProgressIndicator(color: theme.colorScheme.primary))
           : _error != null
               ? Center(child: _buildErrorWidget(theme, local))
               : RefreshIndicator(

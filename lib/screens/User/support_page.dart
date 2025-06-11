@@ -5,7 +5,6 @@ import 'package:taxi_app/language/localization.dart';
 import 'package:taxi_app/providers/theme_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 
 class SupportPage extends StatelessWidget {
   const SupportPage({super.key});
@@ -21,7 +20,7 @@ class SupportPage extends StatelessWidget {
       appBar: isWeb
           ? null
           : AppBar(
-            automaticallyImplyLeading: false,
+              automaticallyImplyLeading: false,
               backgroundColor: theme.colorScheme.primary,
               title: Text(
                 local.translate("support_center"),
@@ -123,7 +122,7 @@ class SupportPage extends StatelessWidget {
 
   void _showEmergencyOptions(BuildContext context) {
     final local = AppLocalizations.of(context);
-    
+
     showModalBottomSheet(
       context: context,
       builder: (BuildContext context) {
@@ -155,7 +154,6 @@ class SupportPage extends StatelessWidget {
 
   Widget _buildSupportOptions(BuildContext context, AppLocalizations local) {
     final theme = Theme.of(context);
-    final isWeb = MediaQuery.of(context).size.width > 800;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -197,7 +195,6 @@ class SupportPage extends StatelessWidget {
   }
 
   void _showEmailDialog(BuildContext context) {
-    final theme = Theme.of(context);
     final local = AppLocalizations.of(context);
     final TextEditingController messageController = TextEditingController();
 
@@ -247,7 +244,8 @@ class SupportPage extends StatelessWidget {
     final local = AppLocalizations.of(context);
     final adminEmail = "amamry2025.2002@gmail.com";
     final subject = local.translate("support_email_subject");
-    final body = "${local.translate("message")}:\n$message\n\n\n--\n${local.translate("sent_from_taxigo_app")}";
+    final body =
+        "${local.translate("message")}:\n$message\n\n\n--\n${local.translate("sent_from_taxigo_app")}";
 
     final Uri emailUri = Uri(
       scheme: 'mailto',
@@ -284,7 +282,7 @@ class SupportPage extends StatelessWidget {
 
   void _showPhoneOptions(BuildContext context) {
     final local = AppLocalizations.of(context);
-    
+
     showModalBottomSheet(
       context: context,
       builder: (BuildContext context) {
@@ -425,7 +423,8 @@ class SupportPage extends StatelessWidget {
     );
   }
 
-  Widget _buildFAQItem(BuildContext context, {required String title, required String content}) {
+  Widget _buildFAQItem(BuildContext context,
+      {required String title, required String content}) {
     final theme = Theme.of(context);
     final isWeb = MediaQuery.of(context).size.width > 800;
 
@@ -450,9 +449,9 @@ class SupportPage extends StatelessWidget {
         children: [
           Padding(
             padding: EdgeInsets.fromLTRB(
-              isWeb ? 24.0 : 16.0, 
-              0, 
-              isWeb ? 24.0 : 16.0, 
+              isWeb ? 24.0 : 16.0,
+              0,
+              isWeb ? 24.0 : 16.0,
               16.0,
             ),
             child: Text(

@@ -55,11 +55,9 @@ class _DriverSettingsPageState extends State<DriverSettingsPage> {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final languageProvider = Provider.of<LanguageProvider>(context);
     final isDarkMode = themeProvider.themeMode == ThemeMode.dark;
-    final isWeb = MediaQuery.of(context).size.width > 800;
     final local = AppLocalizations.of(context);
 
     return Scaffold(
-      
       body: Center(
         child: Container(
           constraints: const BoxConstraints(maxWidth: 600),
@@ -149,7 +147,6 @@ class _DriverSettingsPageState extends State<DriverSettingsPage> {
 
               // Security Section
               _buildSettingsSection(context, 'security_settings', [
-              
                 _buildSettingsItem(
                   context,
                   'change_password',

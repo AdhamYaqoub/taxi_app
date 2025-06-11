@@ -5,16 +5,13 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:taxi_app/language/localization.dart';
-import 'package:taxi_app/screens/Admin/analytics_reports.dart';
 import 'package:taxi_app/screens/Admin/dashboard_home.dart';
 import 'package:taxi_app/screens/Admin/drivers_page.dart';
 import 'package:taxi_app/screens/Admin/payments_management.dart';
-import 'package:taxi_app/screens/Admin/security_monitoring.dart';
 import 'package:taxi_app/screens/Admin/settings_page.dart';
 import 'package:taxi_app/screens/Admin/taxi_offices_page.dart';
 import 'package:taxi_app/screens/Admin/trips_management.dart';
 import 'package:taxi_app/screens/Admin/users_page.dart';
-import 'package:taxi_app/screens/Admin/vip_corporate.dart';
 
 class AdminDashboard extends StatefulWidget {
   final int userId;
@@ -40,7 +37,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
     0,
     1,
     2,
-    8
+    5
   ]; // Home, Drivers, Users, Settings
 
   @override
@@ -57,9 +54,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
       const UsersPage(),
       const DriverTripsPage(), // تم تغيير اسم الصفحة للاسم الصحيح
       const PaymentsManagementPage(),
-      const SecurityMonitoringPage(),
-      const AnalyticsReportsPage(),
-      const VipCorporatePage(),
       SettingsPage(userId: widget.userId, token: widget.token),
       TaxiOfficesPage(token: widget.token), // تم تمرير التوكن الصحيح
     ];
@@ -73,9 +67,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
       local.translate('users'),
       local.translate('trips_management'),
       local.translate('payments_management'),
-      local.translate('security_monitoring'),
-      local.translate('analytics_reports'),
-      local.translate('vip_corporate'),
       local.translate('settings'),
       local.translate('taxi_offices'),
     ];
@@ -226,17 +217,12 @@ class _AdminDashboardState extends State<AdminDashboard> {
           local.translate('users'), LucideIcons.users, 2, theme, isDrawer),
       _buildSidebarItem(local.translate('trips_management'), LucideIcons.router,
           3, theme, isDrawer),
-      _buildSidebarItem(local.translate('taxi_offices'), LucideIcons.building,
-          9, theme, isDrawer),
-      const Divider(height: 24, thickness: 1, indent: 16, endIndent: 16),
       _buildSidebarItem(local.translate('payments_management'),
           LucideIcons.dollarSign, 4, theme, isDrawer),
-      _buildSidebarItem(local.translate('security_monitoring'),
-          LucideIcons.shieldCheck, 5, theme, isDrawer),
-      _buildSidebarItem(local.translate('analytics_reports'),
-          LucideIcons.barChart, 6, theme, isDrawer),
-      _buildSidebarItem(local.translate('vip_corporate'), LucideIcons.star, 7,
-          theme, isDrawer),
+      _buildSidebarItem(local.translate('settings'), LucideIcons.settings, 5,
+          theme, isDrawer), // أضف الإعدادات هنا
+      _buildSidebarItem(local.translate('taxi_offices'), LucideIcons.building,
+          6, theme, isDrawer),
     ];
 
     return Column(
@@ -381,7 +367,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
         BottomNavigationBarItem(
             icon: const Icon(LucideIcons.users), label: _pageTitles[2]),
         BottomNavigationBarItem(
-            icon: const Icon(LucideIcons.settings), label: _pageTitles[8]),
+            icon: const Icon(LucideIcons.settings), label: _pageTitles[5]),
       ],
     );
   }
