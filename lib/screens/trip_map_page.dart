@@ -756,149 +756,168 @@ class _TripMapPageState extends State<TripMapPage> {
         LatLng(widget.startLocation.latitude, widget.startLocation.longitude);
     double initialZoom = _driverCurrentLocation != null ? 15.0 : 13.0;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(local.translate('current_trip')),
-        backgroundColor: theme.colorScheme.primary,
-        foregroundColor: theme.colorScheme.onPrimary,
-        actions: [
-          if (_telegramBotToken.isNotEmpty)
-            IconButton(
-              icon: const Icon(LucideIcons.info),
-              tooltip: local.translate('road_status'),
-              onPressed: () {
-                showDialog(
-                  context: context,
-                  builder: (context) => AlertDialog(
-                    title: Text(local.translate('blocked_roads_info')),
-                    content: SingleChildScrollView(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (_blockedRoads.isEmpty)
-                            Text(local.translate('no_blocked_roads'))
-                          else
-                            ..._blockedRoads.map((road) => Padding(
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 4),
-                                  child: Text(
-                                      '• ${road["name"]} - ${road["city"]} (${road["status"]})'),
-                                )),
+    // ✅ هنا التعديل الرئيسي لمنع الخروج
+    return PopScope(
+      // استخدم PopScope
+      canPop: false, // اجعلها false لمنع الخروج بشكل افتراضي
+      onPopInvoked: (bool didPop) {
+        // هذه الدالة تُستدعى عندما يحاول المستخدم الخروج
+        // إذا كان `didPop` صحيحاً، فهذا يعني أن الخروج قد حدث (نادراً مع canPop: false)
+        // إذا كان `didPop` خاطئاً، فهذا يعني أننا منعنا الخروج.
+        if (!didPop) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(local.translate('cannot_exit_trip')), // تحتاج ترجمة
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(local.translate('current_trip')),
+          backgroundColor: theme.colorScheme.primary,
+          foregroundColor: theme.colorScheme.onPrimary,
+          automaticallyImplyLeading: false, // ✅ إزالة زر الرجوع من الـ AppBar
+          actions: [
+            if (_telegramBotToken.isNotEmpty)
+              IconButton(
+                icon: const Icon(LucideIcons.info),
+                tooltip: local.translate('road_status'),
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: Text(local.translate('blocked_roads_info')),
+                      content: SingleChildScrollView(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (_blockedRoads.isEmpty)
+                              Text(local.translate('no_blocked_roads'))
+                            else
+                              ..._blockedRoads.map((road) => Padding(
+                                    padding:
+                                        const EdgeInsets.symmetric(vertical: 4),
+                                    child: Text(
+                                        '• ${road["name"]} - ${road["city"]} (${road["status"]})'),
+                                  )),
+                          ],
+                        ),
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: Text(local.translate('ok')),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+          ],
+        ),
+        body: _isLoadingRoute || _driverCurrentLocation == null
+            ? Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const CircularProgressIndicator(),
+                    const SizedBox(height: 16),
+                    Text(local.translate('calculating_route_and_location')),
+                  ],
+                ),
+              )
+            : Stack(
+                children: [
+                  FlutterMap(
+                    mapController: _mapController,
+                    options: MapOptions(
+                      initialCenter: initialCenter,
+                      initialZoom: initialZoom,
+                      onMapReady: () {
+                        if (mounted && !_isMapReady) {
+                          setState(() => _isMapReady = true);
+                          Future.delayed(const Duration(milliseconds: 500), () {
+                            if (_orsApiKey.isNotEmpty) {
+                              _getActualRoute();
+                            }
+                          });
+                        }
+                      },
+                    ),
+                    children: [
+                      TileLayer(
+                        urlTemplate:
+                            'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                        subdomains: const ['a', 'b', 'c'],
+                        userAgentPackageName: 'com.example.taxi_app',
+                      ),
+                      PolylineLayer(
+                        polylines: [
+                          if (_currentRoutePoints.isNotEmpty)
+                            Polyline(
+                              points: _currentRoutePoints,
+                              color: Colors.blue.withOpacity(0.7),
+                              strokeWidth: 4,
+                            ),
                         ],
                       ),
-                    ),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: Text(local.translate('ok')),
+                      MarkerLayer(
+                        markers: [
+                          Marker(
+                            point: _driverCurrentLocation ?? initialCenter,
+                            width: 40,
+                            height: 40,
+                            child: const Icon(Icons.directions_car,
+                                color: Colors.blue, size: 30),
+                          ),
+                          Marker(
+                            point: LatLng(widget.endLocation.latitude,
+                                widget.endLocation.longitude),
+                            width: 40,
+                            height: 40,
+                            child: const Icon(Icons.location_on,
+                                color: Colors.red, size: 30),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                );
-              },
-            ),
-        ],
-      ),
-      body: _isLoadingRoute || _driverCurrentLocation == null
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const CircularProgressIndicator(),
-                  const SizedBox(height: 16),
-                  Text(local.translate('calculating_route_and_location')),
+                  Positioned(
+                    bottom: 20,
+                    left: 20,
+                    right: 20,
+                    child: ElevatedButton.icon(
+                      icon: _isCompletingTrip
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                  color: Colors.white, strokeWidth: 2),
+                            )
+                          : const Icon(LucideIcons.checkCheck),
+                      label: Text(
+                        _isCompletingTrip
+                            ? local.translate('completing_trip')
+                            : local.translate('end_trip'),
+                        style: const TextStyle(fontSize: 18),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 15),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      onPressed: _isCompletingTrip ? null : _completeTrip,
+                    ),
+                  ),
                 ],
               ),
-            )
-          : Stack(
-              children: [
-                FlutterMap(
-                  mapController: _mapController,
-                  options: MapOptions(
-                    initialCenter: initialCenter,
-                    initialZoom: initialZoom,
-                    onMapReady: () {
-                      if (mounted && !_isMapReady) {
-                        setState(() => _isMapReady = true);
-                        Future.delayed(const Duration(milliseconds: 500), () {
-                          if (_orsApiKey.isNotEmpty) {
-                            _getActualRoute();
-                          }
-                        });
-                      }
-                    },
-                  ),
-                  children: [
-                    TileLayer(
-                      urlTemplate:
-                          'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-                      subdomains: const ['a', 'b', 'c'],
-                      userAgentPackageName: 'com.example.taxi_app',
-                    ),
-                    PolylineLayer(
-                      polylines: [
-                        if (_currentRoutePoints.isNotEmpty)
-                          Polyline(
-                            points: _currentRoutePoints,
-                            color: Colors.blue.withOpacity(0.7),
-                            strokeWidth: 4,
-                          ),
-                      ],
-                    ),
-                    MarkerLayer(
-                      markers: [
-                        Marker(
-                          point: _driverCurrentLocation ?? initialCenter,
-                          width: 40,
-                          height: 40,
-                          child: const Icon(Icons.directions_car,
-                              color: Colors.blue, size: 30),
-                        ),
-                        Marker(
-                          point: LatLng(widget.endLocation.latitude,
-                              widget.endLocation.longitude),
-                          width: 40,
-                          height: 40,
-                          child: const Icon(Icons.location_on,
-                              color: Colors.red, size: 30),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                Positioned(
-                  bottom: 20,
-                  left: 20,
-                  right: 20,
-                  child: ElevatedButton.icon(
-                    icon: _isCompletingTrip
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                                color: Colors.white, strokeWidth: 2),
-                          )
-                        : const Icon(LucideIcons.checkCheck),
-                    label: Text(
-                      _isCompletingTrip
-                          ? local.translate('completing_trip')
-                          : local.translate('end_trip'),
-                      style: const TextStyle(fontSize: 18),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 15),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    onPressed: _isCompletingTrip ? null : _completeTrip,
-                  ),
-                ),
-              ],
-            ),
+      ),
     );
   }
 }
