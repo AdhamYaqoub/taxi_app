@@ -577,5 +577,22 @@ const Map<String, String> ar = {
   "trip_date_time": "تاريخ ووقت الرحلة",
   "payment_time": "وقت الدفع",
   "transaction_date_time": "تاريخ ووقت المعاملة",
-  "payment_status": "حالة الدفع"
+  "payment_status": "حالة الدفع",
+
+  "error_loading_nearby_trips": "خطأ في تحميل الرحلات القريبة.",
+  "error_loading_pending_trips": "خطأ في تحميل الطلبات المعلقة.",
+  "error_loading_accepted_trips":
+      "خطأ في تحميل الرحلات المقبولة أو قيد التقدم.",
+  "trip_accepted_success": "تم قبول الرحلة بنجاح.",
+  "failed_to_accept_trip": "فشل في قبول الرحلة.",
+  "trip_rejected_success": "تم رفض الرحلة بنجاح.",
+  "failed_to_reject_trip": "فشل في رفض الرحلة.",
+  "failed_to_start_trip": "فشل في بدء الرحلة.",
+  "start_trip_button": "بدء الرحلة",
+  "end_trip_button": "إنهاء الرحلة",
+  "trip_started_success": "تم بدء الرحلة بنجاح.",
+  "trip_ended_success": "تم إنهاء الرحلة بنجاح.",
+  "failed_to_end_trip": "فشل في إنهاء الرحلة.",
+  "no": "لا",
+  "something_went_wrong": "حدث خطأ ما."
 };

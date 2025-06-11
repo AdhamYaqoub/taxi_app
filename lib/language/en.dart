@@ -606,4 +606,23 @@ const Map<String, String> en = {
   "no_transactions_found": "No transactions available.",
   "trip_id": "Trip ID",
   "amount": "Amount",
+
+  "error_loading_nearby_trips": "Error loading nearby trips.",
+  "error_loading_pending_trips": "Error loading pending requests.",
+  "error_loading_accepted_trips":
+      "Error loading accepted or in-progress trips.",
+  "trip_accepted_success": "Trip accepted successfully.",
+  "failed_to_accept_trip": "Failed to accept trip.",
+  "trip_rejected_success": "Trip rejected successfully.",
+  "failed_to_reject_trip": "Trip rejected successfully.",
+  "failed_to_start_trip": "Failed to start trip.",
+  "view_trip_on_map": "View Trip on Map",
+  "resume_trip": "Resume Trip",
+  "end_trip_button": "End Trip",
+  "trip_started_success": "Trip started successfully.",
+  "trip_ended_success": "Trip ended successfully.",
+  "failed_to_end_trip": "Failed to end trip.",
+  "start_trip_button": "Start Trip",
+  "no": "No",
+  "something_went_wrong": "Something went wrong."
 };
