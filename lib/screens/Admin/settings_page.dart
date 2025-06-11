@@ -52,6 +52,7 @@ class _SettingsPageState extends State<SettingsPage> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: Text(AppLocalizations.of(context).translate('settings_title')),
         backgroundColor: theme.colorScheme.primary,
       ),

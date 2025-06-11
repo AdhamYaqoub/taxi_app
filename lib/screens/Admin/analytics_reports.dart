@@ -12,6 +12,7 @@ class AnalyticsReportsPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         backgroundColor: Colors.blue.shade700,
         title: Text(AppLocalizations.of(context)
             .translate('analytics_reports')), // استخدام الترجمة

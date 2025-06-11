@@ -58,6 +58,7 @@ class _DriverTripsPageState extends State<DriverTripsPage> {
       appBar: isDesktop
           ? null
           : AppBar(
+            automaticallyImplyLeading: false,
               title: Text(local.translate('my_trips')),
             ),
       body: RefreshIndicator(

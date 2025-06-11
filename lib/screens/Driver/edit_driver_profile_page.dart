@@ -363,6 +363,7 @@ class _EditDriverProfilePageState extends State<EditDriverProfilePage> {
 
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: Text(local.translate('title_edit_driver_profile')),
         centerTitle: true,
         elevation: 0,
