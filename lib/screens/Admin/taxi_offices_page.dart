@@ -183,6 +183,7 @@ class _TaxiOfficesPageState extends State<TaxiOfficesPage> {
 
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: Text(local.translate('taxi_offices')),
         actions: [
           IconButton(

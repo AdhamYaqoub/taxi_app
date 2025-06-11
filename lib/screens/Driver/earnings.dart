@@ -41,6 +41,7 @@ class _EarningsPageState extends State<EarningsPage> {
       appBar: isWeb
           ? null
           : AppBar(
+            automaticallyImplyLeading: false,
               backgroundColor: theme.colorScheme.primary,
               title: Text(
                 local.translate('earnings'),

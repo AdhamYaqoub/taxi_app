@@ -8,7 +8,6 @@ import 'package:taxi_app/screens/User/drivers_list_page.dart';
 import 'package:taxi_app/screens/components/NotificationIcon.dart';
 import 'User/user_home.dart';
 import 'User/mytrip.dart';
-// import 'User/payment_page.dart';
 import 'User/offers_page.dart';
 import 'User/settings_page.dart';
 import 'User/support_page.dart';
@@ -25,6 +24,7 @@ class UserDashboard extends StatefulWidget {
 }
 
 class _UserDashboardState extends State<UserDashboard> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   int _selectedIndex = 0;
   late List<Widget> _pages;
   String? _fullName;
@@ -168,9 +168,19 @@ class _UserDashboardState extends State<UserDashboard> {
     bool isWeb = MediaQuery.of(context).size.width > 800;
 
     return Scaffold(
+      key: _scaffoldKey, // أضف هذا السطر هنا
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         backgroundColor: theme.colorScheme.primary,
+        leading: !isWeb
+            ? IconButton(
+                icon: const Icon(Icons.menu),
+                onPressed: () {
+                  _scaffoldKey.currentState?.openDrawer();
+                },
+              )
+            : null,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -184,12 +194,12 @@ class _UserDashboardState extends State<UserDashboard> {
           ],
         ),
         actions: [
-          if (kIsWeb) ...[
+          if (isWeb) ...[
             NotificationIcon(userId: widget.userId),
             const SizedBox(width: 16),
             IconButton(
               icon: const Icon(Icons.settings),
-              onPressed: () => _navigateToPage(3), // الانتقال لصفحة الإعدادات
+              onPressed: () => _navigateToPage(3),
             ),
           ] else ...[
             NotificationIcon(userId: widget.userId),

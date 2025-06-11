@@ -81,7 +81,7 @@ class _OfficeManagerDashboardState extends State<OfficeManagerDashboard> {
       final userData = jsonDecode(accessResponse.body);
       final userDetails = userData['user'];
 
-      if (userDetails == null || userDetails['isLoggedIn'] != true || userDetails['role'] != 'OfficeManager') {
+      if (userDetails == null || userDetails['isLoggedIn'] != true || userDetails['role'] != 'Manager') {
         _handleAccessDenied();
         return;
       }
@@ -154,6 +154,7 @@ class _OfficeManagerDashboardState extends State<OfficeManagerDashboard> {
 
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: Text(_pageTitles[_selectedIndex]),
         actions: [
           NotificationIcon(userId: widget.userId),

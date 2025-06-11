@@ -45,6 +45,7 @@ class _DriversListPageState extends State<DriversListPage> {
       appBar: isDesktop
           ? null // لا يوجد AppBar لسطح المكتب (يمكن دمجه في تصميم أكبر)
           : AppBar(
+            automaticallyImplyLeading: false,
               title: Text(
                   local.translate('available_drivers')), // مفتاح ترجمة جديد
             ),

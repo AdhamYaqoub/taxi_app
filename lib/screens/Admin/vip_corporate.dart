@@ -12,6 +12,7 @@ class VipCorporatePage extends StatelessWidget {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         backgroundColor: Colors.purple.shade700,
         title: Text(
             AppLocalizations.of(context).translate('vip_corporate_management')),

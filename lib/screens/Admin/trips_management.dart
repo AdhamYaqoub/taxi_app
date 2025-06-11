@@ -54,7 +54,8 @@ class _DriverTripsPageState extends State<DriverTripsPage> {
 
     return Scaffold(
       appBar:
-          isDesktop ? null : AppBar(title: Text(local.translate('my_trips'))),
+          isDesktop ? null : AppBar(automaticallyImplyLeading: false,
+          title: Text(local.translate('my_trips'))),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(

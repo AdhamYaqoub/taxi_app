@@ -199,6 +199,7 @@ class _ClientTripsPageState extends State<ClientTripsPage> {
 
     return Scaffold(
       appBar: isDesktop ? null : AppBar(
+          automaticallyImplyLeading: false, // لن يظهر السهم
         title: Text(local.translate('my_trips')),
         elevation: 0,
         backgroundColor: theme.colorScheme.surface,

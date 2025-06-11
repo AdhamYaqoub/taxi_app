@@ -49,6 +49,7 @@ class SettingsPage extends StatelessWidget {
       appBar: isWeb
           ? null
           : AppBar(
+            automaticallyImplyLeading: false,
               backgroundColor: theme.colorScheme.primary,
               title: Text(
                 local.translate('settings_title'),

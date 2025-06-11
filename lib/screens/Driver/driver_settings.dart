@@ -62,6 +62,7 @@ class _DriverSettingsPageState extends State<DriverSettingsPage> {
       appBar: isWeb
           ? null
           : AppBar(
+            automaticallyImplyLeading: false,
               backgroundColor: theme.colorScheme.primary,
               title: Text(
                 local.translate('driver_settings_title'),
