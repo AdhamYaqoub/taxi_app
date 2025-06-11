@@ -51,20 +51,17 @@ class _SettingsPageState extends State<SettingsPage> {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      
+      appBar: AppBar(
+        automaticallyImplyLeading: false, // هذا يخفي سهم الرجوع
+
+        title: Text(AppLocalizations.of(context).translate('settings_title')),
+        backgroundColor: theme.colorScheme.primary,
+      ),
       body: ListView(
         padding: const EdgeInsets.all(16.0),
         children: [
           _buildSectionTitle(
               AppLocalizations.of(context).translate('app_settings'), theme),
-          _buildSettingsItem(
-            icon: LucideIcons.sliders,
-            title: AppLocalizations.of(context).translate('manage_system'),
-            subtitle: AppLocalizations.of(context)
-                .translate('edit_service_and_zones'),
-            onTap: () {},
-            theme: theme,
-          ),
           _buildSettingsItem(
             icon: LucideIcons.bell,
             title: AppLocalizations.of(context).translate('notifications'),
@@ -114,15 +111,6 @@ class _SettingsPageState extends State<SettingsPage> {
               AppLocalizations.of(context).translate('Security_Privacy'),
               theme),
           _buildSettingsItem(
-            icon: LucideIcons.shieldCheck,
-            title:
-                AppLocalizations.of(context).translate('security_management'),
-            subtitle: AppLocalizations.of(context)
-                .translate('security_settings_and_account_protection'),
-            onTap: () {},
-            theme: theme,
-          ),
-          _buildSettingsItem(
             icon: LucideIcons.key,
             title: AppLocalizations.of(context).translate('change_password'),
             subtitle:
@@ -144,14 +132,6 @@ class _SettingsPageState extends State<SettingsPage> {
             title: AppLocalizations.of(context).translate('check_for_updates'),
             subtitle: AppLocalizations.of(context)
                 .translate('update_to_the_latest_version'),
-            onTap: () {},
-            theme: theme,
-          ),
-          _buildSettingsItem(
-            icon: LucideIcons.helpCircle,
-            title: AppLocalizations.of(context).translate('technical_support'),
-            subtitle:
-                AppLocalizations.of(context).translate('contact_support_team'),
             onTap: () {},
             theme: theme,
           ),

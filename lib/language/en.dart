@@ -596,5 +596,14 @@ const Map<String, String> en = {
   "active_drivers_now": "Active Drivers Now",
   "no_active_drivers": "No active drivers currently",
   "show_location": "Show location",
-  "show_location_for": "Show location for"
+  "show_location_for": "Show location for",
+
+  "payments_management_title": "Payments Management",
+  "transactions_section_title": "Transaction History",
+  "pricing_offers_section_title": "Pricing & Offers",
+  "loading_transactions": "Loading transactions...",
+  "error_loading_transactions": "An error occurred while loading transactions.",
+  "no_transactions_found": "No transactions available.",
+  "trip_id": "Trip ID",
+  "amount": "Amount",
 };

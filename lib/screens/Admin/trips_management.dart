@@ -25,8 +25,8 @@ class _DriverTripsPageState extends State<DriverTripsPage> {
   void _loadTrips() {
     setState(() => _isLoading = true);
 
-    _completedTripsFuture = TripsApi.getAllTripsWithStatus(status: 'completed')
-        .catchError((error) {
+    _completedTripsFuture =
+        TripsApi.getAllTripsWithStatus(status: 'completed').catchError((error) {
       debugPrint('Error loading completed trips: $error');
       return <Trip>[];
     });
@@ -134,7 +134,7 @@ class _DriverTripsPageState extends State<DriverTripsPage> {
                 _buildDetailRow(
                   icon: LucideIcons.dollarSign,
                   label: local.translate('fare'),
-                  value: "\$${trip.actualFare?.toStringAsFixed(2) ?? '--'}",
+                  value: "\$${trip.actualFare.toStringAsFixed(2)}",
                   theme: theme,
                 ),
                 const SizedBox(height: 24),
@@ -208,7 +208,9 @@ class _DriverTripsPageState extends State<DriverTripsPage> {
 
     return Scaffold(
       body: _isLoading
-          ? Center(child: CircularProgressIndicator(color: theme.colorScheme.primary))
+          ? Center(
+              child:
+                  CircularProgressIndicator(color: theme.colorScheme.primary))
           : Padding(
               padding: EdgeInsets.symmetric(
                 horizontal: isDesktop ? 0 : 16,
@@ -386,7 +388,7 @@ class _DriverTripsPageState extends State<DriverTripsPage> {
                             child: Padding(
                               padding: const EdgeInsets.symmetric(vertical: 20),
                               child: Text(
-                                "\$${trip.actualFare?.toStringAsFixed(2) ?? '--'}",
+                                "\$${trip.actualFare.toStringAsFixed(2)}",
                                 style: theme.textTheme.bodyMedium?.copyWith(
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -601,7 +603,7 @@ class _DriverTripsPageState extends State<DriverTripsPage> {
                 _buildMobileTripDetail(
                   icon: LucideIcons.dollarSign,
                   label: local.translate('fare'),
-                  value: "\$${trip.actualFare?.toStringAsFixed(2) ?? '--'}",
+                  value: "\$${trip.actualFare.toStringAsFixed(2)}",
                   theme: theme,
                 ),
               ],

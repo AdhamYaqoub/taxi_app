@@ -561,5 +561,21 @@ const Map<String, String> ar = {
   "active_drivers_now": "السائقون النشطون الآن",
   "no_active_drivers": "لا يوجد سائقون نشطون حالياً",
   "show_location": "عرض الموقع",
-  "show_location_for": "عرض الموقع لـ"
+  "show_location_for": "عرض الموقع لـ",
+
+  "payments_management_title": "إدارة المدفوعات",
+  "transactions_section_title": "سجل المعاملات",
+  "pricing_offers_section_title": "الأسعار والعروض",
+  "loading_transactions": "جارٍ تحميل المعاملات...",
+  "error_loading_transactions": "حدث خطأ أثناء تحميل المعاملات.",
+  "no_transactions_found": "لا توجد معاملات متاحة.",
+  "trip_id": "رقم الرحلة",
+  "amount": "المبلغ",
+  "status": "الحالة",
+  "close": "إغلاق",
+  "pending": "معلقة",
+  "trip_date_time": "تاريخ ووقت الرحلة",
+  "payment_time": "وقت الدفع",
+  "transaction_date_time": "تاريخ ووقت المعاملة",
+  "payment_status": "حالة الدفع"
 };

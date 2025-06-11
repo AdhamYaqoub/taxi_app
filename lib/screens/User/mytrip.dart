@@ -133,7 +133,7 @@ class _ClientTripsPageState extends State<ClientTripsPage> {
                 _buildDetailRow(
                   icon: LucideIcons.dollarSign,
                   label: local.translate('fare'),
-                  value: "\$${trip.actualFare?.toStringAsFixed(2) ?? '--'}",
+                  value: "\$${trip.actualFare.toStringAsFixed(2)}",
                   theme: theme,
                 ),
                 const SizedBox(height: 24),
@@ -206,15 +206,18 @@ class _ClientTripsPageState extends State<ClientTripsPage> {
     final theme = Theme.of(context);
 
     return Scaffold(
-
-      appBar: isDesktop ? null : AppBar(
-          automaticallyImplyLeading: false, // لن يظهر السهم
-        title: Text(local.translate('my_trips')),
-        elevation: 0,
-        backgroundColor: theme.colorScheme.surface,
-      ),
-      body: _isLoading 
-          ? Center(child: CircularProgressIndicator(color: theme.colorScheme.primary))
+      appBar: isDesktop
+          ? null
+          : AppBar(
+              automaticallyImplyLeading: false, // لن يظهر السهم
+              title: Text(local.translate('my_trips')),
+              elevation: 0,
+              backgroundColor: theme.colorScheme.surface,
+            ),
+      body: _isLoading
+          ? Center(
+              child:
+                  CircularProgressIndicator(color: theme.colorScheme.primary))
           : Padding(
               padding: EdgeInsets.symmetric(
                 horizontal: isDesktop ? 0 : 16,
@@ -402,7 +405,7 @@ class _ClientTripsPageState extends State<ClientTripsPage> {
                             child: Padding(
                               padding: const EdgeInsets.symmetric(vertical: 20),
                               child: Text(
-                                "\$${trip.actualFare?.toStringAsFixed(2) ?? '--'}",
+                                "\$${trip.actualFare.toStringAsFixed(2)}",
                                 style: theme.textTheme.bodyMedium?.copyWith(
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -619,7 +622,7 @@ class _ClientTripsPageState extends State<ClientTripsPage> {
                 _buildMobileTripDetail(
                   icon: LucideIcons.dollarSign,
                   label: local.translate('fare'),
-                  value: "\$${trip.actualFare?.toStringAsFixed(2) ?? '--'}",
+                  value: "\$${trip.actualFare.toStringAsFixed(2)}",
                   theme: theme,
                 ),
               ],
