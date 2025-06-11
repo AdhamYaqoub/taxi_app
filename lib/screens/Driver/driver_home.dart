@@ -178,12 +178,12 @@ class _DriverHomePageState extends State<DriverHomePage> {
                   title: local.translate('rating'),
                   value: driver.rating.toStringAsFixed(1),
                 ),
-                _buildDriverDetail(
-                  context,
-                  icon: LucideIcons.hash,
-                  title: local.translate('number_of_ratings'),
-                  value: driver.numberOfRatings.toString(),
-                ),
+                // _buildDriverDetail(
+                //   context,
+                //   icon: LucideIcons.hash,
+                //   title: local.translate('number_of_ratings'),
+                //   value: driver.numberOfRatings.toString(),
+                // ),
               ],
             ),
           ],

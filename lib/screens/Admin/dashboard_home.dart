@@ -148,19 +148,21 @@ class _DashboardHomeState extends State<DashboardHome> {
                     bottomTitles: AxisTitles(
                       sideTitles: SideTitles(
                         showTitles: true,
-                        getTitlesWidget: (value, _) {
-                          // تعديل ترتيب الأيام ليتوافق مع MongoDB
-                          final days = [
-                            'اثنين',
-                            'ثلاثاء',
-                            'أربعاء',
-                            'خميس',
-                            'جمعة',
-                            'سبت',
-                            'أحد'
-                          ];
-                          return Text(days[value.toInt()]);
-                        },
+                     getTitlesWidget: (value, meta) {
+  final daysShort = ['إث', 'ثل', 'أر', 'خم', 'جم', 'سب', 'أح'];
+  return SideTitleWidget(
+    meta: meta,
+    space: 8,
+    child: Transform.rotate(
+      angle: -0.5, // زاوية دوران النص (بالراديان، حوالي -30 درجة)
+      child: Text(
+        daysShort[value.toInt()],
+        style: const TextStyle(fontSize: 12),
+      ),
+    ),
+  );
+},
+
                       ),
                     ),
                   ),
