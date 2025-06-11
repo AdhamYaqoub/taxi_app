@@ -68,11 +68,6 @@ Future<void> main() async {
   runApp(const MyApp());
 }
 
-// Web FCM setup (only called when kIsWeb is true)
-Future<void> _setupWebFCM() async {
-  // Will be implemented in a separate file
-}
-
 // Mobile FCM setup
 void _setupMobileFCM() async {
   FirebaseMessaging messaging = FirebaseMessaging.instance;
