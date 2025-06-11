@@ -11,6 +11,7 @@ class SecurityMonitoringPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         backgroundColor: Colors.red.shade700,
         title:
             Text(AppLocalizations.of(context).translate('security_monitoring')),

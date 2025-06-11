@@ -82,9 +82,8 @@ class _OfficeManagerDashboardState extends State<OfficeManagerDashboard> {
       final userData = jsonDecode(accessResponse.body);
       final userDetails = userData['user'];
 
-      if (userDetails == null ||
-          userDetails['isLoggedIn'] != true ||
-          userDetails['role'] != 'Manager') {
+
+      if (userDetails == null || userDetails['isLoggedIn'] != true || userDetails['role'] != 'Manager') {
         _handleAccessDenied();
         return;
       }

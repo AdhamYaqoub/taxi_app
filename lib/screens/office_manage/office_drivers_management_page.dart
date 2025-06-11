@@ -142,8 +142,8 @@ class _OfficeManagerPageState extends State<OfficeDriversManagementPage> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        automaticallyImplyLeading: false, // هذا يخفي سهم الرجوع
 
+        automaticallyImplyLeading: false,
         title: Text(local.translate('drivers_management')),
         backgroundColor: theme.colorScheme.primary,
         actions: [

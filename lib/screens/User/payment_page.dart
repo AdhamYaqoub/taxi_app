@@ -13,6 +13,7 @@ class PaymentPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         backgroundColor: theme.colorScheme.primary,
         title: Text(
           local.translate('payment_management'),

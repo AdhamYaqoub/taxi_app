@@ -265,6 +265,7 @@ class _DriverRequestsPageState extends State<DriverRequestsPage> {
       length: 2,
       child: Scaffold(
         appBar: AppBar(
+          automaticallyImplyLeading: false,
           title: Text(local.translate('trip_management')),
           bottom: TabBar(
             tabs: [

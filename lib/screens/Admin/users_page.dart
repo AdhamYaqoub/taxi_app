@@ -92,6 +92,7 @@ class _UsersPageState extends State<UsersPage> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: Text(local.translate('users_management')),
         backgroundColor: theme.colorScheme.primary,
         actions: [
