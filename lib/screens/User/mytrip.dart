@@ -28,11 +28,18 @@ class _ClientTripsPageState extends State<ClientTripsPage> {
   void _loadTrips() {
     setState(() {
       _isLoading = true;
-      _acceptedTripsFuture = TripsApi.getClientTripsWithStatus(widget.userId, status: 'accepted');
-      _inProgressTripsFuture = TripsApi.getClientTripsWithStatus(widget.userId, status: 'in_progress');
-      _completedTripsFuture = TripsApi.getClientTripsWithStatus(widget.userId, status: 'completed');
-      
-      Future.wait([_acceptedTripsFuture, _inProgressTripsFuture, _completedTripsFuture])
+      _acceptedTripsFuture =
+          TripsApi.getClientTripsWithStatus(widget.userId, status: 'accepted');
+      _inProgressTripsFuture = TripsApi.getClientTripsWithStatus(widget.userId,
+          status: 'in_progress');
+      _completedTripsFuture =
+          TripsApi.getClientTripsWithStatus(widget.userId, status: 'completed');
+
+      Future.wait([
+        _acceptedTripsFuture,
+        _inProgressTripsFuture,
+        _completedTripsFuture
+      ])
           .then((_) => setState(() => _isLoading = false))
           .catchError((_) => setState(() => _isLoading = false));
     });
@@ -71,7 +78,8 @@ class _ClientTripsPageState extends State<ClientTripsPage> {
                       ),
                     ),
                     IconButton(
-                      icon: Icon(Icons.close, color: theme.colorScheme.onSurface.withOpacity(0.6)),
+                      icon: Icon(Icons.close,
+                          color: theme.colorScheme.onSurface.withOpacity(0.6)),
                       onPressed: () => Navigator.pop(context),
                     ),
                   ],
@@ -198,6 +206,7 @@ class _ClientTripsPageState extends State<ClientTripsPage> {
     final theme = Theme.of(context);
 
     return Scaffold(
+
       appBar: isDesktop ? null : AppBar(
           automaticallyImplyLeading: false, // لن يظهر السهم
         title: Text(local.translate('my_trips')),
@@ -220,7 +229,8 @@ class _ClientTripsPageState extends State<ClientTripsPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       if (isDesktop) _buildDesktopHeader(local, theme),
-                      if (!isDesktop) _buildMobileSections(context, local, theme),
+                      if (!isDesktop)
+                        _buildMobileSections(context, local, theme),
                       if (isDesktop) _buildDesktopTable(local, theme),
                     ],
                   ),
@@ -243,7 +253,8 @@ class _ClientTripsPageState extends State<ClientTripsPage> {
     );
   }
 
-  Widget _buildMobileSections(BuildContext context, AppLocalizations local, ThemeData theme) {
+  Widget _buildMobileSections(
+      BuildContext context, AppLocalizations local, ThemeData theme) {
     return Column(
       children: [
         _buildTripSection(
@@ -283,18 +294,24 @@ class _ClientTripsPageState extends State<ClientTripsPage> {
             _buildTableHeader(local, theme),
             const SizedBox(height: 12),
             FutureBuilder(
-              future: Future.wait([_acceptedTripsFuture, _inProgressTripsFuture, _completedTripsFuture]),
+              future: Future.wait([
+                _acceptedTripsFuture,
+                _inProgressTripsFuture,
+                _completedTripsFuture
+              ]),
               builder: (context, snapshot) {
                 if (snapshot.hasError) return _buildErrorWidget(theme, local);
-                
+
                 final allTrips = [
                   ...snapshot.data?[0] ?? [],
                   ...snapshot.data?[1] ?? [],
                   ...snapshot.data?[2] ?? [],
                 ];
-                
-                if (allTrips.isEmpty) return _buildEmptyState(theme, local.translate('no_trips_found'));
-                
+
+                if (allTrips.isEmpty)
+                  return _buildEmptyState(
+                      theme, local.translate('no_trips_found'));
+
                 return Table(
                   columnWidths: const {
                     0: FixedColumnWidth(120),
@@ -333,7 +350,8 @@ class _ClientTripsPageState extends State<ClientTripsPage> {
                           InkWell(
                             onTap: () => _showTripDetails(context, trip),
                             child: Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 8),
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 20, horizontal: 8),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -344,7 +362,9 @@ class _ClientTripsPageState extends State<ClientTripsPage> {
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                   const SizedBox(height: 4),
-                                  Icon(LucideIcons.arrowDown, size: 16, color: theme.colorScheme.primary),
+                                  Icon(LucideIcons.arrowDown,
+                                      size: 16,
+                                      color: theme.colorScheme.primary),
                                   const SizedBox(height: 4),
                                   Text(
                                     trip.endLocation.address.split(',').first,
@@ -364,11 +384,13 @@ class _ClientTripsPageState extends State<ClientTripsPage> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    _formatDate(trip.startTime ?? DateTime.now()),
+                                    _formatDate(
+                                        trip.startTime ?? DateTime.now()),
                                     style: theme.textTheme.bodyMedium,
                                   ),
                                   Text(
-                                    _formatTime(trip.startTime ?? DateTime.now()),
+                                    _formatTime(
+                                        trip.startTime ?? DateTime.now()),
                                     style: theme.textTheme.bodySmall,
                                   ),
                                 ],
@@ -393,7 +415,8 @@ class _ClientTripsPageState extends State<ClientTripsPage> {
                             child: Padding(
                               padding: const EdgeInsets.symmetric(vertical: 20),
                               child: Center(
-                                child: _buildStatusBadge(trip.status, local, theme),
+                                child: _buildStatusBadge(
+                                    trip.status, local, theme),
                               ),
                             ),
                           ),
@@ -409,7 +432,8 @@ class _ClientTripsPageState extends State<ClientTripsPage> {
     );
   }
 
-  Widget _buildStatusBadge(String status, AppLocalizations local, ThemeData theme) {
+  Widget _buildStatusBadge(
+      String status, AppLocalizations local, ThemeData theme) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
@@ -491,7 +515,7 @@ class _ClientTripsPageState extends State<ClientTripsPage> {
     required String emptyMessage,
   }) {
     final theme = Theme.of(context);
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -511,18 +535,20 @@ class _ClientTripsPageState extends State<ClientTripsPage> {
         FutureBuilder<List<Trip>>(
           future: future,
           builder: (context, snapshot) {
-            if (snapshot.hasError) return _buildErrorWidget(theme, AppLocalizations.of(context));
-            
+            if (snapshot.hasError)
+              return _buildErrorWidget(theme, AppLocalizations.of(context));
+
             final trips = snapshot.data ?? [];
-            
+
             if (trips.isEmpty) return _buildEmptyState(theme, emptyMessage);
-            
+
             return ListView.separated(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               itemCount: trips.length,
               separatorBuilder: (context, index) => const SizedBox(height: 16),
-              itemBuilder: (context, index) => _buildMobileTripCard(trips[index], theme),
+              itemBuilder: (context, index) =>
+                  _buildMobileTripCard(trips[index], theme),
             );
           },
         ),
@@ -532,7 +558,7 @@ class _ClientTripsPageState extends State<ClientTripsPage> {
 
   Widget _buildMobileTripCard(Trip trip, ThemeData theme) {
     final local = AppLocalizations.of(context);
-    
+
     return InkWell(
       onTap: () => _showTripDetails(context, trip),
       borderRadius: BorderRadius.circular(12),
@@ -580,7 +606,7 @@ class _ClientTripsPageState extends State<ClientTripsPage> {
               const SizedBox(height: 12),
               _buildMobileTripDetail(
                 icon: LucideIcons.clock,
-                label: trip.status == 'completed' 
+                label: trip.status == 'completed'
                     ? local.translate('completed_on')
                     : trip.status == 'accepted'
                         ? local.translate('accepted_on')

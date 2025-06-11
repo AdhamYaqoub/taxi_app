@@ -42,11 +42,15 @@ class _OfficeManagerHomePageState extends State<OfficeManagerHomePage> {
     });
 
     try {
-      final stats = await TaxiOfficeApi.getOfficeStats(widget.officeId, widget.token);
-      final dailyStats = await TaxiOfficeApi.getDailyStats(widget.officeId, widget.token);
-      final drivers = await TaxiOfficeApi.getOfficeDrivers(widget.officeId, widget.token);
-      
-      final activeDrivers = drivers.where((driver) => driver.isAvailable).toList();
+      final stats =
+          await TaxiOfficeApi.getOfficeStats(widget.officeId, widget.token);
+      final dailyStats =
+          await TaxiOfficeApi.getDailyStats(widget.officeId, widget.token);
+      final drivers =
+          await TaxiOfficeApi.getOfficeDrivers(widget.officeId, widget.token);
+
+      final activeDrivers =
+          drivers.where((driver) => driver.isAvailable).toList();
 
       if (!mounted) return;
       setState(() {
@@ -59,7 +63,8 @@ class _OfficeManagerHomePageState extends State<OfficeManagerHomePage> {
       if (kDebugMode) print('Error loading office data: $e');
       if (!mounted) return;
       setState(() {
-        _errorMessage = AppLocalizations.of(context).translate('error_loading_data');
+        _errorMessage =
+            AppLocalizations.of(context).translate('error_loading_data');
       });
     } finally {
       if (mounted) {
@@ -108,11 +113,13 @@ class _OfficeManagerHomePageState extends State<OfficeManagerHomePage> {
               children: [
                 Text(
                   local.translate('welcome_office_manager'),
-                  style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
+                  style: theme.textTheme.headlineMedium
+                      ?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 Text(
                   local.translate('your_daily_overview'),
-                  style: theme.textTheme.titleMedium?.copyWith(color: theme.colorScheme.onSurface.withOpacity(0.7)),
+                  style: theme.textTheme.titleMedium?.copyWith(
+                      color: theme.colorScheme.onSurface.withOpacity(0.7)),
                 ),
                 const SizedBox(height: 24),
                 _buildStatsGrid(context, constraints),
@@ -137,7 +144,8 @@ class _OfficeManagerHomePageState extends State<OfficeManagerHomePage> {
     // تحديد عدد الأعمدة ونسبة العرض إلى الارتفاع بناءً على حجم الشاشة
     final int crossAxisCount = screenWidth > 600 ? 3 : 2;
     // إعطاء مساحة أكبر للكروت على الموبايل
-    final double childAspectRatio = screenWidth < 400 ? 1.4 : (screenWidth < 600 ? 1.6 : 2.5);
+    final double childAspectRatio =
+        screenWidth < 400 ? 1.4 : (screenWidth < 600 ? 1.6 : 2.5);
 
     return GridView.count(
       shrinkWrap: true,
@@ -164,7 +172,7 @@ class _OfficeManagerHomePageState extends State<OfficeManagerHomePage> {
         _buildStatCard(
           context,
           AppLocalizations.of(context).translate('today_earnings'),
-          '\$${_dailyEarnings.toStringAsFixed(2)}', 
+          '\$${_dailyEarnings.toStringAsFixed(2)}',
           LucideIcons.dollarSign,
           Colors.orange.shade700,
         ),
@@ -173,7 +181,8 @@ class _OfficeManagerHomePageState extends State<OfficeManagerHomePage> {
   }
 
   // ======  التعديل الثاني: جعل كرت الإحصائيات مرنًا ======
-  Widget _buildStatCard(BuildContext context, String title, String value, IconData icon, Color color) {
+  Widget _buildStatCard(BuildContext context, String title, String value,
+      IconData icon, Color color) {
     final theme = Theme.of(context);
     final isVerySmallScreen = MediaQuery.of(context).size.width < 380;
 
@@ -192,7 +201,8 @@ class _OfficeManagerHomePageState extends State<OfficeManagerHomePage> {
                   Flexible(
                     child: Text(
                       title,
-                      style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurface.withOpacity(0.8)),
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurface.withOpacity(0.8)),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
@@ -211,7 +221,8 @@ class _OfficeManagerHomePageState extends State<OfficeManagerHomePage> {
                 fit: BoxFit.scaleDown,
                 child: Text(
                   value,
-                  style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
+                  style: theme.textTheme.headlineMedium
+                      ?.copyWith(fontWeight: FontWeight.bold),
                   maxLines: 1,
                 ),
               ),
@@ -220,7 +231,7 @@ class _OfficeManagerHomePageState extends State<OfficeManagerHomePage> {
         ),
       );
     }
-    
+
     // التصميم الأفقي للشاشات الأكبر (الوضع الافتراضي)
     return Card(
       child: Padding(
@@ -254,7 +265,8 @@ class _OfficeManagerHomePageState extends State<OfficeManagerHomePage> {
                     fit: BoxFit.scaleDown,
                     child: Text(
                       value,
-                      style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+                      style: theme.textTheme.headlineSmall
+                          ?.copyWith(fontWeight: FontWeight.bold),
                       maxLines: 1,
                     ),
                   ),
@@ -271,18 +283,20 @@ class _OfficeManagerHomePageState extends State<OfficeManagerHomePage> {
   Widget _buildActiveDriversList(BuildContext context) {
     final theme = Theme.of(context);
     final local = AppLocalizations.of(context);
-    
+
     if (_activeDrivers.isEmpty) {
       return Container(
         padding: const EdgeInsets.symmetric(vertical: 48.0),
         alignment: Alignment.center,
         child: Column(
           children: [
-            Icon(LucideIcons.userX, size: 48, color: theme.colorScheme.onSurface.withOpacity(0.5)),
+            Icon(LucideIcons.userX,
+                size: 48, color: theme.colorScheme.onSurface.withOpacity(0.5)),
             const SizedBox(height: 16),
             Text(
               local.translate('no_active_drivers'),
-              style: theme.textTheme.titleMedium?.copyWith(color: theme.colorScheme.onSurface.withOpacity(0.7)),
+              style: theme.textTheme.titleMedium?.copyWith(
+                  color: theme.colorScheme.onSurface.withOpacity(0.7)),
             ),
           ],
         ),
@@ -296,14 +310,15 @@ class _OfficeManagerHomePageState extends State<OfficeManagerHomePage> {
       itemBuilder: (context, index) {
         final driver = _activeDrivers[index];
         final status = local.translate('active');
-        
-        final double driverEarnings = (driver.earnings ?? 0).toDouble();
+
+        final double driverEarnings = (driver.earnings).toDouble();
         final tripsText = '\$${driverEarnings.toStringAsFixed(2)}';
 
         return Card(
           margin: const EdgeInsets.only(bottom: 12),
           child: ListTile(
-            contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+            contentPadding:
+                const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
             leading: CircleAvatar(
               radius: 24,
               backgroundColor: theme.colorScheme.primaryContainer,
@@ -312,7 +327,9 @@ class _OfficeManagerHomePageState extends State<OfficeManagerHomePage> {
                   : null,
               child: driver.profileImageUrl == null
                   ? Text(
-                      driver.fullName.isNotEmpty ? driver.fullName[0].toUpperCase() : 'D',
+                      driver.fullName.isNotEmpty
+                          ? driver.fullName[0].toUpperCase()
+                          : 'D',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         color: theme.colorScheme.onPrimaryContainer,
@@ -322,28 +339,37 @@ class _OfficeManagerHomePageState extends State<OfficeManagerHomePage> {
             ),
             title: Text(
               driver.fullName,
-              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+              style: theme.textTheme.titleMedium
+                  ?.copyWith(fontWeight: FontWeight.w600),
             ),
             subtitle: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: Colors.green.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
                     status,
-                    style: TextStyle(color: Colors.green.shade800, fontSize: 12, fontWeight: FontWeight.w500),
+                    style: TextStyle(
+                        color: Colors.green.shade800,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500),
                   ),
                 ),
                 const SizedBox(width: 12),
-                Icon(LucideIcons.dollarSign, size: 14, color: theme.colorScheme.onSurface.withOpacity(0.7)),
+                Icon(LucideIcons.dollarSign,
+                    size: 14,
+                    color: theme.colorScheme.onSurface.withOpacity(0.7)),
                 const SizedBox(width: 4),
-                Flexible( // استخدام Flexible لمنع تجاوز النص
+                Flexible(
+                  // استخدام Flexible لمنع تجاوز النص
                   child: Text(
                     tripsText,
-                    style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurface.withOpacity(0.7)),
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurface.withOpacity(0.7)),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
@@ -354,7 +380,9 @@ class _OfficeManagerHomePageState extends State<OfficeManagerHomePage> {
               tooltip: local.translate('show_location'),
               onPressed: () {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('${local.translate("show_location_for")} ${driver.fullName}')),
+                  SnackBar(
+                      content: Text(
+                          '${local.translate("show_location_for")} ${driver.fullName}')),
                 );
               },
             ),

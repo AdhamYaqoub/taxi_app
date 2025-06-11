@@ -576,5 +576,25 @@ const Map<String, String> en = {
   "why_choose_description_new":
       "At TaxiGo, we are committed to providing the best transportation experience for travelers. We combine advanced technology with personalized service to ensure smooth and reliable journeys. Your satisfaction is our top priority.",
   "developer_bio":
-      "Ensures the smooth operation and continuous improvement of the app's performance, a pioneer in technical solutions."
+      "Ensures the smooth operation and continuous improvement of the app's performance, a pioneer in technical solutions.",
+  "taxi_offices_title": "Taxi Offices",
+  "refresh_button_tooltip": "Refresh Offices List",
+  "office_details_title": "Office Details",
+  "address_label": "Address",
+  "phone_label": "Phone",
+  "working_hours_label": "Working Hours",
+  "call_office_button": "Call Office",
+  "could_not_launch_phone": "Could not launch phone dialer.",
+  "loading_offices": "Loading taxi offices...",
+  "error_fetching_offices": "An error occurred while fetching offices.",
+  "retry_button": "Retry",
+  "office_info_not_available": "Information not available",
+  "error_loading_data": "Error loading data",
+  "retry": "Retry",
+  "welcome_office_manager": "Welcome Office Manager",
+  "your_daily_overview": "Your daily overview",
+  "active_drivers_now": "Active Drivers Now",
+  "no_active_drivers": "No active drivers currently",
+  "show_location": "Show location",
+  "show_location_for": "Show location for"
 };

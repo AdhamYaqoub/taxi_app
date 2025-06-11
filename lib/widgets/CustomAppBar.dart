@@ -58,10 +58,11 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
           Text(
             'TaxiGo',
             style: theme.textTheme.headlineMedium?.copyWith(
-              color: theme.colorScheme.onPrimary,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 0.8, // تباعد بين الأحرف لخط أجمل
-            ),
+                color: theme.colorScheme.onPrimary,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 0.8,
+                fontSize: 18 // تباعد بين الأحرف لخط أجمل
+                ),
           ),
         ],
       ),
