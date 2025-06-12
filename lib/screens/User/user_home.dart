@@ -33,7 +33,7 @@ class _HomePageState extends State<HomePage> {
   final MapController mapController = MapController();
   bool showMap = false; // التحكم في ظهور الخريطة
   List<Marker> markers = [];
-  final double fixedFareRate = 10.0; // سعر الكيلومتر الواحد
+  final double fixedFareRate = 4.4; // سعر الكيلومتر الواحد
   List<dynamic> pendingTrips = [];
   bool isLoading = false; // حالة تحميل الرحلات المعلقة
   bool isCreatingTrip = false; // حالة إنشاء الرحلة
