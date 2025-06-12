@@ -46,18 +46,7 @@ class SettingsPage extends StatelessWidget {
     final local = AppLocalizations.of(context);
 
     return Scaffold(
-      appBar: isWeb
-          ? null
-          : AppBar(
-            automaticallyImplyLeading: false,
-              backgroundColor: theme.colorScheme.primary,
-              title: Text(
-                local.translate('settings_title'),
-                style: theme.textTheme.titleLarge?.copyWith(
-                  color: theme.colorScheme.onPrimary,
-                ),
-              ),
-            ),
+     
       body: Center(
         child: Container(
           constraints: const BoxConstraints(maxWidth: 600),

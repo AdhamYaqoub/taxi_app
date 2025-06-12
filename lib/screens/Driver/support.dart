@@ -12,18 +12,7 @@ class SupportPage extends StatelessWidget {
     final isWeb = MediaQuery.of(context).size.width > 800;
 
     return Scaffold(
-      appBar: isWeb
-          ? null
-          : AppBar(
-            automaticallyImplyLeading: false,
-              backgroundColor: theme.colorScheme.primary,
-              title: Text(
-                local.translate('support_center'),
-                style: theme.textTheme.titleLarge?.copyWith(
-                  color: theme.colorScheme.onPrimary,
-                ),
-              ),
-            ),
+      
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(

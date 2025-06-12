@@ -12,16 +12,7 @@ class PaymentPage extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        backgroundColor: theme.colorScheme.primary,
-        title: Text(
-          local.translate('payment_management'),
-          style: theme.textTheme.titleLarge?.copyWith(
-            color: theme.colorScheme.onPrimary,
-          ),
-        ),
-      ),
+  
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
