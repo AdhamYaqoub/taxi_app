@@ -594,5 +594,13 @@ const Map<String, String> ar = {
   "trip_ended_success": "تم إنهاء الرحلة بنجاح.",
   "failed_to_end_trip": "فشل في إنهاء الرحلة.",
   "no": "لا",
-  "something_went_wrong": "حدث خطأ ما."
+  "something_went_wrong": "حدث خطأ ما.",
+  "password_too_short": "يجب أن تتكون كلمة المرور من 8 أحرف على الأقل.",
+  "password_missing_uppercase":
+      "يجب أن تحتوي كلمة المرور على حرف كبير واحد على الأقل.",
+  "password_missing_lowercase":
+      "يجب أن تحتوي كلمة المرور على حرف صغير واحد على الأقل.",
+  "password_missing_digit": "يجب أن تحتوي كلمة المرور على رقم واحد على الأقل.",
+  "password_missing_special_char":
+      "يجب أن تحتوي كلمة المرور على رمز خاص واحد على الأقل (مثال: !@#\$%)."
 };

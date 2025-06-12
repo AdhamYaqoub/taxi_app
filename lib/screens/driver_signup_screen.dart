@@ -41,6 +41,32 @@ class _DriverSignUpScreenState extends State<DriverSignUpScreen> {
   DateTime? selectedLicenseExpiry;
   bool isLoading = false;
 
+  String? _validatePassword(String password) {
+    final localizations = AppLocalizations.of(context);
+
+    if (password.length < 8) {
+      return localizations
+          .translate('password_too_short'); // يجب أن تحتوي على 8 أحرف على الأقل
+    }
+    if (!password.contains(RegExp(r'[A-Z]'))) {
+      return localizations.translate(
+          'password_missing_uppercase'); // يجب أن تحتوي على حرف كبير واحد على الأقل
+    }
+    if (!password.contains(RegExp(r'[a-z]'))) {
+      return localizations.translate(
+          'password_missing_lowercase'); // يجب أن تحتوي على حرف صغير واحد على الأقل
+    }
+    if (!password.contains(RegExp(r'[0-9]'))) {
+      return localizations.translate(
+          'password_missing_digit'); // يجب أن تحتوي على رقم واحد على الأقل
+    }
+    if (!password.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'))) {
+      return localizations.translate(
+          'password_missing_special_char'); // يجب أن تحتوي على رمز خاص واحد على الأقل
+    }
+    return null; // كلمة المرور قوية
+  }
+
   void showSnackBarMessage(String message, {bool isError = false}) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -100,6 +126,14 @@ class _DriverSignUpScreenState extends State<DriverSignUpScreen> {
       showSnackBarMessage(
           AppLocalizations.of(context).translate('fill_all_fields'),
           isError: true);
+      if (!mounted) return;
+      setState(() => isLoading = false);
+      return;
+    }
+
+    final passwordError = _validatePassword(passwordController.text);
+    if (passwordError != null) {
+      showSnackBarMessage(passwordError, isError: true);
       if (!mounted) return;
       setState(() => isLoading = false);
       return;
