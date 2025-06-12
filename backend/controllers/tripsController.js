@@ -7,7 +7,7 @@ const { scheduleTripStartCheck } = require('../services/tripScheduler'); // تأ
 const { updateDriverRating } = require('../services/ratingService'); // تأكد من استيراد وحدة تحديث تقييم السائق
 const { calculateDistance } = require('../utils/geoUtils');
 
-const RATE_PER_KM = 4.4;
+const RATE_PER_KM = 5;
 const MAX_ACCEPTED_TRIPS = 3;
 
 
