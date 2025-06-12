@@ -624,5 +624,14 @@ const Map<String, String> en = {
   "failed_to_end_trip": "Failed to end trip.",
   "start_trip_button": "Start Trip",
   "no": "No",
-  "something_went_wrong": "Something went wrong."
+  "something_went_wrong": "Something went wrong.",
+  // ✅ رسائل جديدة للتحقق من كلمة المرور
+  "password_too_short": "Password must be at least 8 characters long.",
+  "password_missing_uppercase":
+      "Password must contain at least one uppercase letter.",
+  "password_missing_lowercase":
+      "Password must contain at least one lowercase letter.",
+  "password_missing_digit": "Password must contain at least one digit.",
+  "password_missing_special_char":
+      "Password must contain at least one special character (e.g., !@#\$%)."
 };

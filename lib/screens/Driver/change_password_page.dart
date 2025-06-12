@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:taxi_app/language/localization.dart'; // هذا هو المسار الخاص بـ AppLocalizations الخاص بك
+import 'package:taxi_app/language/localization.dart';
 
 class ChangePasswordPage extends StatefulWidget {
   final int userId;
@@ -41,14 +41,38 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
     super.dispose();
   }
 
+  // ✅ دالة التحقق من قوة كلمة المرور (مكررة هنا للوضوح)
+  String? _validatePassword(String password) {
+    final local = AppLocalizations.of(context);
+
+    if (password.length < 8) {
+      return local.translate('password_too_short');
+    }
+    if (!password.contains(RegExp(r'[A-Z]'))) {
+      return local.translate('password_missing_uppercase');
+    }
+    if (!password.contains(RegExp(r'[a-z]'))) {
+      return local.translate('password_missing_lowercase');
+    }
+    if (!password.contains(RegExp(r'[0-9]'))) {
+      return local.translate('password_missing_digit');
+    }
+    if (!password.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'))) {
+      return local.translate('password_missing_special_char');
+    }
+    return null; // كلمة المرور قوية
+  }
+
   void _changePassword() async {
-    // استخدم ! للتأكيد على أن context موجود وأن AppLocalizations موجود
     final local = AppLocalizations.of(context);
 
     if (!_formKey.currentState!.validate()) {
+      // إذا فشلت أي من عمليات التحقق في validator (بما في ذلك _validatePassword)
       return;
     }
 
+    // هذا التحقق من تطابق كلمات المرور أصبح redundant إذا تم التحقق في validator
+    // ولكن إبقاؤه لا يضر للتأكيد أو إذا تم إزالته من validator لاحقاً
     if (_newPasswordController.text != _confirmPasswordController.text) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(local.translate('passwords_do_not_match'))),
@@ -92,10 +116,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
         _currentPasswordController.clear();
         _newPasswordController.clear();
         _confirmPasswordController.clear();
-        // يمكنك العودة للصفحة السابقة بعد التغيير بنجاح
-        // Navigator.pop(context);
       } else {
-        // التعامل مع أخطاء الـ API (مثل كلمة المرور الحالية غير صحيحة)
         final Map<String, dynamic> errorData = jsonDecode(response.body);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -104,21 +125,19 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
         );
       }
     } catch (e) {
-      // التعامل مع أخطاء الشبكة (مثل عدم الاتصال بالإنترنت)
       print('Error changing password: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(local.translate('something_went_wrong'))),
       );
     } finally {
       setState(() {
-        _isLoading = false; // إنهاء التحميل بغض النظر عن النتيجة
+        _isLoading = false;
       });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    // استخدم ! للتأكيد على أن context موجود وأن AppLocalizations موجود
     final local = AppLocalizations.of(context);
 
     return Scaffold(
@@ -172,6 +191,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                         },
                       ),
                       const SizedBox(height: 20),
+                      // ✅ تم تعديل هذا TextFormField لتطبيق التحقق من قوة كلمة المرور
                       TextFormField(
                         controller: _newPasswordController,
                         decoration: InputDecoration(
@@ -194,13 +214,11 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                         obscureText: _obscureNewPassword,
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return local.translate('required_field');
+                            return local.translate(
+                                'required_field'); // يجب أن تكون "required_field" في ملف الترجمة
                           }
-                          if (value.length < 6) {
-                            return local
-                                .translate('new_password_length_validation');
-                          }
-                          return null;
+                          // ✅ استدعاء دالة التحقق الجديدة هنا
+                          return _validatePassword(value);
                         },
                       ),
                       const SizedBox(height: 20),
@@ -230,6 +248,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                             return local
                                 .translate('confirm_password_empty_validation');
                           }
+                          // التحقق من تطابق كلمات المرور
                           if (value != _newPasswordController.text) {
                             return local.translate('passwords_do_not_match');
                           }
@@ -248,7 +267,9 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                                       width: 24,
                                       height: 24,
                                       child: CircularProgressIndicator(
-                                        color: Colors.black87,
+                                        // ✅ يفضل استخدام ألوان الثيم
+                                        color: Colors
+                                            .white, // Theme.of(context).colorScheme.onPrimary,
                                         strokeWidth: 2,
                                       ),
                                     )

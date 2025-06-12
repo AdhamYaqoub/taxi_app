@@ -19,10 +19,10 @@ const taxiOfficeSchema = new mongoose.Schema({
     phone: String,
     email: String
   },
-  workingHours: {
-    from: String,
-    to: String
-  },
+workingHours: {
+  from: { type: String, default: "08:00" },
+  to: { type: String, default: "16:00" }
+},
   isActive: { type: Boolean, default: true },
   manager: { type: mongoose.Schema.Types.ObjectId, ref: 'Manager' },
   managerId: Number,

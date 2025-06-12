@@ -240,7 +240,7 @@ class _DriverTripsPageState extends State<DriverTripsPage> {
     return Padding(
       padding: const EdgeInsets.only(left: 32, top: 16, bottom: 24),
       child: Text(
-        local.translate('my_trips'),
+        local.translate('All Trips'),
         style: theme.textTheme.headlineSmall?.copyWith(
           fontWeight: FontWeight.bold,
           color: theme.colorScheme.primary,
