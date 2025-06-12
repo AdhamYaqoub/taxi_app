@@ -42,13 +42,7 @@ class _DriversListPageState extends State<DriversListPage> {
     final isDesktop = MediaQuery.of(context).size.width > 768;
 
     return Scaffold(
-      appBar: isDesktop
-          ? null // لا يوجد AppBar لسطح المكتب (يمكن دمجه في تصميم أكبر)
-          : AppBar(
-            automaticallyImplyLeading: false,
-              title: Text(
-                  local.translate('available_drivers')), // مفتاح ترجمة جديد
-            ),
+    
       body: RefreshIndicator(
         onRefresh: () async {
           _loadDrivers(); // إعادة التحميل عند السحب

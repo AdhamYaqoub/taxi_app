@@ -141,19 +141,7 @@ class _OfficeManagerPageState extends State<OfficeDriversManagementPage> {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-
-        automaticallyImplyLeading: false,
-        title: Text(local.translate('drivers_management')),
-        backgroundColor: theme.colorScheme.primary,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _loadDrivers,
-            tooltip: local.translate('refresh'),
-          ),
-        ],
-      ),
+   
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(

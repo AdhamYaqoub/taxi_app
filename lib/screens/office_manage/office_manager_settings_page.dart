@@ -52,13 +52,7 @@ class _SettingsPageState extends State<OfficeManagerSettingsPage> {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        automaticallyImplyLeading: false, // هذا يخفي سهم الرجوع
-
-
-        title: Text(AppLocalizations.of(context).translate('settings_title')),
-        backgroundColor: theme.colorScheme.primary,
-      ),
+    
       body: ListView(
         padding: const EdgeInsets.all(16.0),
         children: [

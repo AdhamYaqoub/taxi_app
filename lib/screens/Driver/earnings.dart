@@ -38,18 +38,7 @@ class _EarningsPageState extends State<EarningsPage> {
     final isWeb = MediaQuery.of(context).size.width > 800;
 
     return Scaffold(
-      appBar: isWeb
-          ? null
-          : AppBar(
-            automaticallyImplyLeading: false,
-              backgroundColor: theme.colorScheme.primary,
-              title: Text(
-                local.translate('earnings'),
-                style: theme.textTheme.titleLarge?.copyWith(
-                  color: theme.colorScheme.onPrimary,
-                ),
-              ),
-            ),
+     
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: FutureBuilder<List<Trip>>(

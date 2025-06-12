@@ -199,6 +199,7 @@ final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
     if (!_accessGranted || _isLoading) {
       return _buildLoadingScreen();
     }
+    bool isWeb = MediaQuery.of(context).size.width > 800;
     // Initialize titles here to access context for localization
     _updatePageTitles();
 
@@ -211,6 +212,14 @@ final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
       backgroundColor: theme.colorScheme.background,
       appBar: AppBar(
            automaticallyImplyLeading: false,
+           leading: !isWeb
+            ? IconButton(
+                icon: const Icon(Icons.menu),
+                onPressed: () {
+                  _scaffoldKey.currentState?.openDrawer();
+                },
+              )
+            : null,
         // Theming is now handled by app_theme.dart
         elevation: isLargeScreen ? 0 : 4,
         title: Text(_pageTitles[_selectedIndex]),
@@ -468,6 +477,7 @@ final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
           icon: const Icon(LucideIcons.dollarSign),
           label: local.translate('earnings'),
         ),
+        
       ],
     );
   }
