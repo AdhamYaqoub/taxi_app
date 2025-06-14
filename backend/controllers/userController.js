@@ -13,27 +13,6 @@ const nodemailer = require('nodemailer');
 // controllers/userController.js (أو authController.js)
 
 
-
-const validatePasswordStrength = (password) => {
-    if (password.length < 8) {
-        return 'يجب أن تتكون كلمة المرور من 8 أحرف على الأقل.';
-    }
-    if (!/[A-Z]/.test(password)) {
-        return 'يجب أن تحتوي كلمة المرور على حرف كبير واحد على الأقل.';
-    }
-    if (!/[a-z]/.test(password)) {
-        return 'يجب أن تحتوي كلمة المرور على حرف صغير واحد على الأقل.';
-    }
-    if (!/[0-9]/.test(password)) {
-        return 'يجب أن تحتوي كلمة المرور على رقم واحد على الأقل.';
-    }
-    if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
-        return 'يجب أن تحتوي كلمة المرور على رمز خاص واحد على الأقل (مثال: !@#$%).';
-    }
-    return null;
-};
-
-
 async function sendVerificationEmail(user) {
   // إنشاء رمز تحقق
   const token = crypto.randomBytes(20).toString('hex');
@@ -654,58 +633,51 @@ const forgotPassword = async (req, res) => {
   }
 };
 
-// ✅ دالة إعادة تعيين كلمة المرور (resetPassword)
+// إعادة تعيين كلمة المرور باستخدام الرمز
 const resetPassword = async (req, res) => {
-    try {
-        const { token } = req.params; // الرمز الذي يأتي من رابط الـ URL
-        const { newPassword, confirmNewPassword } = req.body;
+  try {
+    const { token } = req.params;
+    const { newPassword, confirmNewPassword } = req.body;
 
-        // 1. البحث عن المستخدم باستخدام رمز إعادة التعيين والتحقق من صلاحيته
-        const user = await User.findOne({
-            resetPasswordToken: token,
-            resetPasswordExpires: { $gt: Date.now() } // يجب أن يكون الرمز صالحاً (لم تنته صلاحيته)
-        });
-
-        if (!user) {
-            return res.status(400).json({
-                success: false,
-                message: 'رمز إعادة التعيين غير صالح أو انتهت صلاحيته. الرجاء طلب رابط جديد.'
-            });
-        }
-
-        // 2. التحقق من تطابق كلمتي المرور الجديدتين
-        if (newPassword !== confirmNewPassword) {
-            return res.status(400).json({
-                success: false,
-                message: 'كلمتا المرور الجديدتان غير متطابقتين.'
-            });
-        }
-
-        // 3. التحقق من قوة كلمة المرور الجديدة
-        const passwordStrengthError = validatePasswordStrength(newPassword);
-        if (passwordStrengthError) {
-            return res.status(400).json({ success: false, message: passwordStrengthError });
-        }
-
-        // 4. تحديث كلمة المرور وحذف الرمز من قاعدة البيانات
-        // افترض أن لديك pre-save hook في Mongoose لتهشيش كلمة المرور تلقائياً
-        user.password = newPassword; // Mongoose hook سيقوم بالتهشيش هنا
-        user.resetPasswordToken = undefined;
-        user.resetPasswordExpires = undefined;
-        await user.save(); // حفظ التغييرات في قاعدة البيانات
-
-        res.status(200).json({
-            success: true,
-            message: 'تم إعادة تعيين كلمة المرور بنجاح. يمكنك الآن تسجيل الدخول بكلمة مرورك الجديدة.'
-        });
-
-    } catch (error) {
-        console.error('Error in resetPassword:', error); // طباعة الخطأ للمطور
-        res.status(500).json({
-            success: false,
-            message: 'حدث خطأ أثناء معالجة طلب إعادة تعيين كلمة المرور.'
-        });
+    // التحقق من تطابق كلمتي المرور الجديدتين
+    if (newPassword !== confirmNewPassword) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'كلمتا المرور غير متطابقتين' 
+      });
     }
+
+    const user = await User.findOne({
+      resetPasswordToken: token,
+      resetPasswordExpires: { $gt: Date.now() }
+    });
+
+    if (!user) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'رابط إعادة التعيين غير صالح أو منتهي الصلاحية' 
+      });
+    }
+
+    // تحديث كلمة المرور
+    const hashedPassword = await bcrypt.hash(newPassword, 12);
+    user.password = hashedPassword;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+    await user.save();
+
+    res.status(200).json({ 
+      success: true,
+      message: 'تم تحديث كلمة المرور بنجاح' 
+    });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ 
+      success: false,
+      message: 'حدث خطأ أثناء إعادة تعيين كلمة المرور' 
+    });
+  }
 };
 
 
