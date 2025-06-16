@@ -61,6 +61,9 @@ const tripSchema = new mongoose.Schema({
     ],
     default: 'pending'
   },
+   isScheduled: { type: Boolean, default: false }, // هل الرحلة مجدولة؟
+  scheduledStartTime: { type: Date }, // وقت البدء المحدد للرحلة المجدولة
+
   
   // إمكانية إضافة أسباب للإلغاء/الرفض لاحقاً
   cancellationReason: { type: String },

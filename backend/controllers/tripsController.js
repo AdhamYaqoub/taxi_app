@@ -14,22 +14,24 @@ const MAX_ACCEPTED_TRIPS = 3;
 // إنشاء طلب رحلة جديدة من قبل المستخدم
 exports.createTrip = async (req, res) => {
   try {
-    const { userId, startLocation, endLocation, distance, startTime, paymentMethod } = req.body;
+    const { 
+      userId, 
+      startLocation, 
+      endLocation, 
+      distance, 
+      startTime, 
+      paymentMethod,
+      isScheduled // هل الرحلة مجدولة؟
+    } = req.body;
+    
     const estimatedFare = distance * RATE_PER_KM;
 
-    // إذا كانت طريقة الدفع من المحفظة، نتحقق من الرصيد فقط
+    // التحقق من رصيد المحفظة إذا كانت طريقة الدفع بالمحفظة
     if (paymentMethod === 'wallet') {
       const client = await Client.findOne({ clientUserId: userId });
-      console.log('Client ID:', userId); // Log the client ID for debugging
-      console.log('Client:', client); // Log the client object for debugging
-      
       if (!client) {
         return res.status(404).json({ error: 'العميل غير موجود' });
       }
-
-      console.log('Client wallet balance:', client.walletBalance);
-      console.log('Estimated fare:', estimatedFare);
-
       if (client.walletBalance < estimatedFare) {
         return res.status(400).json({ 
           error: 'رصيد المحفظة غير كافي لإنشاء الرحلة',
@@ -54,8 +56,9 @@ exports.createTrip = async (req, res) => {
       paymentMethod,
       distance,
       estimatedFare,
-      startTime: startTime ? new Date(startTime) : undefined,
-      paymentStatus: 'pending' // جميع الحالات تبدأ pending الآن
+      isScheduled: isScheduled || false,
+      scheduledStartTime: isScheduled ? new Date(startTime) : undefined,
+      paymentStatus: 'pending'
     });
 
     await newTrip.save();
@@ -565,13 +568,20 @@ exports.getNearbyTrips = async (req, res) => {
     let foundTrips = [];
     let currentDistance = 0;
 
-    // جلب جميع الرحلات المعلقة مرة واحدة فقط
+    // جلب جميع الرحلات المعلقة غير المجدولة أو المجدولة التي حان وقتها
     const pendingTrips = await Trip.find({ 
       status: 'pending',
-       $or: [
-    { driverId: { $exists: false } },
-    { driverId: null }
-  ]// فقط الرحلات غير المخصصة لسائق
+      $or: [
+        { driverId: { $exists: false } },
+        { driverId: null }
+      ],
+      $or: [
+        { isScheduled: false }, // الرحلات العادية
+        { 
+          isScheduled: true,
+          scheduledStartTime: { $lte: new Date() } // الرحلات المجدولة التي حان وقتها
+        }
+      ]
     });
 
     // البحث التدريجي ضمن مستويات المسافة
