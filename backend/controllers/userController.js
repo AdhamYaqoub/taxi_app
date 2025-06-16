@@ -8,10 +8,6 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 
-// إنشاء مستخدم جديد
-// إنشاء مستخدم جديد (مع إنشاء ملف سائق إذا كان الدور 'Driver')
-// controllers/userController.js (أو authController.js)
-
 
 async function sendVerificationEmail(user) {
   // إنشاء رمز تحقق

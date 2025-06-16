@@ -19,6 +19,8 @@ const taxiOfficeRoutes = require('./routes/taxiOfficeRouter');
 const adminRoutes = require('./routes/adminRoutes'); // تأكد من استيراد مسار المدير
 
 const driverLocationRoutes = require('./routes/driverLocationRoutes'); // ✅ استيراد راوتر الموقع الجديد
+const { checkScheduledTrips } = require('./services/scheduledTasks');
+
 
 const db = require('./config/db');
 
@@ -34,6 +36,9 @@ const server = http.createServer(app);
 
 // تهيئة السوكيت
 init(server); // ✅ تهيئة السوكيت باستخدام السيرفر
+
+// استدعاء التحقق من الرحلات المجدولة (يمكنك جدولة هذا بفاصل زمني)
+setInterval(checkScheduledTrips, 60 * 1000); // كل دقيقة
 
 // Middlewares
 app.use(express.json());
