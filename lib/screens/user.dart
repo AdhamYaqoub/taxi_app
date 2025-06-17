@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:taxi_app/language/localization.dart';
 import 'package:taxi_app/screens/User/drivers_list_page.dart';
+import 'package:taxi_app/screens/User/scheduled_trips_page.dart';
 import 'package:taxi_app/screens/components/NotificationIcon.dart';
 import 'User/user_home.dart';
 import 'User/mytrip.dart';
@@ -41,9 +42,9 @@ class _UserDashboardState extends State<UserDashboard> {
   List<Widget> _initializePages() {
     return [
       HomePage(userId: widget.userId),
+      ScheduledTripsPage(userId: widget.userId), // الصفحة الجديدة
       ClientTripsPage(userId: widget.userId),
       const DriversListPage(),
-      // const PaymentPage(),
       SettingsPage(userId: widget.userId, token: widget.token),
       const SupportPage(),
       const OffersPage(),
@@ -227,6 +228,10 @@ class _UserDashboardState extends State<UserDashboard> {
                     icon: Icon(LucideIcons.home),
                     label: AppLocalizations.of(context).translate('home')),
                 BottomNavigationBarItem(
+                    icon: Icon(LucideIcons.settings),
+                    label: AppLocalizations.of(context)
+                        .translate('new_scheduled_ride')),
+                BottomNavigationBarItem(
                     icon: Icon(LucideIcons.history),
                     label: AppLocalizations.of(context)
                         .translate('trips_history')),
@@ -278,14 +283,19 @@ class _UserDashboardState extends State<UserDashboard> {
           _buildSidebarItem(AppLocalizations.of(context).translate('home'),
               LucideIcons.home, 0, theme),
           _buildSidebarItem(
-              AppLocalizations.of(context).translate('trips_history'),
+              AppLocalizations.of(context).translate('new_scheduled_ride'),
               LucideIcons.history,
               1,
               theme),
           _buildSidebarItem(
+              AppLocalizations.of(context).translate('trips_history'),
+              LucideIcons.history,
+              2,
+              theme),
+          _buildSidebarItem(
               AppLocalizations.of(context).translate('drivers_list'),
               LucideIcons.list,
-              2,
+              3,
               theme),
           // _buildSidebarItem(
           //     AppLocalizations.of(context).translate('payment_methods'),
@@ -293,9 +303,9 @@ class _UserDashboardState extends State<UserDashboard> {
           //     3,
           //     theme),
           _buildSidebarItem(AppLocalizations.of(context).translate('settings'),
-              LucideIcons.settings, 3, theme),
+              LucideIcons.settings, 4, theme),
           _buildSidebarItem(AppLocalizations.of(context).translate('support'),
-              LucideIcons.helpCircle, 4, theme),
+              LucideIcons.helpCircle, 5, theme),
         ],
       ),
     );
