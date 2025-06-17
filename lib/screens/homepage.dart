@@ -6,12 +6,13 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:taxi_app/screens/about.dart';
 import 'package:taxi_app/screens/maps_screen.dart';
 import 'package:taxi_app/screens/public_offices_map.dart';
-import 'package:taxi_app/screens/rodes_telgrame.dart';
-import 'package:taxi_app/widgets/CustomAppBar.dart';
-import 'package:taxi_app/language/localization.dart';
+import 'package:taxi_app/screens/rodes_telgrame.dart'; // تأكد من المسار الصحيح لهذا الملف
+import 'package:taxi_app/widgets/CustomAppBar.dart'; // تأكد من المسار الصحيح لهذا الملف
+import 'package:taxi_app/language/localization.dart'; // تأكد من المسار الصحيح لهذا الملف
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:url_launcher/url_launcher.dart'; // <--- تم إضافة هذا الاستيراد
 
 class MapSearchDialog extends StatefulWidget {
   final LatLng initialCenter;
@@ -173,6 +174,8 @@ class _HomePageState extends State<HomePage> {
   static const double NIGHT_SURGE_MULTIPLIER = 1.25;
   static const double WEEKEND_SURGE_MULTIPLIER = 1.15;
 
+  final String _telegramBotUrl = 'https://t.me/TaxiGobookbot'; // <--- رابط البوت الخاص بك
+
   Future<void> _getCurrentLocation() async {
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
@@ -255,11 +258,9 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  // START: دالة جديدة لجلب أقصر مسار
   Future<void> _getRoute() async {
     if (_pickUpLocation == null || _dropOffLocation == null) return;
 
-    // OSRM يتطلب (lon,lat) لذلك نعكس الإحداثيات
     final pickCoords =
         "${_pickUpLocation!.longitude},${_pickUpLocation!.latitude}";
     final dropCoords =
@@ -271,9 +272,7 @@ class _HomePageState extends State<HomePage> {
       final response = await http.get(url);
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        // استخراج قائمة الإحداثيات من الرد
         final coords = data['routes'][0]['geometry']['coordinates'] as List;
-        // تحويل قائمة (lon,lat) إلى قائمة LatLng(lat, lon)
         final points = coords
             .map((p) => LatLng(p[1].toDouble(), p[0].toDouble()))
             .toList();
@@ -283,7 +282,6 @@ class _HomePageState extends State<HomePage> {
       // يمكنك إضافة رسالة خطأ هنا إذا فشلت العملية
     }
   }
-  // END: دالة جديدة لجلب أقصر مسار
 
   Future<void> _showMapSelector(
       BuildContext context, Function(LatLng) onLocationSelected) async {
@@ -315,6 +313,11 @@ class _HomePageState extends State<HomePage> {
       'date': localizations.translate('date'),
       'time': localizations.translate('time'),
       'estimate_price': localizations.translate('estimate_price'),
+      // <--- الترجمات الجديدة
+      'book_via_telegram_button': localizations.translate('book_via_telegram_button'),
+      'book_via_telegram_tooltip': localizations.translate('book_via_telegram_tooltip'),
+      'cannot_open_telegram_error': localizations.translate('cannot_open_telegram_error'),
+      // الترجمات
     };
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -542,6 +545,32 @@ class _HomePageState extends State<HomePage> {
           onPressed: _calculateAndShowPrice,
           child: Text(t['estimate_price']!),
         ),
+        const SizedBox(height: 12), // <--- إضافة مسافة بين الأزرار
+        Tooltip( // <--- Tooltip لإظهار النص عند الإشارة بالماوس (خاصة بالويب)
+          message: t['book_via_telegram_tooltip']!,
+          child: OutlinedButton.icon( // <--- زر "احجز عبر تيليجرام"
+            icon: Image.asset('../assets/telegram_icon.png', height: 24, width: 24), // استخدم أيقونة من Assets
+            label: Text(t['book_via_telegram_button']!),
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              // ألوان مخصصة للزر إذا أردت
+              // foregroundColor: Colors.blueAccent,
+              // side: const BorderSide(color: Colors.blueAccent),
+            ),
+            onPressed: () async {
+              // فتح رابط البوت في التيليجرام
+              if (await canLaunchUrl(Uri.parse(_telegramBotUrl))) {
+                await launchUrl(Uri.parse(_telegramBotUrl));
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(t['cannot_open_telegram_error']!)),
+                );
+              }
+            },
+          ),
+        ),
       ],
     );
   }
@@ -725,10 +754,9 @@ class _HomePageState extends State<HomePage> {
             child: ListView(
               padding: const EdgeInsets.symmetric(horizontal: 8),
               children: [
-                // غيّر اسم home إلى خريطة
                 ListTile(
                     leading: const Icon(Icons.map),
-                    title: Text(t['map']!), // سيظهر "خريطة"
+                    title: Text(t['map']!),
                     onTap: () => Navigator.push(context,
                         MaterialPageRoute(builder: (c) => const MapScreen()))),
                 ListTile(
@@ -749,6 +777,19 @@ class _HomePageState extends State<HomePage> {
                         context,
                         MaterialPageRoute(
                             builder: (c) => const PublicTaxiOfficesMap()))),
+                // <--- زر تيليجرام في الشريط الجانبي (Web)
+                ListTile(
+                    leading: Image.asset('../assets/telegram_icon.png', height: 24, width: 24), // أو Icon(Icons.telegram)
+                    title: Text(t['book_via_telegram_button']!),
+                    onTap: () async {
+                      if (await canLaunchUrl(Uri.parse(_telegramBotUrl))) {
+                        await launchUrl(Uri.parse(_telegramBotUrl));
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(t['cannot_open_telegram_error']!)),
+                        );
+                      }
+                    }),
               ],
             ),
           ),
@@ -768,10 +809,9 @@ class _HomePageState extends State<HomePage> {
                 style: theme.textTheme.titleLarge
                     ?.copyWith(color: theme.colorScheme.onPrimary)),
           ),
-          // غيّر اسم home إلى خريطة
           ListTile(
               leading: const Icon(Icons.map),
-              title: Text(t['map']!), // سيظهر "خريطة"
+              title: Text(t['map']!),
               onTap: () => Navigator.push(context,
                   MaterialPageRoute(builder: (c) => const MapScreen()))),
 
@@ -793,6 +833,19 @@ class _HomePageState extends State<HomePage> {
                   context,
                   MaterialPageRoute(
                       builder: (c) => const PublicTaxiOfficesMap()))),
+          // <--- زر تيليجرام في القائمة الجانبية (Mobile)
+          ListTile(
+              leading: Image.asset('../assets/telegram_icon.png', height: 24, width: 24), // أو Icon(Icons.telegram)
+              title: Text(t['book_via_telegram_button']!),
+              onTap: () async {
+                if (await canLaunchUrl(Uri.parse(_telegramBotUrl))) {
+                  await launchUrl(Uri.parse(_telegramBotUrl));
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(t['cannot_open_telegram_error']!)),
+                  );
+                }
+              }),
         ],
       ),
     );

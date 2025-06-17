@@ -634,6 +634,12 @@ const Map<String, String> en = {
   "password_missing_digit": "Password must contain at least one digit.",
   "password_missing_special_char":
       "Password must contain at least one special character (e.g., !@#\$%).",
+      
+  "book_via_telegram_button": "Book via Telegram",
+  "book_via_telegram_tooltip": "Book your ride using Telegram",
+  "cannot_open_telegram_error": "Cannot open Telegram app. Please install it first.",
+
+
   'new_scheduled_ride': 'New Scheduled Ride',
   'scheduled_rides': 'Scheduled Rides',
   'no_scheduled_rides': 'No scheduled rides',
