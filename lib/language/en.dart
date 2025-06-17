@@ -639,4 +639,12 @@ const Map<String, String> en = {
   "book_via_telegram_tooltip": "Book your ride using Telegram",
   "cannot_open_telegram_error": "Cannot open Telegram app. Please install it first.",
 
+
+  'new_scheduled_ride': 'New Scheduled Ride',
+  'scheduled_rides': 'Scheduled Rides',
+  'no_scheduled_rides': 'No scheduled rides',
+  'select_date_time': 'Select date and time',
+  'date_and_time': 'Date & Time',
+  'scheduled_trip_created': 'Trip scheduled successfully!',
+  'specify_all_fields': 'Please specify all fields',
 };

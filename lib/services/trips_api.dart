@@ -13,6 +13,7 @@ class TripsApi {
     required double distance,
     DateTime? startTime,
     required String paymentMethod,
+    bool isScheduled = false, // هل الرحلة مجدولة؟
   }) async {
     try {
       final response = await http.post(
@@ -24,7 +25,8 @@ class TripsApi {
           'endLocation': endLocation,
           'distance': distance,
           'startTime': startTime?.toIso8601String(),
-          'paymentMethod': paymentMethod, // أضف هذا الحقل
+          'paymentMethod': paymentMethod,
+          'isScheduled': isScheduled, // إرسال حالة الجدولة
         }),
       );
 
