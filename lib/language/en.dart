@@ -633,5 +633,12 @@ const Map<String, String> en = {
       "Password must contain at least one lowercase letter.",
   "password_missing_digit": "Password must contain at least one digit.",
   "password_missing_special_char":
-      "Password must contain at least one special character (e.g., !@#\$%)."
+      "Password must contain at least one special character (e.g., !@#\$%).",
+  'new_scheduled_ride': 'New Scheduled Ride',
+  'scheduled_rides': 'Scheduled Rides',
+  'no_scheduled_rides': 'No scheduled rides',
+  'select_date_time': 'Select date and time',
+  'date_and_time': 'Date & Time',
+  'scheduled_trip_created': 'Trip scheduled successfully!',
+  'specify_all_fields': 'Please specify all fields',
 };
