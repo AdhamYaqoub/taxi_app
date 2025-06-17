@@ -633,5 +633,10 @@ const Map<String, String> en = {
       "Password must contain at least one lowercase letter.",
   "password_missing_digit": "Password must contain at least one digit.",
   "password_missing_special_char":
-      "Password must contain at least one special character (e.g., !@#\$%)."
+      "Password must contain at least one special character (e.g., !@#\$%).",
+      
+  "book_via_telegram_button": "Book via Telegram",
+  "book_via_telegram_tooltip": "Book your ride using Telegram",
+  "cannot_open_telegram_error": "Cannot open Telegram app. Please install it first.",
+
 };
