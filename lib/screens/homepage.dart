@@ -12,7 +12,8 @@ import 'package:taxi_app/language/localization.dart'; // تأكد من المس�
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:url_launcher/url_launcher.dart'; // <--- تم إضافة هذا الاستيراد
+import 'package:url_launcher/url_launcher.dart'; 
+import 'package:flutter/foundation.dart' show kIsWeb; // <--- تم إضافة هذا الاستيراد
 
 class MapSearchDialog extends StatefulWidget {
   final LatLng initialCenter;
@@ -174,7 +175,8 @@ class _HomePageState extends State<HomePage> {
   static const double NIGHT_SURGE_MULTIPLIER = 1.25;
   static const double WEEKEND_SURGE_MULTIPLIER = 1.15;
 
-  final String _telegramBotUrl = 'https://t.me/TaxiGobookbot'; // <--- رابط البوت الخاص بك
+  final String _telegramBotWebUrl = 'https://t.me/TaxiGobookbot'; // <--- رابط الويب للبوت
+  final String _telegramBotAppUrl = 'tg://resolve?domain=TaxiGobookbot'; // <--- رابط التطبيق للبوت
 
   Future<void> _getCurrentLocation() async {
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
@@ -545,24 +547,22 @@ class _HomePageState extends State<HomePage> {
           onPressed: _calculateAndShowPrice,
           child: Text(t['estimate_price']!),
         ),
-        const SizedBox(height: 12), // <--- إضافة مسافة بين الأزرار
-        Tooltip( // <--- Tooltip لإظهار النص عند الإشارة بالماوس (خاصة بالويب)
+        const SizedBox(height: 12),
+        Tooltip(
           message: t['book_via_telegram_tooltip']!,
-          child: OutlinedButton.icon( // <--- زر "احجز عبر تيليجرام"
-            icon: Image.asset('../assets/telegram_icon.png', height: 24, width: 24), // استخدم أيقونة من Assets
+          child: OutlinedButton.icon(
+            icon: Image.asset('assets/telegram_icon.png', height: 24, width: 24),
             label: Text(t['book_via_telegram_button']!),
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 16),
               textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              // ألوان مخصصة للزر إذا أردت
-              // foregroundColor: Colors.blueAccent,
-              // side: const BorderSide(color: Colors.blueAccent),
             ),
             onPressed: () async {
-              // فتح رابط البوت في التيليجرام
-              if (await canLaunchUrl(Uri.parse(_telegramBotUrl))) {
-                await launchUrl(Uri.parse(_telegramBotUrl));
+              // <--- التعديل الرئيسي هنا: اختيار الرابط بناءً على المنصة
+              final urlToLaunch = kIsWeb ? _telegramBotWebUrl : _telegramBotAppUrl;
+              if (await canLaunchUrl(Uri.parse(urlToLaunch))) {
+                await launchUrl(Uri.parse(urlToLaunch));
               } else {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text(t['cannot_open_telegram_error']!)),
@@ -777,13 +777,14 @@ class _HomePageState extends State<HomePage> {
                         context,
                         MaterialPageRoute(
                             builder: (c) => const PublicTaxiOfficesMap()))),
-                // <--- زر تيليجرام في الشريط الجانبي (Web)
                 ListTile(
-                    leading: Image.asset('../assets/telegram_icon.png', height: 24, width: 24), // أو Icon(Icons.telegram)
+                    leading: Image.asset('assets/telegram_icon.png', height: 24, width: 24),
                     title: Text(t['book_via_telegram_button']!),
                     onTap: () async {
-                      if (await canLaunchUrl(Uri.parse(_telegramBotUrl))) {
-                        await launchUrl(Uri.parse(_telegramBotUrl));
+                      // <--- التعديل الرئيسي هنا: اختيار الرابط بناءً على المنصة
+                      final urlToLaunch = kIsWeb ? _telegramBotWebUrl : _telegramBotAppUrl;
+                      if (await canLaunchUrl(Uri.parse(urlToLaunch))) {
+                        await launchUrl(Uri.parse(urlToLaunch));
                       } else {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(content: Text(t['cannot_open_telegram_error']!)),
@@ -833,13 +834,14 @@ class _HomePageState extends State<HomePage> {
                   context,
                   MaterialPageRoute(
                       builder: (c) => const PublicTaxiOfficesMap()))),
-          // <--- زر تيليجرام في القائمة الجانبية (Mobile)
           ListTile(
-              leading: Image.asset('../assets/telegram_icon.png', height: 24, width: 24), // أو Icon(Icons.telegram)
+              leading: Image.asset('assets/telegram_icon.png', height: 24, width: 24),
               title: Text(t['book_via_telegram_button']!),
               onTap: () async {
-                if (await canLaunchUrl(Uri.parse(_telegramBotUrl))) {
-                  await launchUrl(Uri.parse(_telegramBotUrl));
+                // <--- التعديل الرئيسي هنا: اختيار الرابط بناءً على المنصة
+                final urlToLaunch = kIsWeb ? _telegramBotWebUrl : _telegramBotAppUrl;
+                if (await canLaunchUrl(Uri.parse(urlToLaunch))) {
+                  await launchUrl(Uri.parse(urlToLaunch));
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text(t['cannot_open_telegram_error']!)),
