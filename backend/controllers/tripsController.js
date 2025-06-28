@@ -8,7 +8,7 @@ const { updateDriverRating } = require('../services/ratingService'); // تأكد
 const { calculateDistance } = require('../utils/geoUtils');
 
 const RATE_PER_KM = 4.4;
-const MAX_ACCEPTED_TRIPS = 3;
+const MAX_ACCEPTED_TRIPS = 1;
 
 
 // إنشاء طلب رحلة جديدة من قبل المستخدم
