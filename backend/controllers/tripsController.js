@@ -21,9 +21,26 @@ exports.createTrip = async (req, res) => {
       distance, 
       startTime, 
       paymentMethod,
-      isScheduled // هل الرحلة مجدولة؟
+      isScheduled
     } = req.body;
     
+    // التحقق من وجود رحلة نشطة للمستخدم
+    const activeTrip = await Trip.findOne({
+      userId,
+      status: { 
+        $in: ['pending', 'accepted', 'in_progress'] 
+      }
+    });
+
+    if (activeTrip) {
+      return res.status(400).json({ 
+        error: 'لديك رحلة نشطة بالفعل',
+        activeTripId: activeTrip._id,
+        currentStatus: activeTrip.status,
+        message: 'يجب إكمال أو إلغاء الرحلة الحالية قبل إنشاء رحلة جديدة'
+      });
+    }
+
     const estimatedFare = distance * RATE_PER_KM;
 
     // التحقق من رصيد المحفظة إذا كانت طريقة الدفع بالمحفظة
@@ -64,7 +81,10 @@ exports.createTrip = async (req, res) => {
     await newTrip.save();
     res.status(201).json(newTrip);
   } catch (err) {
-    res.status(500).json({ error: 'فشل إنشاء الرحلة', details: err.message });
+    res.status(500).json({ 
+      error: 'فشل إنشاء الرحلة', 
+      details: err.message 
+    });
   }
 };
 
